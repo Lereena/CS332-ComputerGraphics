@@ -60,4 +60,6 @@ fun drawColorGist(
     axesCtx.moveTo(x0, y0)
     axesCtx.lineTo(x0 + width, y0)
     axesCtx.stroke()
+    axesCtx.strokeText(max.toString(), x0 - 20, y0 - height - 1);
+    axesCtx.strokeText(values.size.toString(), x0 + width - 20, y0 + 10);
 }
