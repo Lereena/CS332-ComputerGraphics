@@ -17,6 +17,7 @@ class ColorSpaces : Application() {
         val rootScene = DemoScene(primaryStage)
         val task1Scene = Task1(primaryStage)
         val task2Scene = Task2(primaryStage)
+        val task3Scene = Task3(primaryStage)
 
         primaryStage.show()
 
@@ -27,6 +28,7 @@ class ColorSpaces : Application() {
                 "0" -> rootScene.switch()
                 "1" -> task1Scene.switch()
                 "2" -> task2Scene.switch()
+                "3" -> task3Scene.switch()
             }
         }
     }
