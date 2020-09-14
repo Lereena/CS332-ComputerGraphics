@@ -1,10 +1,14 @@
 package lab2
 
-import javafx.scene.Group
+import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
+import javafx.scene.canvas.GraphicsContext
+import javafx.scene.control.Label
+import javafx.scene.control.Slider
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
+import javafx.scene.layout.FlowPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import java.io.FileInputStream
@@ -13,19 +17,71 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-class Task3(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 3") {
+class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 3") {
     init {
-        val root = Group()
+        val root = FlowPane(Orientation.VERTICAL, 0.0, 30.0)
         val canvas = Canvas(800.0, 600.0)
         val gc = canvas.graphicsContext2D
         root.children.add(canvas)
         scene = Scene(root)
 
+        val hueSlider = Slider(0.0, 100.0, 50.0)
+        val saturationSlider = Slider(0.0, 100.0, 50.0)
+        val valueSlider = Slider(0.0, 100.0, 50.0)
+        configureSlider(hueSlider)
+        configureSlider(saturationSlider)
+        configureSlider(valueSlider)
+        root.children.addAll(
+            Label("Hue"),
+            hueSlider,
+            Label("Saturation"),
+            saturationSlider,
+            Label("Value"),
+            valueSlider
+        )
+
+        var hueValue = 50.0
+        var saturationValue = 50.0
+        var valueValue = 50.0
+
         val image = Image(FileInputStream("assets/fruits.jpg"))
         val HSVImage = RGBImageToHSV(image)
-        changeHSV(HSVImage, Component.H, 50)
-        val transformedImage = HSVImageToRGB(HSVImage)
-        gc.drawImage(transformedImage, 0.0, 0.0, 800.0, 600.0)
+        val k = image.height / image.width
+        gc.drawImage(image, 50.0, 50.0, 700.0, 700.0 * k)
+        hueSlider.setOnDragDetected {
+            sliderChangeEvent(gc, HSVImage, Component.H, (hueSlider.value - hueValue).toInt())
+            hueValue = hueSlider.value
+        }
+        saturationSlider.setOnDragDetected {
+            sliderChangeEvent(gc, HSVImage, Component.S, (saturationSlider.value - saturationValue).toInt())
+            saturationValue = saturationSlider.value
+        }
+        valueSlider.setOnDragDetected {
+            sliderChangeEvent(gc, HSVImage, Component.V, (valueSlider.value - valueValue).toInt())
+            valueValue = valueSlider.value
+        }
+    }
+
+    fun sliderChangeEvent(
+        gc: GraphicsContext, image: Array<Array<HSVComponents>>,
+        component: Component, addition: Int
+    ) {
+        when (component) {
+            Component.H -> changeHSV(image, Component.H, addition)
+            Component.S -> changeHSV(image, Component.S, addition)
+            Component.V -> changeHSV(image, Component.V, addition)
+        }
+        val transformedImage = HSVImageToRGB(image)
+
+        val k = transformedImage.height / transformedImage.width
+        gc.drawImage(transformedImage, 50.0, 50.0, 700.0, 700.0 * k)
+    }
+
+    fun configureSlider(slider: Slider) {
+        slider.isSnapToTicks = true
+        slider.orientation = Orientation.HORIZONTAL
+        slider.isShowTickMarks = true
+        slider.isShowTickLabels = true
     }
 
     fun RGBImageToHSV(image: Image): Array<Array<HSVComponents>> {
@@ -84,9 +140,6 @@ class Task3(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
     }
 
     fun setHSVComponent(pixel: HSVComponents, component: Component, addition: Int) {
-        if (addition !in 0..100)
-            throw Exception("Изменение должно лежать в диапазоне от 0% до 100%")
-
         when (component) {
             Component.H -> pixel.h = abs((pixel.h + addition) % 360)
             Component.S -> pixel.s = min(max(pixel.s + (addition / 100.0), 0.0), 1.0)
