@@ -21,7 +21,7 @@ class Task3(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         root.children.add(canvas)
         scene = Scene(root)
 
-        val image = Image(FileInputStream("assets/ФРУКТЫ.jpg"))
+        val image = Image(FileInputStream("assets/fruits.jpg"))
         val HSVImage = RGBImageToHSV(image)
         changeHSV(HSVImage, Component.H, 50)
         val transformedImage = HSVImageToRGB(HSVImage)
