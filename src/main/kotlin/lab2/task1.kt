@@ -1,0 +1,119 @@
+package lab2
+
+import javafx.application.Application
+import javafx.scene.Group
+import javafx.scene.Scene
+import javafx.scene.canvas.Canvas
+import javafx.scene.image.Image
+import javafx.scene.image.WritableImage
+import javafx.scene.paint.Color
+import javafx.stage.Stage
+import java.io.FileInputStream
+
+
+class Task1 : Application() {
+    override fun start(primaryStage: Stage) {
+        primaryStage.title = "Graphics program"
+        val root = Group()
+        val canvas = Canvas(800.0, 600.0)
+        val gc = canvas.graphicsContext2D
+        root.children.add(canvas)
+        primaryStage.scene = Scene(root)
+        primaryStage.show()
+
+        val image = Image(FileInputStream("assets/fruits.jpg"))
+        val matrix1 = IntensityMatrix(image) { x -> 0.299 * x.red + 0.587 * x.green + 0.114 * x.blue }
+        val matrix2 = IntensityMatrix(image) { x -> 0.2126 * x.red + 0.7152 * x.green + 0.0722 * x.blue }
+        val matrixDif = matrix1 - matrix2
+        val image1 = matrix1.getImage()
+        val image2 = matrix2.getImage()
+        val imageD = matrixDif.getImage()
+        gc.drawImage(image,  0.0, 0.0,   192.0, 128.5);
+        gc.drawImage(image1, 0.0, 138.5, 192.0, 128.5);
+        gc.drawImage(image2, 0.0, 277.0, 192.0, 128.5);
+        gc.drawImage(imageD, 0.0, 415.5, 192.0, 128.5);
+
+    }
+
+    class IntensityMatrix {
+        private var _matrix: Array<Array<Double>> = Array<Array<Double>>(0){Array<Double>(0){0.0}}
+        private var _height: Int = 0
+        private var _width: Int = 0
+
+        constructor(image: Image, func: (Color) -> Double) {
+            _height = image.height.toInt();
+            _width = image.width.toInt();
+            val matrix = Array<Array<Double>>(_height) {
+                Array<Double>(_width) { 0.0 }
+            }
+            val pixelReader = image.pixelReader;
+            for (y in (0 until _height))
+                for (x in (0 until _width)) {
+                    val color = pixelReader.getColor(x, y)
+                    val value = func(color)
+                    matrix[y][x] = value
+                }
+            _matrix = matrix;
+        }
+
+        constructor(matrix: Array<Array<Double>>) {
+            _matrix = matrix;
+            _height = matrix.size
+            _width = matrix[0].size
+        }
+
+        operator fun minus(other: IntensityMatrix): IntensityMatrix {
+            if (this._height != other._height ||
+                this._width != other._width
+            )
+                throw Exception("Matrix sizes don't match")
+
+            val matrix = Array<Array<Double>>(_height) {
+                Array<Double>(_width) { 0.0 }
+            }
+            var min = 1.0
+            for (y in (0 until this._height))
+                for (x in (0 until this._width)) {
+                    val diff = this._matrix[y][x] - other._matrix[y][x]
+                    matrix[y][x] = diff
+                    if (diff < min)
+                        min = diff
+                }
+
+            for (y in (0 until this._height))
+                for (x in (0 until this._width))
+                    matrix[y][x] -= min
+
+            return IntensityMatrix(matrix)
+        }
+
+        fun getImage(): Image {
+            val image = WritableImage(_width, _height)
+            val writer = image.pixelWriter
+            for (y in (0 until this._height))
+                for (x in (0 until this._width)) {
+                    val value = _matrix[y][x]
+                    writer.setColor(x, y, Color(value, value, value, 1.0))
+                }
+            return image
+        }
+
+        fun evalGist(): Array<Int> {
+            val result = Array<int>(256) { 0 }
+            for (y in (0 until this._height))
+                for (x in (0 until this._width)) {
+                    val value = Math.round(_matrix[y][x] * 255)
+                    result[value]++
+                }
+
+            return result
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            launch(Task1::class.java, *args)
+        }
+    }
+}
