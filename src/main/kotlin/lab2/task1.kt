@@ -4,6 +4,7 @@ import javafx.application.Application
 import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
+import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
@@ -15,9 +16,12 @@ class Task1 : Application() {
     override fun start(primaryStage: Stage) {
         primaryStage.title = "Graphics program"
         val root = Group()
-        val canvas = Canvas(800.0, 600.0)
-        val gc = canvas.graphicsContext2D
-        root.children.add(canvas)
+        val mainCanvas = Canvas(800.0, 600.0)
+        val mainCtx = mainCanvas.graphicsContext2D
+        val plotCanvas = Canvas(800.0, 600.0)
+        val plotCtx = plotCanvas.graphicsContext2D
+        root.children.add(plotCanvas)
+        root.children.add(mainCanvas)
         primaryStage.scene = Scene(root)
         primaryStage.show()
 
@@ -28,15 +32,60 @@ class Task1 : Application() {
         val image1 = matrix1.getImage()
         val image2 = matrix2.getImage()
         val imageD = matrixDif.getImage()
-        gc.drawImage(image,  0.0, 0.0,   192.0, 128.5);
-        gc.drawImage(image1, 0.0, 138.5, 192.0, 128.5);
-        gc.drawImage(image2, 0.0, 277.0, 192.0, 128.5);
-        gc.drawImage(imageD, 0.0, 415.5, 192.0, 128.5);
+        mainCtx.drawImage(image,  0.0, 0.0,   192.0, 128.5);
+        mainCtx.drawImage(image1, 0.0, 138.5, 192.0, 128.5);
+        mainCtx.drawImage(image2, 0.0, 277.0, 192.0, 128.5);
+        mainCtx.drawImage(imageD, 0.0, 415.5, 192.0, 128.5);
 
+        drawColorGist(
+            plotCtx, mainCtx,
+            Color.BLACK,
+            matrix1.evalGist(),
+            225.0, 290.0,
+            550.0, 280.0
+        )
+        drawColorGist(
+            plotCtx, mainCtx,
+            Color.BLACK,
+            matrix2.evalGist(),
+            225.0, 590.0,
+            550.0, 280.0
+        )
+    }
+
+    fun drawColorGist(
+        plotCtx: GraphicsContext, axesCtx: GraphicsContext,
+        color: Color,
+        values: Array<Int>,
+        x0: Double, y0: Double,
+        width: Double, height: Double
+    ) {
+        val max = values.max()!!
+
+        plotCtx.stroke = color
+        val kX = width / 256.0
+        val kY = height / max
+        plotCtx.lineWidth = kX
+        for (x in (0 until 256)) {
+            if (values[x] == 0)
+                continue
+            val xCord = x0 + x * kX
+            plotCtx.moveTo(xCord, y0)
+            plotCtx.lineTo(xCord, y0 - values[x] * kY)
+        }
+        plotCtx.stroke()
+
+        axesCtx.stroke = Color.PURPLE
+        axesCtx.lineWidth = 1.0
+        axesCtx.moveTo(x0, y0)
+        axesCtx.lineTo(x0, y0 - height)
+        axesCtx.moveTo(x0, y0)
+        axesCtx.lineTo(x0 + width, y0)
+        axesCtx.stroke()
     }
 
     class IntensityMatrix {
-        private var _matrix: Array<Array<Double>> = Array<Array<Double>>(0){Array<Double>(0){0.0}}
+        private var _matrix: Array<Array<Double>> = Array<Array<Double>>(0) { Array<Double>(0) { 0.0 } }
         private var _height: Int = 0
         private var _width: Int = 0
 
@@ -99,13 +148,12 @@ class Task1 : Application() {
         }
 
         fun evalGist(): Array<Int> {
-            val result = Array<int>(256) { 0 }
+            val result = Array<Int>(256) { 0 }
             for (y in (0 until this._height))
                 for (x in (0 until this._width)) {
-                    val value = Math.round(_matrix[y][x] * 255)
+                    val value = Math.round(_matrix[y][x] * 255).toInt()
                     result[value]++
                 }
-
             return result
         }
     }
