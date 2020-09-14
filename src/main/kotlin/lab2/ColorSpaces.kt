@@ -16,6 +16,7 @@ class ColorSpaces : Application() {
     override fun start(primaryStage: Stage) {
         val rootScene = DemoScene(primaryStage)
         val task1Scene = Task1(primaryStage)
+        val task3Scene = Task3(primaryStage)
 
         primaryStage.show()
 
@@ -25,6 +26,7 @@ class ColorSpaces : Application() {
             when(e.text) {
                 "0" -> rootScene.switch()
                 "1" -> task1Scene.switch()
+                "3" -> task3Scene.switch()
             }
         }
     }
