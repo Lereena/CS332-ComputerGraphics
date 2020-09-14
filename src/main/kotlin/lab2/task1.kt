@@ -28,10 +28,14 @@ class Task1(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         val image1 = matrix1.getImage()
         val image2 = matrix2.getImage()
         val imageD = matrixDif.getImage()
-        mainCtx.drawImage(image, 0.0, 0.0, 192.0, 128.5);
-        mainCtx.drawImage(image1, 0.0, 138.5, 192.0, 128.5);
-        mainCtx.drawImage(image2, 0.0, 277.0, 192.0, 128.5);
-        mainCtx.drawImage(imageD, 0.0, 415.5, 192.0, 128.5);
+
+        with(mainCtx) {
+            drawImage(image, 0.0, 0.0, 192.0, 128.5)
+            drawImage(image1, 0.0, 138.5, 192.0, 128.5)
+            drawImage(image2, 0.0, 277.0, 192.0, 128.5)
+            drawImage(imageD, 0.0, 415.5, 192.0, 128.5)
+        }
+
 
         drawColorGist(
             plotCtx, mainCtx,
@@ -57,23 +61,23 @@ class Task1(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         private var _width: Int = 0
 
         constructor(image: Image, func: (Color) -> Double) {
-            _height = image.height.toInt();
-            _width = image.width.toInt();
+            _height = image.height.toInt()
+            _width = image.width.toInt()
             val matrix = Array(_height) {
                 Array(_width) { 0.0 }
             }
-            val pixelReader = image.pixelReader;
+            val pixelReader = image.pixelReader
             for (y in (0 until _height))
                 for (x in (0 until _width)) {
                     val color = pixelReader.getColor(x, y)
                     val value = func(color)
                     matrix[y][x] = value
                 }
-            _matrix = matrix;
+            _matrix = matrix
         }
 
         constructor(matrix: Array<Array<Double>>) {
-            _matrix = matrix;
+            _matrix = matrix
             _height = matrix.size
             _width = matrix[0].size
         }
