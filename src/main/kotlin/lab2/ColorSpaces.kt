@@ -5,18 +5,24 @@ import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.image.Image
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import java.io.FileInputStream
 
+
 class ColorSpaces : Application() {
     override fun start(primaryStage: Stage) {
         primaryStage.title = "Graphics program"
+
+        val task1 = Task1(primaryStage)
         val root = Group()
         val canvas = Canvas(800.0, 600.0)
         val gc = canvas.graphicsContext2D
         root.children.add(canvas)
-        primaryStage.scene = Scene(root)
+        val rootScene = Scene(root)
+        primaryStage.scene = rootScene
         primaryStage.show()
 
         gc.stroke = Color.BLUEVIOLET
@@ -27,6 +33,13 @@ class ColorSpaces : Application() {
 
         val imgFile = Image(FileInputStream("assets/fruits.jpg"))
         gc.drawImage(imgFile, 0.0, 0.0, 400.0, 300.0);
+
+        primaryStage.addEventHandler(KeyEvent.KEY_PRESSED) { e ->
+            when(e.text) {
+                "0" -> primaryStage.scene = rootScene
+                "1" -> task1.switch()
+            }
+        }
     }
 
     companion object {

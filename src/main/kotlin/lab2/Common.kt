@@ -1,7 +1,19 @@
 package lab2
 
+import javafx.scene.Group
+import javafx.scene.Scene
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
+import javafx.stage.Stage
+
+open class SceneWrapper(open val primaryStage: Stage, val title: String) {
+    var scene = Scene(Group())
+
+    fun switch() {
+        primaryStage.title = title
+        primaryStage.scene = scene
+    }
+}
 
 class ARGBComponents constructor(val a: Int, val r: Int, val g: Int, val b: Int)
 
@@ -29,10 +41,10 @@ fun drawColorGist(
     val max = values.max()!!
 
     plotCtx.stroke = color
-    val kX = width / 256.0
+    val kX = width / values.size
     val kY = height / max
     plotCtx.lineWidth = kX
-    for (x in (0 until 256)) {
+    for (x in (values.indices)) {
         if (values[x] == 0)
             continue
         val xCord = x0 + x * kX
