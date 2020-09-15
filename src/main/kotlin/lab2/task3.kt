@@ -28,9 +28,9 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         root.children.add(canvas)
         scene = Scene(root)
 
-        val hueSlider = Slider(0.0, 100.0, 50.0)
-        val saturationSlider = Slider(0.0, 100.0, 50.0)
-        val valueSlider = Slider(0.0, 100.0, 50.0)
+        val hueSlider = Slider(-100.0, 100.0, 0.0)
+        val saturationSlider = Slider(-100.0, 100.0, 0.0)
+        val valueSlider = Slider(-100.0, 100.0, 0.0)
         configureSlider(hueSlider)
         configureSlider(saturationSlider)
         configureSlider(valueSlider)
@@ -91,20 +91,26 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         gc: GraphicsContext, image: Array<Array<HSVComponents>>,
         component: Component, addition: Int
     ): Image {
-        val transformedImage = processImage(image, component, addition)
+
+        val transformedImage = HSVImageToRGB(processImage(image, component, addition))
         val k = transformedImage.height / transformedImage.width
         gc.drawImage(transformedImage, 50.0, 50.0, 700.0, 700.0 * k)
 
         return transformedImage
     }
 
-    fun processImage(image: Array<Array<HSVComponents>>, component: Component, addition: Int): Image {
+    fun processImage(
+        image: Array<Array<HSVComponents>>,
+        component: Component,
+        addition: Int
+    ): Array<Array<HSVComponents>> {
         val newImage = when (component) {
             Component.H -> changeHSV(image, Component.H, addition)
             Component.S -> changeHSV(image, Component.S, addition)
             Component.V -> changeHSV(image, Component.V, addition)
         }
-        return HSVImageToRGB(newImage)
+//        return HSVImageToRGB(newImage)
+        return newImage
     }
 
     fun configureSlider(slider: Slider) {
@@ -126,8 +132,7 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         for (x in (0 until width))
             for (y in (0 until height)) {
                 val pixel = pixelReader.getColor(x, y)
-                val hsvPixel = pixelToHSV(pixel)
-                hsvImage[x][y] = hsvPixel
+                hsvImage[x][y] = pixelToHSV(pixel)
             }
 
         return hsvImage
@@ -147,16 +152,22 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     fun pixelToRGB(pixel: HSVComponents): Color {
-        val hue = pixel.h
-        val saturation = pixel.s * 100
-        val value = pixel.v * 100
+        val hue = pixel.h // 0-360
+        val saturation = pixel.s * 100 // 0-100
+        var value = pixel.v * 100 // 0-100
 
+        // 0-5
         val hi = (floor(hue / 60) % 6).toInt()
-        val vMin = ((100 - saturation) * value) / 100
-        val a = (value - vMin) * ((hue % 60) / 60)
-        val vInc = vMin + a
-        val vDec = value - a
-        val coef = 2.55
+        // 0-100
+        var vMin = ((100 - saturation) * value) / 100.0
+        // 0-100
+        val a = (value - vMin) * ((hue % 60) / 60.0)
+        //
+        val vInc = (vMin + a) / 100.0
+        val vDec = (value - a) / 100.0
+        val coef = 1
+        value /= 100
+        vMin /= 100
 
         return when (hi) {
             0 -> Color(value * coef, vInc * coef, vMin * coef, 1.0)
@@ -171,9 +182,27 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
 
     fun setHSVComponent(pixel: HSVComponents, component: Component, addition: Int): HSVComponents {
         return when (component) {
-            Component.H -> HSVComponents(abs((pixel.h + addition) % 360), pixel.s, pixel.v)
-            Component.S -> HSVComponents(pixel.h, min(max(pixel.s + (addition / 100.0), 0.0), 1.0), pixel.v)
-            Component.V -> HSVComponents(pixel.h, pixel.s, min(max(pixel.v + (addition / 100.0), 0.0), 1.0))
+            Component.H -> {
+                if (addition <= 0)
+                    HSVComponents((pixel.h / 100) * (100 + addition), pixel.s, pixel.v)
+                else
+                    HSVComponents(pixel.h + ((360 - pixel.h) / 100) * addition, pixel.s, pixel.v)
+            }
+            //HSVComponents(abs((pixel.h + addition) % 360), pixel.s, pixel.v)
+            Component.S -> {
+                if (addition <= 0)
+                    HSVComponents(pixel.h, (pixel.s / 100) * (100 + addition), pixel.v)
+                else
+                    HSVComponents(pixel.h, pixel.s + ((1.0 - pixel.s) / 100) * addition, pixel.v)
+            }
+            //HSVComponents(pixel.h, min(max(pixel.s + (addition / 100.0), 0.0), 1.0), pixel.v)
+            Component.V -> {
+                if (addition <= 0)
+                    HSVComponents(pixel.h, pixel.s, (pixel.v / 100) * (100 + addition))
+                else
+                    HSVComponents(pixel.h, pixel.s, pixel.v + ((1.0 - pixel.v) / 100) * addition)
+            }
+            //HSVComponents(pixel.h, pixel.s, min(max(pixel.v + (addition / 100.0), 0.0), 1.0))
         }
     }
 
@@ -197,9 +226,9 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     fun pixelToHSV(pixel: Color): HSVComponents {
-        val red = pixel.red / 255.0
-        val green = pixel.green / 255.0
-        val blue = pixel.blue / 255.0
+        val red = pixel.red
+        val green = pixel.green
+        val blue = pixel.blue
 
         val max = max(red, max(green, blue))
         val min = min(red, min(green, blue))
