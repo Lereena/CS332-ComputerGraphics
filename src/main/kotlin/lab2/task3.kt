@@ -15,10 +15,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
 import javax.imageio.ImageIO
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
 
 class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 3") {
     init {
@@ -45,35 +42,23 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             saveButton
         )
 
-        var hueValue = 0.0
-        var saturationValue = 0.0
-        var valueValue = 0.0
-
         val image = Image(FileInputStream("assets/fruits.jpg"))
         val originalHSVImage = RGBImageToHSV(image)
         val HSVImage = RGBImageToHSV(image)
 
         val testRGB = image.pixelReader.getColor(0, 0)
-        val testR = testRGB.red * 255
-        val testG = testRGB.green * 255
-        val testB = testRGB.blue * 255
-        val testHSV = HSVImage[0][0]
 
         var transformedImage: Image? = null
         val k = image.height / image.width
         gc.drawImage(image, 50.0, 50.0, 700.0, 700.0 * k)
         hueSlider.setOnMouseReleased {
             transformedImage = sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.H, (hueSlider.value).toInt())
-            hueValue = hueSlider.value
         }
         saturationSlider.setOnMouseReleased {
-            transformedImage =
-                sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.S, (saturationSlider.value).toInt())
-            saturationValue = saturationSlider.value
+            transformedImage = sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.S, (saturationSlider.value).toInt())
         }
         valueSlider.setOnMouseReleased {
             transformedImage = sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.V, (valueSlider.value).toInt())
-            valueValue = valueSlider.value
         }
         saveButton.setOnMouseClicked {
             if (transformedImage != null) {
@@ -160,47 +145,83 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
 
     fun pixelToRGB(pixel: HSVComponents): Color {
         val hue = pixel.h // 0-360
-        val saturation = pixel.s * 100 // 0-100
-        var value = pixel.v * 100 // 0-100
+        val saturation = pixel.s // 0-100
+        var value = pixel.v // 0-100
+
+        val c = value * saturation
+        val x = c * (1 - abs((hue / 60) % 2 - 1))
+        val m = value - c
+        val temp = when(hue) {
+            in 0.0..60.0    -> Color(c, x, 0.0, 1.0)
+            in 60.0..120.0  -> Color(x, c, 0.0, 1.0)
+            in 120.0..180.0 -> Color(0.0, c, x, 1.0)
+            in 180.0..240.0 -> Color(0.0, x, c, 1.0)
+            in 240.0..300.0 -> Color(x, 0.0, c, 1.0)
+            else            -> Color(c, 0.0, x, 1.0)
+        }
+        return Color(
+            toInterval(temp.red + m),
+            toInterval(temp.green + m),
+            toInterval(temp.blue + m),
+            1.0
+        )
 
         // 0-5
-        val hi = (floor(hue / 60) % 6).toInt()
-        // 0-100
-        var vMin = ((100 - saturation) * value) / 100.0
-        // 0-100
-        val a = (value - vMin) * ((hue % 60) / 60.0)
-        //
-        val vInc = (vMin + a) / 100.0
-        val vDec = (value - a) / 100.0
-        val coef = 1.0
-        value /= 100
-        vMin /= 100
+//        val hi = (floor(hue / 60) % 6).toInt()
+//        // 0-100
+//        var vMin = ((100 - saturation) * value) / 100.0
+//        // 0-100
+//        val a = (value - vMin) * ((hue % 60) / 60.0)
+//        //
+//        val vInc = (vMin + a) / 100.0
+//        val vDec = (value - a) / 100.0
+//        val coef = 1.0
+//        value /= 100
+//        vMin /= 100
+//
+//        return when (hi) {
+//            0 -> Color(value * coef, vInc * coef, vMin * coef, 1.0)
+//            1 -> Color(vDec * coef, value * coef, vMin * coef, 1.0)
+//            2 -> Color(vMin * coef, value * coef, vInc * coef, 1.0)
+//            3 -> Color(vMin * coef, vDec * coef, value * coef, 1.0)
+//            4 -> Color(vInc * coef, vMin * coef, value * coef, 1.0)
+//            5 -> Color(value * coef, vMin * coef, vDec * coef, 1.0)
+//            else -> throw Exception("Какое-то странное взятие остатка от деления на 6")
+//        }
+    }
 
-        return when (hi) {
-            0 -> Color(value * coef, vInc * coef, vMin * coef, 1.0)
-            1 -> Color(vDec * coef, value * coef, vMin * coef, 1.0)
-            2 -> Color(vMin * coef, value * coef, vInc * coef, 1.0)
-            3 -> Color(vMin * coef, vDec * coef, value * coef, 1.0)
-            4 -> Color(vInc * coef, vMin * coef, value * coef, 1.0)
-            5 -> Color(value * coef, vMin * coef, vDec * coef, 1.0)
-            else -> throw Exception("Какое-то странное взятие остатка от деления на 6")
-        }
+    fun toInterval(x: Double): Double {
+        if (x > 1)
+            return 1.0
+        if (x < 0)
+            return 1.0
+        return x
     }
 
     fun setHSVComponent(pixel: HSVComponents, originalPixel: HSVComponents, component: Component, addition: Int): HSVComponents {
         return when (component) {
             Component.H -> {
-                if (addition <= 0)
-                    HSVComponents((originalPixel.h / 100) * (100 + addition), pixel.s, pixel.v)
-                else
-                    HSVComponents(originalPixel.h + ((360 - originalPixel.h) / 100) * addition, pixel.s, pixel.v)
+                var temp = originalPixel.h + addition * 3.6
+                if (temp < 0)
+                    temp += 360.0
+                if (temp > 360)
+                    temp %= 360.0
+                HSVComponents(temp, pixel.s, pixel.v)
+//                if (addition <= 0)
+//                    HSVComponents((originalPixel.h / 100) * (100 + addition), pixel.s, pixel.v)
+//                else
+//                    HSVComponents(originalPixel.h + ((360 - originalPixel.h) / 100) * addition, pixel.s, pixel.v)
             }
             //HSVComponents(abs((pixel.h + addition) % 360), pixel.s, pixel.v)
             Component.S -> {
-                if (addition <= 0)
-                    HSVComponents(pixel.h, (originalPixel.s / 100) * (100 + addition), pixel.v)
-                else
-                    HSVComponents(pixel.h, originalPixel.s + ((1.0 - originalPixel.s) / 100) * addition, pixel.v)
+                var temp = (originalPixel.s * (addition + 100) / 100)
+                if (temp > 1)
+                    temp = 1.0
+                HSVComponents(pixel.h, temp, pixel.v)
+//                if (addition <= 0)
+//                    HSVComponents(pixel.h, (originalPixel.s / 100) * (100 + addition), pixel.v)
+//                else
+//                    HSVComponents(pixel.h, originalPixel.s + ((1.0 - originalPixel.s) / 100) * addition, pixel.v)
             }
             //HSVComponents(pixel.h, min(max(pixel.s + (addition / 100.0), 0.0), 1.0), pixel.v)
             Component.V -> {
