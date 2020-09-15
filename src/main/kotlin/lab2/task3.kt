@@ -50,21 +50,29 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         var valueValue = 0.0
 
         val image = Image(FileInputStream("assets/fruits.jpg"))
+        val originalHSVImage = RGBImageToHSV(image)
         val HSVImage = RGBImageToHSV(image)
+
+        val testRGB = image.pixelReader.getColor(0, 0)
+        val testR = testRGB.red * 255
+        val testG = testRGB.green * 255
+        val testB = testRGB.blue * 255
+        val testHSV = HSVImage[0][0]
+
         var transformedImage: Image? = null
         val k = image.height / image.width
         gc.drawImage(image, 50.0, 50.0, 700.0, 700.0 * k)
         hueSlider.setOnMouseReleased {
-            transformedImage = sliderChangeEvent(gc, HSVImage, Component.H, (hueSlider.value).toInt())
+            transformedImage = sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.H, (hueSlider.value).toInt())
             hueValue = hueSlider.value
         }
         saturationSlider.setOnMouseReleased {
             transformedImage =
-                sliderChangeEvent(gc, HSVImage, Component.S, (saturationSlider.value).toInt())
+                sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.S, (saturationSlider.value).toInt())
             saturationValue = saturationSlider.value
         }
         valueSlider.setOnMouseReleased {
-            transformedImage = sliderChangeEvent(gc, HSVImage, Component.V, (valueSlider.value).toInt())
+            transformedImage = sliderChangeEvent(gc, HSVImage, originalHSVImage, Component.V, (valueSlider.value).toInt())
             valueValue = valueSlider.value
         }
         saveButton.setOnMouseClicked {
@@ -89,28 +97,27 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
 
     fun sliderChangeEvent(
         gc: GraphicsContext, image: Array<Array<HSVComponents>>,
+        originalImage: Array<Array<HSVComponents>>,
         component: Component, addition: Int
     ): Image {
 
-        val transformedImage = HSVImageToRGB(processImage(image, component, addition))
+        val transformedImage = HSVImageToRGB(updateImage(image, originalImage, component, addition))
         val k = transformedImage.height / transformedImage.width
         gc.drawImage(transformedImage, 50.0, 50.0, 700.0, 700.0 * k)
 
         return transformedImage
     }
 
-    fun processImage(
+    fun updateImage(
         image: Array<Array<HSVComponents>>,
+        originalImage: Array<Array<HSVComponents>>,
         component: Component,
         addition: Int
     ): Array<Array<HSVComponents>> {
-        val newImage = when (component) {
-            Component.H -> changeHSV(image, Component.H, addition)
-            Component.S -> changeHSV(image, Component.S, addition)
-            Component.V -> changeHSV(image, Component.V, addition)
-        }
-//        return HSVImageToRGB(newImage)
-        return newImage
+        for (x in (0 until image.size))
+            for (y in (0 until image[0].size))
+                image[x][y] = setHSVComponent(image[x][y], originalImage[x][y], component, addition)
+        return image
     }
 
     fun configureSlider(slider: Slider) {
@@ -165,7 +172,7 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         //
         val vInc = (vMin + a) / 100.0
         val vDec = (value - a) / 100.0
-        val coef = 1
+        val coef = 1.0
         value /= 100
         vMin /= 100
 
@@ -180,49 +187,30 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         }
     }
 
-    fun setHSVComponent(pixel: HSVComponents, component: Component, addition: Int): HSVComponents {
+    fun setHSVComponent(pixel: HSVComponents, originalPixel: HSVComponents, component: Component, addition: Int): HSVComponents {
         return when (component) {
             Component.H -> {
                 if (addition <= 0)
-                    HSVComponents((pixel.h / 100) * (100 + addition), pixel.s, pixel.v)
+                    HSVComponents((originalPixel.h / 100) * (100 + addition), pixel.s, pixel.v)
                 else
-                    HSVComponents(pixel.h + ((360 - pixel.h) / 100) * addition, pixel.s, pixel.v)
+                    HSVComponents(originalPixel.h + ((360 - originalPixel.h) / 100) * addition, pixel.s, pixel.v)
             }
             //HSVComponents(abs((pixel.h + addition) % 360), pixel.s, pixel.v)
             Component.S -> {
                 if (addition <= 0)
-                    HSVComponents(pixel.h, (pixel.s / 100) * (100 + addition), pixel.v)
+                    HSVComponents(pixel.h, (originalPixel.s / 100) * (100 + addition), pixel.v)
                 else
-                    HSVComponents(pixel.h, pixel.s + ((1.0 - pixel.s) / 100) * addition, pixel.v)
+                    HSVComponents(pixel.h, originalPixel.s + ((1.0 - originalPixel.s) / 100) * addition, pixel.v)
             }
             //HSVComponents(pixel.h, min(max(pixel.s + (addition / 100.0), 0.0), 1.0), pixel.v)
             Component.V -> {
                 if (addition <= 0)
-                    HSVComponents(pixel.h, pixel.s, (pixel.v / 100) * (100 + addition))
+                    HSVComponents(pixel.h, pixel.s, (originalPixel.v / 100) * (100 + addition))
                 else
-                    HSVComponents(pixel.h, pixel.s, pixel.v + ((1.0 - pixel.v) / 100) * addition)
+                    HSVComponents(pixel.h, pixel.s, originalPixel.v + ((1.0 - originalPixel.v) / 100) * addition)
             }
             //HSVComponents(pixel.h, pixel.s, min(max(pixel.v + (addition / 100.0), 0.0), 1.0))
         }
-    }
-
-    fun changeHSV(
-        image: Array<Array<HSVComponents>>,
-        component: Component,
-        addition: Int
-    ): Array<Array<HSVComponents>> {
-        val width = image.size
-        val height = image[0].size
-        val newImage = Array(width) {
-            Array(height) { HSVComponents(0.0, 0.0, 0.0) }
-        }
-
-        for (x in (0 until width))
-            for (y in (0 until height)) {
-                newImage[x][y] = setHSVComponent(image[x][y], component, addition)
-            }
-
-        return newImage
     }
 
     fun pixelToHSV(pixel: Color): HSVComponents {
