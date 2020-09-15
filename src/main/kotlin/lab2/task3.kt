@@ -45,9 +45,9 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             saveButton
         )
 
-        var hueValue = 50.0
-        var saturationValue = 50.0
-        var valueValue = 50.0
+        var hueValue = 0.0
+        var saturationValue = 0.0
+        var valueValue = 0.0
 
         val image = Image(FileInputStream("assets/fruits.jpg"))
         val HSVImage = RGBImageToHSV(image)
