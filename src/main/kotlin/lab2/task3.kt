@@ -55,16 +55,16 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val k = image.height / image.width
         gc.drawImage(image, 50.0, 50.0, 700.0, 700.0 * k)
         hueSlider.setOnMouseReleased {
-            transformedImage = sliderChangeEvent(gc, HSVImage, Component.H, (hueSlider.value - hueValue).toInt())
+            transformedImage = sliderChangeEvent(gc, HSVImage, Component.H, (hueSlider.value).toInt())
             hueValue = hueSlider.value
         }
         saturationSlider.setOnMouseReleased {
             transformedImage =
-                sliderChangeEvent(gc, HSVImage, Component.S, (saturationSlider.value - saturationValue).toInt())
+                sliderChangeEvent(gc, HSVImage, Component.S, (saturationSlider.value).toInt())
             saturationValue = saturationSlider.value
         }
         valueSlider.setOnMouseReleased {
-            transformedImage = sliderChangeEvent(gc, HSVImage, Component.V, (valueSlider.value - valueValue).toInt())
+            transformedImage = sliderChangeEvent(gc, HSVImage, Component.V, (valueSlider.value).toInt())
             valueValue = valueSlider.value
         }
         saveButton.setOnMouseClicked {
