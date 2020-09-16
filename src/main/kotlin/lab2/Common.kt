@@ -16,6 +16,7 @@ open class SceneWrapper(open val primaryStage: Stage, val title: String) {
 }
 
 class HSVComponents constructor(var h: Double, var s: Double, var v: Double)
+class HSLComponents constructor(var h: Double, var s: Double, var l: Double)
 
 fun drawColorGist(
     plotCtx: GraphicsContext, axesCtx: GraphicsContext,

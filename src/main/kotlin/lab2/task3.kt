@@ -25,7 +25,7 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         root.children.add(canvas)
         scene = Scene(root)
 
-        val hueSlider = Slider(-100.0, 100.0, 0.0)
+        val hueSlider = Slider(-180.0, 180.0, 0.0)
         val saturationSlider = Slider(-100.0, 100.0, 0.0)
         val valueSlider = Slider(-100.0, 100.0, 0.0)
         configureSlider(hueSlider)
@@ -201,37 +201,69 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     fun setHSVComponent(pixel: HSVComponents, originalPixel: HSVComponents, component: Component, addition: Int): HSVComponents {
         return when (component) {
             Component.H -> {
-                var temp = originalPixel.h + addition * 3.6
+                var temp = originalPixel.h + addition
                 if (temp < 0)
                     temp += 360.0
                 if (temp > 360)
                     temp %= 360.0
                 HSVComponents(temp, pixel.s, pixel.v)
-//                if (addition <= 0)
-//                    HSVComponents((originalPixel.h / 100) * (100 + addition), pixel.s, pixel.v)
-//                else
-//                    HSVComponents(originalPixel.h + ((360 - originalPixel.h) / 100) * addition, pixel.s, pixel.v)
             }
-            //HSVComponents(abs((pixel.h + addition) % 360), pixel.s, pixel.v)
             Component.S -> {
-                var temp = (originalPixel.s * (addition + 100) / 100)
-                if (temp > 1)
-                    temp = 1.0
+//                var hslOg = HSVtoHSL(originalPixel)
+//                var hsl = HSVtoHSL(pixel)
+//                hsl.s = normalize(hslOg.s + addition / 100.0)
+//                HSLtoHSV(hsl)
+
+
+//                var temp = normalize(originalPixel.s + addition / 100.0)
+//                HSVComponents(pixel.h, temp, pixel.v)
+                val temp = scale(originalPixel.s, addition.toDouble(), 100.0)
                 HSVComponents(pixel.h, temp, pixel.v)
-//                if (addition <= 0)
-//                    HSVComponents(pixel.h, (originalPixel.s / 100) * (100 + addition), pixel.v)
-//                else
-//                    HSVComponents(pixel.h, originalPixel.s + ((1.0 - originalPixel.s) / 100) * addition, pixel.v)
             }
             //HSVComponents(pixel.h, min(max(pixel.s + (addition / 100.0), 0.0), 1.0), pixel.v)
             Component.V -> {
-                if (addition <= 0)
-                    HSVComponents(pixel.h, pixel.s, (originalPixel.v / 100) * (100 + addition))
-                else
-                    HSVComponents(pixel.h, pixel.s, originalPixel.v + ((1.0 - originalPixel.v) / 100) * addition)
+//                var hslOg = HSVtoHSL(originalPixel)
+//                var hsl = HSVtoHSL(pixel)
+//                hsl.l = normalize(hslOg.l + addition / 100.0)
+//                HSLtoHSV(hsl)
+
+                val temp = scale(originalPixel.v, addition.toDouble(), 100.0)
+                HSVComponents(pixel.h, pixel.s, temp)
             }
-            //HSVComponents(pixel.h, pixel.s, min(max(pixel.v + (addition / 100.0), 0.0), 1.0))
         }
+    }
+
+    fun HSVtoHSL(hsv: HSVComponents): HSLComponents {
+        val l = hsv.v * (1 - hsv.s / 2)
+        val sL = when (l) {
+            0.0, 1.0 -> 0.0
+            else -> (hsv.v - l) / min(l, 1 - l)
+        }
+        return HSLComponents(hsv.h, sL, l)
+    }
+
+    fun HSLtoHSV(hsl: HSLComponents): HSVComponents {
+        val v = hsl.l + hsl.s * min(hsl.l, 1 - hsl.l)
+        val sV = when (v) {
+            0.0 -> 0.0
+            else -> 2 * (1 - hsl.l / v)
+        }
+        return HSVComponents(hsl.h, sV, v)
+    }
+
+    fun normalize(x: Double): Double {
+        if (x < 0)
+            return 0.0
+        if (x > 1)
+            return 1.0
+        return x
+    }
+
+    fun scale(x: Double, addition: Double, addAbs: Double): Double {
+        if (addition <= 0)
+            return x * (1.0 + addition / addAbs)
+        else
+            return x + ((1.0 - x) / addAbs) * addition
     }
 
     fun pixelToHSV(pixel: Color): HSVComponents {
