@@ -49,9 +49,9 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         val image3 = getImage(blueVals, 'b')
 
         with(plotCtxs[0]) {
-            drawImage(image1, 0.0, 0.0, 192.0, 128.5)
-            drawImage(image2, 0.0, 138.5, 192.0, 128.5)
-            drawImage(image3, 0.0, 277.0, 192.0, 128.5)
+            drawImage(image1, 0.0, 20.0, 192.0, 128.5)
+            drawImage(image2, 0.0, 215.0, 192.0, 128.5)
+            drawImage(image3, 0.0, 410.0, 192.0, 128.5)
         }
 
         drawColorGist(
@@ -85,11 +85,12 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         for (y in (0 until values.size))
             for (x in (0 until values[0].size)) {
                 val value = values[y][x]
-                when (comp) {
-                    'r' -> writer.setColor(x, y, Color(value, 0.0, 0.0, 1.0))
-                    'g' -> writer.setColor(x, y, Color(0.0, value, 0.0, 1.0))
-                    'b' -> writer.setColor(x, y, Color(0.0, 0.0, value, 1.0))
-                }
+//                when (comp) {
+//                    'r' -> writer.setColor(x, y, Color(value, 0.0, 0.0, 1.0))
+//                    'g' -> writer.setColor(x, y, Color(0.0, value, 0.0, 1.0))
+//                    'b' -> writer.setColor(x, y, Color(0.0, 0.0, value, 1.0))
+//                }
+                writer.setColor(x, y, Color(value, value, value, 1.0))
             }
         return image
     }
