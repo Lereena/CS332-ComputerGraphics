@@ -4,6 +4,7 @@ import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
+import javafx.scene.control.Button
 import javafx.scene.control.ToggleButton
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
@@ -26,13 +27,14 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val lineDrawButton = ToggleButton("Рисовать линии")
         val colorFillButton = ToggleButton("Заливать цветом")
         val imageFillButton = ToggleButton("Заливать изображением")
+        val clearButton = Button("Очистить")
+        root.children.addAll(lineDrawButton, colorFillButton, imageFillButton, clearButton)
 
         val fileChooser = FileChooser()
         fileChooser.title = "Выберите изображение"
         val extensionFilter = FileChooser.ExtensionFilter("Image Files", "*.png")
         fileChooser.extensionFilters.add(extensionFilter)
         fileChooser.initialDirectory = File("assets")
-        root.children.addAll(lineDrawButton, colorFillButton, imageFillButton)
 
         var startPoint: Point?
         var endPoint: Point? = null
@@ -71,6 +73,12 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             if (selectedFile != null)
                 fillImage = Image(FileInputStream(selectedFile))
         }
+
+        clearButton.setOnAction {
+            gc.drawImage(Image(FileInputStream("assets/blank.png")), 0.0, 0.0)
+            startPoint = null
+            endPoint = null
+        }
     }
 
     fun fill(
@@ -86,19 +94,23 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         var xR = startPoint.x
         val y = startPoint.y
 
-        while (pixelReader.getColor(xL, y) == pixelColor) xL--
-        while (pixelReader.getColor(xR, y) == pixelColor) xR++
+        while (inBoundsOfImage(xL, y, image) && pixelReader.getColor(xL, y) == pixelColor) xL--
+        while (inBoundsOfImage(xR, y, image) && pixelReader.getColor(xR, y) == pixelColor) xR++
         val pixelWriter = image.pixelWriter
         for (x in (xL + 1) until xR)
             pixelWriter.setColor(x, y, targetColor)
         gc.drawImage(image, 0.0, 0.0)
 
         for (x in (xL + 1) until xR) {
-            if (first || direction == Direction.UP)
+            if (inBoundsOfImage(x, y + 1, image) && (first || direction == Direction.UP))
                 fill(gc, Point(x, y + 1), targetColor, image, false, pixelColor, Direction.UP)
-            if (first || direction == Direction.DOWN)
+            if (inBoundsOfImage(x, y - 1, image) && (first || direction == Direction.DOWN))
                 fill(gc, Point(x, y - 1), targetColor, image, false, pixelColor, Direction.DOWN)
         }
+    }
+
+    private fun inBoundsOfImage(x: Int, y: Int, image: Image): Boolean {
+        return x >= 0 && y >= 0 && x < image.width && y < image.height
     }
 
     private fun noNeedToHandle(areaColor: Color?, currentColor: Color, targetColor: Color): Boolean {
