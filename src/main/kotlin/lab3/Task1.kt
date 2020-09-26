@@ -82,8 +82,7 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     fun fill(
-        gc: GraphicsContext, startPoint: Point, targetColor: Color, image: WritableImage,
-        first: Boolean = true, areaColor: Color? = null, direction: Direction? = null
+        gc: GraphicsContext, startPoint: Point, targetColor: Color, image: WritableImage, areaColor: Color? = null
     ) {
         val pixelReader = image.pixelReader
         val pixelColor = pixelReader.getColor(startPoint.x, startPoint.y)
@@ -102,10 +101,10 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         gc.drawImage(image, 0.0, 0.0)
 
         for (x in (xL + 1) until xR) {
-            if (inBoundsOfImage(x, y + 1, image) && (first || direction == Direction.UP))
-                fill(gc, Point(x, y + 1), targetColor, image, false, pixelColor, Direction.UP)
-            if (inBoundsOfImage(x, y - 1, image) && (first || direction == Direction.DOWN))
-                fill(gc, Point(x, y - 1), targetColor, image, false, pixelColor, Direction.DOWN)
+            if (inBoundsOfImage(x, y + 1, image))
+                fill(gc, Point(x, y + 1), targetColor, image, pixelColor)
+            if (inBoundsOfImage(x, y - 1, image))
+                fill(gc, Point(x, y - 1), targetColor, image, pixelColor)
         }
     }
 
@@ -118,5 +117,3 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                 || currentColor == targetColor
     }
 }
-
-enum class Direction { UP, DOWN }
