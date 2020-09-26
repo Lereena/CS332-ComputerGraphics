@@ -62,7 +62,7 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             canvasImage = canvas.snapshot(null, null)
             root.setOnMouseClicked {
                 val start = Point(it.sceneX.toInt(), it.sceneY.toInt())
-                fill(gc, start, Color.GREEN, canvasImage)
+                colorFill(gc, start, Color.GREEN, canvasImage)
             }
         }
 
@@ -70,8 +70,15 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             lineDrawButton.isSelected = false
             imageFillButton.isSelected = false
             val selectedFile = fileChooser.showOpenDialog(primaryStage)
-            if (selectedFile != null)
+            if (selectedFile != null) {
                 fillImage = Image(FileInputStream(selectedFile))
+                canvasImage = canvas.snapshot(null, null)
+
+                root.setOnMouseClicked {
+                    val start = Point(it.sceneX.toInt(), it.sceneY.toInt())
+                    imageFill(gc, start, fillImage, canvasImage, start)
+                }
+            }
         }
 
         clearButton.setOnAction {
@@ -81,7 +88,7 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         }
     }
 
-    fun fill(
+    fun colorFill(
         gc: GraphicsContext, startPoint: Point, targetColor: Color, image: WritableImage, areaColor: Color? = null
     ) {
         val pixelReader = image.pixelReader
@@ -102,18 +109,64 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
 
         for (x in (xL + 1) until xR) {
             if (inBoundsOfImage(x, y + 1, image))
-                fill(gc, Point(x, y + 1), targetColor, image, pixelColor)
+                colorFill(gc, Point(x, y + 1), targetColor, image, pixelColor)
             if (inBoundsOfImage(x, y - 1, image))
-                fill(gc, Point(x, y - 1), targetColor, image, pixelColor)
+                colorFill(gc, Point(x, y - 1), targetColor, image, pixelColor)
         }
+    }
+
+
+    private fun imageFill(
+        gc: GraphicsContext, currentPoint: Point, fillImage: Image, image: WritableImage, startPoint: Point,
+        areaColor: Color? = null
+    ) {
+        val canvasReader = image.pixelReader
+        val pixelColor = canvasReader.getColor(currentPoint.x, currentPoint.y)
+        if (noNeedToHandle(areaColor, pixelColor))
+            return
+        val fillImageReader = fillImage.pixelReader
+
+        var xL = currentPoint.x
+        var xR = currentPoint.x
+        val y = currentPoint.y
+        val fillImageWidth = fillImage.width.toInt()
+        val fillImageHeight = fillImage.height.toInt()
+        if (currentPoint.x == startPoint.x && currentPoint.y == startPoint.y)
+            println(module(-80, 80))
+        while (inBoundsOfImage(xL, y, image) && canvasReader.getColor(xL, y) == pixelColor) xL--
+        while (inBoundsOfImage(xR, y, image) && canvasReader.getColor(xR, y) == pixelColor) xR++
+        val pixelWriter = image.pixelWriter
+
+        val relY = module(y - startPoint.y, fillImageHeight)
+
+        for (x in (xL + 1) until xR) {
+            val relX = module(x - startPoint.x, fillImageWidth)
+            pixelWriter.setColor(x, y, fillImageReader.getColor(relX, relY))
+        }
+        gc.drawImage(image, 0.0, 0.0)
+
+        for (x in (xL + 1) until xR) {
+            if (inBoundsOfImage(x, y + 1, image))
+                imageFill(gc, Point(x, y + 1), fillImage, image, startPoint, pixelColor)
+            if (inBoundsOfImage(x, y - 1, image))
+                imageFill(gc, Point(x, y - 1), fillImage, image, startPoint, pixelColor)
+        }
+    }
+
+    private fun module(number: Int, module: Int): Int {
+        val mod = number % module
+        return if (mod < 0)
+            mod + module
+        else
+            mod
     }
 
     private fun inBoundsOfImage(x: Int, y: Int, image: Image): Boolean {
         return x >= 0 && y >= 0 && x < image.width && y < image.height
     }
 
-    private fun noNeedToHandle(areaColor: Color?, currentColor: Color, targetColor: Color): Boolean {
+    private fun noNeedToHandle(areaColor: Color?, currentColor: Color, targetColor: Color? = null): Boolean {
         return (areaColor != null && currentColor != areaColor)
-                || currentColor == targetColor
+                || if (targetColor == null) false else currentColor == targetColor
     }
 }
