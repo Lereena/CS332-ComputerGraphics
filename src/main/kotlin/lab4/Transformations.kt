@@ -32,8 +32,8 @@ fun turnAroundPoint(polygon: LinkedList<Point>, point: Point, angle: Double): Li
     return makeTransformation(transformationMatrix, polygon)
 }
 
-fun turnAroundCenter(polygon: LinkedList<Point>): LinkedList<Point> {
-    throw NotImplementedError()
+fun turnAroundCenter(polygon: LinkedList<Point>, angle: Double): LinkedList<Point> {
+    return turnAroundPoint(polygon, findCenter(polygon), angle)
 }
 
 fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point): LinkedList<Point> {
@@ -44,23 +44,33 @@ fun turnEdge(edge: LinkedList<Point>): LinkedList<Point> {
     throw NotImplementedError()
 }
 
-//fun findCenter(polygon: LinkedList<Point>): Point {
-//    val n = polygon.size
-//    var x = 0
-//    var y = 0
-//    for (i in polygon.indices - 1) {
-//        val current = polygon[i]
-//        val next = polygon[i + 1]
-//        x += (current.x + next.x) * (current.x * next.y - next.x * current.y)
-//        y += (current.y + next.y) * (current.x * next.y - next.x * current.y)
-//    }
-//    val first = polygon[0]
-//    val last = polygon[n - 1]
-//    x += (last.x + first.x) * (last.x * first.y - first.x * last.y)
-//    y += (last.y + first.y) * (last.x * first.y - first.x * last.y)
-//
-//    x /=
-//}
+fun findCenter(polygon: LinkedList<Point>): Point {
+    val n = polygon.size
+    var x = 0
+    var y = 0
+    var area = 0
+
+    for (i in polygon.indices - 3) {
+        val current = polygon[i]
+        val next = polygon[i + 1]
+        val mult =  (current.x * next.y - next.x * current.y)
+        x += (current.x + next.x) * mult
+        y += (current.y + next.y) * mult
+        area += mult
+    }
+    val first = polygon[0]
+    val last = polygon[n - 1]
+    val mult = (last.x * first.y - first.x * last.y)
+    x += (last.x + first.x) * mult
+    y += (last.y + first.y) * mult
+    area += mult
+    area /= 2
+    x /= 6 * area
+    y /= 6 * area
+
+    return Point(x, y)
+}
+
 
 
 fun makeTransformation(transformationMatrix: Array<DoubleArray>, polygon: LinkedList<Point>): LinkedList<Point> {
