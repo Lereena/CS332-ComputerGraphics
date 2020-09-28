@@ -51,7 +51,7 @@ fun drawLine(gc: GraphicsContext, color: Color, start: Point, end: Point) {
         pixelWriter.setColor(point.x, point.y, color)
 }
 
-private fun getLine(color: Color, start: Point, end: Point): LinkedList<Point> {
+fun getLine(color: Color, start: Point, end: Point): LinkedList<Point> {
     val result = LinkedList<Point>()
     result.add(start)
 
