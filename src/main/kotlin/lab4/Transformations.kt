@@ -51,10 +51,6 @@ fun scaleAroundCenter(polygon: LinkedList<Point>, kX: Double, kY: Double): Linke
     return scaleAroundPoint(polygon, findCenter(polygon), kX, kY)
 }
 
-fun turnEdge(edge: LinkedList<Point>): LinkedList<Point> {
-    return turnAroundCenter(edge, Math.PI/2)
-}
-
 fun findCenter(polygon: LinkedList<Point>): Point {
     val n = polygon.size
     if (n == 2)
