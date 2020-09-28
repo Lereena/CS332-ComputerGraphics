@@ -32,6 +32,7 @@ enum class Mode {
     DRAW_POLY,
 
     SELECT_ROTATION_POINT,
+    SELECT_SCALE_POINT,
     CHECK_POLYGONS,
     CHECK_EDGE
 }
@@ -113,7 +114,7 @@ class AffineTransformations : Application() {
         val trAngleField = TextField("0")
         val trAngleLabel = Label("Угол: ")
         val trRotatePointButton =  ToggleButton("Выбрать точку")
-        val trRotateCenterButton = Button("Повернуть от центров")
+        val trRotateCenterButton = Button("Относительно центров")
         trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
         trRotatePane.add(trAngleLabel,  0, 1)
         trRotatePane.add(trAngleField,  1, 1)
@@ -121,8 +122,33 @@ class AffineTransformations : Application() {
         trRotatePane.add(trRotateCenterButton, 0, 4, 2, 1)
 
         trRotateCenterButton.setOnAction {
-            // TODO: Invoke func
-            throw NotImplementedError("IMPLEMENT INVOKING FUNC")
+            for (shape in curShapes)
+                shape.update(turnAroundCenter(shape.points, trAngleField.text.toDouble()))
+            redrawShapes()
+        }
+
+        // rotate pane
+        val trScalePane = GridPane()
+        val trScaleTitle = Label("Масштабирование")
+        val trScaleKxField = TextField("0")
+        val trScaleKyField = TextField("0")
+        val trScaleKxLabel = Label("kx: ")
+        val trScaleKyLabel = Label("ky: ")
+        val trScalePointButton =   ToggleButton("Выбрать точку")
+        val trScaleCenterButton =  Button("Относительно центров")
+        trScalePane.add(trScaleTitle,   0, 0, 2, 1)
+        trScalePane.add(trScaleKxLabel, 0, 1)
+        trScalePane.add(trScaleKxField, 1, 1)
+        trScalePane.add(trScaleKyLabel, 0, 2)
+        trScalePane.add(trScaleKyField, 1, 2)
+        trScalePane.add(trScalePointButton,  0, 3, 2, 1)
+        trScalePane.add(trScaleCenterButton, 0, 4, 2, 1)
+
+        trScaleCenterButton.setOnAction {
+            for (shape in curShapes)
+                shape.update(scaleAroundCenter(shape.points,
+                        trScaleKxField.text.toInt(), trScaleKyField.text.toInt()))
+            redrawShapes()
         }
 
         // check edge intersection
@@ -158,6 +184,7 @@ class AffineTransformations : Application() {
         transformationPane.children.addAll(
                 trMovePane,
                 trRotatePane,
+                trScalePane,
                 checkEdgeIntersectionButton,
                 checkPolygonsPane,
                 checkPointEdgePane
@@ -171,6 +198,8 @@ class AffineTransformations : Application() {
                 drawPolygonButton,
 
                 trRotatePointButton,
+                trScalePointButton,
+
                 checkPolygonsButton,
                 checkPointEdgeButton
         )
@@ -179,9 +208,10 @@ class AffineTransformations : Application() {
         setModeButton(drawRectButton,    Mode.DRAW_RECT,  toggleButtons)
         setModeButton(drawPolygonButton, Mode.DRAW_POLY,  toggleButtons)
 
-        setModeButton(trRotatePointButton, Mode.SELECT_ROTATION_POINT, toggleButtons)
-        setModeButton(checkPolygonsButton,  Mode.CHECK_POLYGONS,         toggleButtons)
-        setModeButton(checkPointEdgeButton,     Mode.CHECK_EDGE,            toggleButtons)
+        setModeButton(trRotatePointButton,  Mode.SELECT_ROTATION_POINT, toggleButtons)
+        setModeButton(trRotatePointButton,  Mode.SELECT_SCALE_POINT,    toggleButtons)
+        setModeButton(checkPolygonsButton,  Mode.CHECK_POLYGONS,        toggleButtons)
+        setModeButton(checkPointEdgeButton, Mode.CHECK_EDGE,            toggleButtons)
 
         mainCanvas.setOnMouseClicked {
             if (selectedMode != Mode.NONE) {
@@ -200,6 +230,14 @@ class AffineTransformations : Application() {
                             shape.update(turnAroundPoint(shape.points, curPoint, trAngleField.text.toDouble()))
                         redrawShapes()
                     }
+                    Mode.SELECT_SCALE_POINT -> {
+                        curPoints.clear()
+                        for (shape in curShapes)
+                            shape.update(scaleAroundPoint(shape.points, curPoint,
+                                    trScaleKxField.text.toInt(), trScaleKyField.text.toInt()))
+                        redrawShapes()
+                    }
+
                     Mode.CHECK_POLYGONS -> {
                         curPoints.clear()
                         val result = checkPolygons(curShapes, curPoint)
