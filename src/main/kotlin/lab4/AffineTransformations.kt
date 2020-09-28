@@ -209,7 +209,7 @@ class AffineTransformations : Application() {
         setModeButton(drawPolygonButton, Mode.DRAW_POLY,  toggleButtons)
 
         setModeButton(trRotatePointButton,  Mode.SELECT_ROTATION_POINT, toggleButtons)
-        setModeButton(trRotatePointButton,  Mode.SELECT_SCALE_POINT,    toggleButtons)
+        setModeButton(trScalePointButton,   Mode.SELECT_SCALE_POINT,    toggleButtons)
         setModeButton(checkPolygonsButton,  Mode.CHECK_POLYGONS,        toggleButtons)
         setModeButton(checkPointEdgeButton, Mode.CHECK_EDGE,            toggleButtons)
 
