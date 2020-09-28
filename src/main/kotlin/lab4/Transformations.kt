@@ -63,7 +63,7 @@ fun findCenter(polygon: LinkedList<Point>): Point {
     var y = 0
     var area = 0
 
-    for (i in polygon.indices - 3) {
+    for (i in 0..(n - 2)) {
         val current = polygon[i]
         val next = polygon[i + 1]
         val mult =  (current.x * next.y - next.x * current.y)
