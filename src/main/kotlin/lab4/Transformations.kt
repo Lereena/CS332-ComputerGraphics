@@ -17,10 +17,16 @@ fun move(polygon: LinkedList<Point>, dx: Int, dy: Int): LinkedList<Point> {
 }
 
 fun turnAroundPoint(polygon: LinkedList<Point>, point: Point, angle: Double): LinkedList<Point> {
+    val angleCos = cos(angle)
+    val angleSin = sin(angle)
+    val x = point.x
+    val y = point.y
     val transformationMatrix = arrayOf(
-        doubleArrayOf(cos(angle), sin(angle), 0.0),
-        doubleArrayOf(-sin(angle), cos(angle), 0.0),
-        doubleArrayOf(0.0, 0.0, 1.0)
+        doubleArrayOf(angleCos, angleSin, 0.0),
+        doubleArrayOf(-angleSin, angleCos, 0.0),
+        doubleArrayOf(-x * angleCos + y * angleSin + x,
+                        -x * angleSin + y * angleCos + x,
+                        1.0)
     )
 
     return makeTransformation(transformationMatrix, polygon)
@@ -60,6 +66,5 @@ fun matrixMultiplication(a: Array<DoubleArray>, b: Array<DoubleArray>): Array<In
     val intResult = arrayOf(intArrayOf(0, 0, 0))
     for (i in result[0].indices)
         intResult[0][i] = result[0][i].roundToInt()
-    
     return intResult
 }
