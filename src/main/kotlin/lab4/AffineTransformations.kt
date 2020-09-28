@@ -31,7 +31,9 @@ enum class Mode {
     DRAW_RECT,
     DRAW_POLY,
 
-    SELECT_ROTATION_POINT
+    SELECT_ROTATION_POINT,
+    CHECK_POLYGON,
+    CHECK_EDGE
 }
 
 class AffineTransformations : Application() {
@@ -66,6 +68,13 @@ class AffineTransformations : Application() {
         val drawPolygonButton = ToggleButton("Многоугольник")
         val clearButton =       Button("Очистить")
 
+        clearButton.setOnAction {
+            mainGc.clearRect(0.0, 0.0, mainCanvas.getWidth(), mainCanvas.getHeight())
+            mainGc.restore()
+            curPoints.clear()
+            curShapes.clear()
+        }
+
         drawPane.children.addAll(
                 drawPointButton,
                 drawLineButton,
@@ -77,16 +86,18 @@ class AffineTransformations : Application() {
         // TRANSFORMATION PANE
         // move pane
         val trMovePane = GridPane()
+        val trMoveTitle = Label("Смещение")
         val trDxField = TextField("0")
         val trDyField = TextField("0")
         val trDxLabel = Label("dx: ")
         val trDyLabel = Label("dy: ")
         val trMoveButton = Button("Сдвинуть")
-        trMovePane.add(trDxLabel,    0, 0)
-        trMovePane.add(trDxField,    1, 0)
-        trMovePane.add(trDyLabel,    0, 1)
-        trMovePane.add(trDyField,    1, 1)
-        trMovePane.add(trMoveButton, 0, 2)
+        trMovePane.add(trMoveTitle,  0, 0, 2, 1)
+        trMovePane.add(trDxLabel,    0, 1)
+        trMovePane.add(trDxField,    1, 1)
+        trMovePane.add(trDyLabel,    0, 2)
+        trMovePane.add(trDyField,    1, 2)
+        trMovePane.add(trMoveButton, 0, 3, 2, 1)
         trMoveButton.setOnAction {
             for (shape in curShapes)
                 shape.update(move(shape.points,
@@ -96,24 +107,55 @@ class AffineTransformations : Application() {
 
         // rotate pane
         val trRotatePane = GridPane()
+        val trRotateTitle = Label("Поворот")
         val trAngleField = TextField("0")
         val trAngleLabel = Label("Угол: ")
-        val trRotateButton = ToggleButton("Выбрать точку")
-        trRotatePane.add(trAngleLabel, 0, 0)
-        trRotatePane.add(trAngleField, 1, 0)
-        trRotatePane.add(trRotateButton, 0, 2)
+        val trRotatePointButton =  ToggleButton("Выбрать точку")
+        val trRotateCenterButton = Button("Повернуть от центров")
+        trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
+        trRotatePane.add(trAngleLabel,  0, 1)
+        trRotatePane.add(trAngleField,  1, 1)
+        trRotatePane.add(trRotatePointButton,  0, 3, 2, 1)
+        trRotatePane.add(trRotateCenterButton, 0, 4, 2, 1)
+
+        trRotateCenterButton.setOnAction {
+            // TODO: Invoke func
+            throw NotImplementedError("IMPLEMENT INVOKING FUNC")
+        }
+
+        // check edge intersection
+        val checkEdgeIntersectionButton = Button("Точки пересечения ребер")
+        checkEdgeIntersectionButton.setOnAction {
+            // TODO: Invoke func
+            throw NotImplementedError("IMPLEMENT INVOKING FUNC")
+        }
+
+        // check polygon
+        val checkPolygonPane = GridPane()
+        val checkPolygonTitle = Label("Проверка принадлежности")
+        val polygonStatus = Label("Не выбрана точка")
+        val checkPolygonButton = ToggleButton("Выбрать точку")
+        checkPolygonPane.add(checkPolygonTitle,  0, 0)
+        checkPolygonPane.add(polygonStatus,      0, 1)
+        checkPolygonPane.add(checkPolygonButton, 0, 2)
+
+        // check edge
+        val checkEdgePane = GridPane()
+        val checkEdgeTitle = Label("Отношение к ребру")
+        val edgeStatus = Label("Не выбрана точка")
+        val checkEdgeButton = ToggleButton("Выбрать точку")
+        checkEdgePane.add(checkEdgeTitle,  0, 0)
+        checkEdgePane.add(edgeStatus,      0, 1)
+        checkEdgePane.add(checkEdgeButton, 0, 2)
 
         transformationPane.children.addAll(
                 trMovePane,
-                trRotatePane
+                trRotatePane,
+                checkEdgeIntersectionButton,
+                checkPolygonPane,
+                checkEdgePane
         )
 
-        clearButton.setOnAction {
-            mainGc.clearRect(0.0, 0.0, mainCanvas.getWidth(), mainCanvas.getHeight())
-            mainGc.restore()
-            curPoints.clear()
-            curShapes.clear()
-        }
 
         val toggleButtons = arrayOf(
                 drawPointButton,
@@ -121,14 +163,16 @@ class AffineTransformations : Application() {
                 drawRectButton,
                 drawPolygonButton,
 
-                trRotateButton
+                trRotatePointButton
         )
         setModeButton(drawPointButton,   Mode.DRAW_POINT, toggleButtons)
         setModeButton(drawLineButton,    Mode.DRAW_LINE,  toggleButtons)
         setModeButton(drawRectButton,    Mode.DRAW_RECT,  toggleButtons)
         setModeButton(drawPolygonButton, Mode.DRAW_POLY,  toggleButtons)
 
-        setModeButton(trRotateButton,    Mode.SELECT_ROTATION_POINT, toggleButtons)
+        setModeButton(trRotatePointButton, Mode.SELECT_ROTATION_POINT, toggleButtons)
+        setModeButton(checkPolygonButton,  Mode.CHECK_POLYGON,         toggleButtons)
+        setModeButton(checkEdgeButton,     Mode.CHECK_EDGE,            toggleButtons)
 
         mainCanvas.setOnMouseClicked {
             if (selectedMode != Mode.NONE) {
@@ -140,11 +184,15 @@ class AffineTransformations : Application() {
                     Mode.DRAW_LINE -> { if (curPoints.count() == 2) addShape() }
                     Mode.DRAW_RECT -> { if (curPoints.count() == 3) addShape() }
                     Mode.DRAW_POLY -> {}
+
                     Mode.SELECT_ROTATION_POINT -> {
                         for (shape in curShapes)
                             shape.update(turnAroundPoint(shape.points, curPoint, trAngleField.text.toDouble()))
                         redrawShapes()
                     }
+                    Mode.CHECK_POLYGON -> { throw NotImplementedError() }
+                    Mode.CHECK_EDGE -> { throw NotImplementedError() }
+                    
                     else -> throw Exception("Invalid mode")
                 }
             }
