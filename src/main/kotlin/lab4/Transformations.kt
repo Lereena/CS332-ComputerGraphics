@@ -60,4 +60,6 @@ fun matrixMultiplication(a: Array<DoubleArray>, b: Array<DoubleArray>): Array<In
     val intResult = arrayOf(intArrayOf(0, 0, 0))
     for (i in result[0].indices)
         intResult[0][i] = result[0][i].roundToInt()
+    
+    return intResult
 }
