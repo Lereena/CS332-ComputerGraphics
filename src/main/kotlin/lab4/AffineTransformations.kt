@@ -17,7 +17,11 @@ import javafx.stage.Stage
 import lab3.Point
 import java.util.*
 
-class Shape(val points: LinkedList<Point>) {}
+class Shape(var points: LinkedList<Point>) {
+    fun update(points: LinkedList<Point>) {
+        this.points = points
+    }
+}
 
 enum class Mode {
     NONE,
@@ -25,12 +29,14 @@ enum class Mode {
     DRAW_POINT,
     DRAW_LINE,
     DRAW_RECT,
-    DRAW_POLY
+    DRAW_POLY,
+
+    SELECT_ROTATION_POINT
 }
 
 class AffineTransformations : Application() {
     var selectedMode: Mode = Mode.NONE
-    val curPoints = LinkedList<Point>()
+    var curPoints = LinkedList<Point>()
     val curShapes = Vector<Shape>()
     val mainCanvas = Canvas(800.0, 600.0)
     val mainGc = mainCanvas.graphicsContext2D
@@ -56,7 +62,7 @@ class AffineTransformations : Application() {
         // DRAW PANE
         val drawPointButton =   ToggleButton("Точка")
         val drawLineButton =    ToggleButton("Линия")
-        val drawRectButton =    ToggleButton("Прямоугольник")
+        val drawRectButton =    ToggleButton("Треугольник")
         val drawPolygonButton = ToggleButton("Многоугольник")
         val clearButton =       Button("Очистить")
 
@@ -67,7 +73,6 @@ class AffineTransformations : Application() {
                 drawPolygonButton,
                 clearButton
         )
-
 
         // TRANSFORMATION PANE
         // move pane
@@ -82,9 +87,26 @@ class AffineTransformations : Application() {
         trMovePane.add(trDyLabel,    0, 1)
         trMovePane.add(trDyField,    1, 1)
         trMovePane.add(trMoveButton, 0, 2)
-        trMoveButton.setOnAction {  }
+        trMoveButton.setOnAction {
+            for (shape in curShapes)
+                shape.update(move(shape.points,
+                        trDxField.text.toInt(), trDyField.text.toInt()))
+            redrawShapes()
+        }
 
-        transformationPane.children.addAll(trMovePane)
+        // rotate pane
+        val trRotatePane = GridPane()
+        val trAngleField = TextField("0")
+        val trAngleLabel = Label("Угол: ")
+        val trRotateButton = ToggleButton("Выбрать точку")
+        trRotatePane.add(trAngleLabel, 0, 0)
+        trRotatePane.add(trAngleField, 1, 0)
+        trRotatePane.add(trRotateButton, 0, 2)
+
+        transformationPane.children.addAll(
+                trMovePane,
+                trRotatePane
+        )
 
         clearButton.setOnAction {
             mainGc.clearRect(0.0, 0.0, mainCanvas.getWidth(), mainCanvas.getHeight())
@@ -97,12 +119,16 @@ class AffineTransformations : Application() {
                 drawPointButton,
                 drawLineButton,
                 drawRectButton,
-                drawPolygonButton
+                drawPolygonButton,
+
+                trRotateButton
         )
         setModeButton(drawPointButton,   Mode.DRAW_POINT, toggleButtons)
         setModeButton(drawLineButton,    Mode.DRAW_LINE,  toggleButtons)
         setModeButton(drawRectButton,    Mode.DRAW_RECT,  toggleButtons)
         setModeButton(drawPolygonButton, Mode.DRAW_POLY,  toggleButtons)
+
+        setModeButton(trRotateButton,    Mode.SELECT_ROTATION_POINT, toggleButtons)
 
         mainCanvas.setOnMouseClicked {
             if (selectedMode != Mode.NONE) {
@@ -114,6 +140,11 @@ class AffineTransformations : Application() {
                     Mode.DRAW_LINE -> { if (curPoints.count() == 2) addShape() }
                     Mode.DRAW_RECT -> { if (curPoints.count() == 3) addShape() }
                     Mode.DRAW_POLY -> {}
+                    Mode.SELECT_ROTATION_POINT -> {
+                        for (shape in curShapes)
+                            shape.update(turnAroundPoint(shape.points, curPoint, trAngleField.text.toDouble()))
+                        redrawShapes()
+                    }
                     else -> throw Exception("Invalid mode")
                 }
             }
@@ -129,7 +160,7 @@ class AffineTransformations : Application() {
         val shape = Shape(curPoints)
         curShapes.add(shape)
         drawShape(shape)
-        curPoints.clear()
+        curPoints = LinkedList<Point>()
     }
 
     fun drawShape(shape: Shape) {
@@ -149,6 +180,12 @@ class AffineTransformations : Application() {
         }
 
         mainGc.stroke()
+    }
+
+    fun redrawShapes() {
+        mainGc.clearRect(0.0, 0.0, mainCanvas.getWidth(), mainCanvas.getHeight())
+        for (shape in curShapes)
+            drawShape(shape)
     }
 
     fun setModeButton(button: ToggleButton, mode: Mode, all_buttons: Array<ToggleButton>) {
