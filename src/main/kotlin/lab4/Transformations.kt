@@ -25,7 +25,7 @@ fun turnAroundPoint(polygon: LinkedList<Point>, point: Point, angle: Double): Li
         doubleArrayOf(angleCos, angleSin, 0.0),
         doubleArrayOf(-angleSin, angleCos, 0.0),
         doubleArrayOf(-x * angleCos + y * angleSin + x,
-                        -x * angleSin + y * angleCos + x,
+                        -x * angleSin - y * angleCos + y,
                         1.0)
     )
 
@@ -43,6 +43,25 @@ fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point): LinkedList<Point
 fun turnEdge(edge: LinkedList<Point>): LinkedList<Point> {
     throw NotImplementedError()
 }
+
+fun findCenter(polygon: LinkedList<Point>): Point {
+//    val n = polygon.size
+//    var x = 0
+//    var y = 0
+//    for (i in polygon.indices - 1) {
+//        val current = polygon[i]
+//        val next = polygon[i + 1]
+//        x += (current.x + next.x) * (current.x * next.y - next.x * current.y)
+//        y += (current.y + next.y) * (current.x * next.y - next.x * current.y)
+//    }
+//    val first = polygon[0]
+//    val last = polygon[n - 1]
+//    x += (last.x + first.x) * (last.x * first.y - first.x * last.y)
+//    y += (last.y + first.y) * (last.x * first.y - first.x * last.y)
+//
+//    x /=
+}
+
 
 fun makeTransformation(transformationMatrix: Array<DoubleArray>, polygon: LinkedList<Point>): LinkedList<Point> {
     val result = LinkedList<Point>()
