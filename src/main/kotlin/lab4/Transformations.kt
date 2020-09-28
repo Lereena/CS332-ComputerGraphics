@@ -1,6 +1,7 @@
 package lab4
 
 import lab3.Point
+import java.security.InvalidParameterException
 import java.util.*
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -36,16 +37,28 @@ fun turnAroundCenter(polygon: LinkedList<Point>, angle: Double): LinkedList<Poin
     return turnAroundPoint(polygon, findCenter(polygon), angle)
 }
 
-fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point): LinkedList<Point> {
-    throw NotImplementedError()
+fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point, kX: Int, kY: Int): LinkedList<Point> {
+    val transformationMatrix = arrayOf(
+        doubleArrayOf(kX.toDouble(), 0.0, 0.0),
+        doubleArrayOf(0.0, kY.toDouble(), 0.0),
+        doubleArrayOf(((1 - kX) * point.x).toDouble(), ((1 - kY) * point.y).toDouble(), 1.0)
+    )
+
+    return makeTransformation(transformationMatrix, polygon)
+}
+
+fun scaleAroundCenter(polygon: LinkedList<Point>, kX: Int, kY: Int): LinkedList<Point> {
+    return scaleAroundPoint(polygon, findCenter(polygon), kX, kY)
 }
 
 fun turnEdge(edge: LinkedList<Point>): LinkedList<Point> {
-    throw NotImplementedError()
+    return turnAroundCenter(edge, Math.PI/2)
 }
 
 fun findCenter(polygon: LinkedList<Point>): Point {
     val n = polygon.size
+    if (n == 2)
+        return findEdgeCenter(polygon)
     var x = 0
     var y = 0
     var area = 0
@@ -71,7 +84,13 @@ fun findCenter(polygon: LinkedList<Point>): Point {
     return Point(x, y)
 }
 
-
+fun findEdgeCenter(edge: LinkedList<Point>): Point {
+    if (edge.size != 2)
+        throw InvalidParameterException("Передано не ребро")
+    val a = edge.first
+    val b = edge.last
+    return Point((a.x + b.x) / 2, (a.y + b.y) / 2)
+}
 
 fun makeTransformation(transformationMatrix: Array<DoubleArray>, polygon: LinkedList<Point>): LinkedList<Point> {
     val result = LinkedList<Point>()
@@ -83,7 +102,6 @@ fun makeTransformation(transformationMatrix: Array<DoubleArray>, polygon: Linked
 
     return result
 }
-
 
 fun matrixMultiplication(a: Array<DoubleArray>, b: Array<DoubleArray>): Array<IntArray> {
     val result = arrayOf(doubleArrayOf(0.0, 0.0, 0.0)) // хардкодед, сорян
