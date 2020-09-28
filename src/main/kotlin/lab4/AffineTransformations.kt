@@ -32,7 +32,7 @@ enum class Mode {
     DRAW_POLY,
 
     SELECT_ROTATION_POINT,
-    CHECK_POLYGON,
+    CHECK_POLYGONS,
     CHECK_EDGE
 }
 
@@ -40,14 +40,16 @@ class AffineTransformations : Application() {
     var selectedMode: Mode = Mode.NONE
     var curPoints = LinkedList<Point>()
     val curShapes = Vector<Shape>()
+    val curEdges = Vector<Shape>()
+
     val mainCanvas = Canvas(800.0, 600.0)
     val mainGc = mainCanvas.graphicsContext2D
 
     override fun start(primaryStage: Stage) {
         val mainGroup = GridPane()
-        mainGroup.setAlignment(Pos.BASELINE_CENTER)
-        mainGroup.setHgap(10.0);
-        mainGroup.setVgap(10.0);
+        mainGroup.alignment = Pos.BASELINE_CENTER
+        mainGroup.hgap = 10.0;
+        mainGroup.vgap =10.0;
 
         val canvasGroup = StackPane(mainCanvas)
         canvasGroup.border = Border(BorderStroke(Color.BLACK,
@@ -126,34 +128,39 @@ class AffineTransformations : Application() {
         // check edge intersection
         val checkEdgeIntersectionButton = Button("Точки пересечения ребер")
         checkEdgeIntersectionButton.setOnAction {
-            // TODO: Invoke func
-            throw NotImplementedError("IMPLEMENT INVOKING FUNC")
+            val points = checkEdgesIntersection(curEdges)
+            for (point in points)
+                mainGc.strokeOval(
+                    point.x - 4.0,
+                    point.y - 4.0, 4.0, 4.0);
         }
 
         // check polygon
-        val checkPolygonPane = GridPane()
-        val checkPolygonTitle = Label("Проверка принадлежности")
-        val polygonStatus = Label("Не выбрана точка")
-        val checkPolygonButton = ToggleButton("Выбрать точку")
-        checkPolygonPane.add(checkPolygonTitle,  0, 0)
-        checkPolygonPane.add(polygonStatus,      0, 1)
-        checkPolygonPane.add(checkPolygonButton, 0, 2)
+        val checkPolygonsPane = GridPane()
+        val checkPolygonsTitle = Label("Проверка принадлежности")
+        val convexCount =    Label("Не выбрана точка")
+        val nonconvexCount = Label("")
+        val checkPolygonsButton = ToggleButton("Выбрать точку")
+        checkPolygonsPane.add(checkPolygonsTitle,  0, 0)
+        checkPolygonsPane.add(convexCount,        0, 1)
+        checkPolygonsPane.add(nonconvexCount,     0, 2)
+        checkPolygonsPane.add(checkPolygonsButton, 0, 3)
 
         // check edge
-        val checkEdgePane = GridPane()
-        val checkEdgeTitle = Label("Отношение к ребру")
-        val edgeStatus = Label("Не выбрана точка")
-        val checkEdgeButton = ToggleButton("Выбрать точку")
-        checkEdgePane.add(checkEdgeTitle,  0, 0)
-        checkEdgePane.add(edgeStatus,      0, 1)
-        checkEdgePane.add(checkEdgeButton, 0, 2)
+        val checkPointEdgePane = GridPane()
+        val checkPointEdgeTitle = Label("Отношение к ребру")
+        val pointEdgeStatus = Label("Не выбрана точка")
+        val checkPointEdgeButton = ToggleButton("Выбрать точку")
+        checkPointEdgePane.add(checkPointEdgeTitle,  0, 0)
+        checkPointEdgePane.add(pointEdgeStatus,      0, 1)
+        checkPointEdgePane.add(checkPointEdgeButton, 0, 2)
 
         transformationPane.children.addAll(
                 trMovePane,
                 trRotatePane,
                 checkEdgeIntersectionButton,
-                checkPolygonPane,
-                checkEdgePane
+                checkPolygonsPane,
+                checkPointEdgePane
         )
 
 
@@ -163,7 +170,9 @@ class AffineTransformations : Application() {
                 drawRectButton,
                 drawPolygonButton,
 
-                trRotatePointButton
+                trRotatePointButton,
+                checkPolygonsButton,
+                checkPointEdgeButton
         )
         setModeButton(drawPointButton,   Mode.DRAW_POINT, toggleButtons)
         setModeButton(drawLineButton,    Mode.DRAW_LINE,  toggleButtons)
@@ -171,8 +180,8 @@ class AffineTransformations : Application() {
         setModeButton(drawPolygonButton, Mode.DRAW_POLY,  toggleButtons)
 
         setModeButton(trRotatePointButton, Mode.SELECT_ROTATION_POINT, toggleButtons)
-        setModeButton(checkPolygonButton,  Mode.CHECK_POLYGON,         toggleButtons)
-        setModeButton(checkEdgeButton,     Mode.CHECK_EDGE,            toggleButtons)
+        setModeButton(checkPolygonsButton,  Mode.CHECK_POLYGONS,         toggleButtons)
+        setModeButton(checkPointEdgeButton,     Mode.CHECK_EDGE,            toggleButtons)
 
         mainCanvas.setOnMouseClicked {
             if (selectedMode != Mode.NONE) {
@@ -186,12 +195,28 @@ class AffineTransformations : Application() {
                     Mode.DRAW_POLY -> {}
 
                     Mode.SELECT_ROTATION_POINT -> {
+                        curPoints.clear()
                         for (shape in curShapes)
                             shape.update(turnAroundPoint(shape.points, curPoint, trAngleField.text.toDouble()))
                         redrawShapes()
                     }
-                    Mode.CHECK_POLYGON -> { throw NotImplementedError() }
-                    Mode.CHECK_EDGE -> { throw NotImplementedError() }
+                    Mode.CHECK_POLYGONS -> {
+                        curPoints.clear()
+                        val result = checkPolygons(curShapes, curPoint)
+                        convexCount.text =    "Выпуклых:   ${result.convex_count}"
+                        nonconvexCount.text = "Невыпуклых: ${result.nonconvex_count}"
+                    }
+                    Mode.CHECK_EDGE -> {
+                        curPoints.clear()
+                        if (curEdges.count() != 0) {
+                            val result = checkPointEdge(curEdges.firstElement(), curPoint)
+                            pointEdgeStatus.text = when(result) {
+                                Position.Left -> "Слева от отрезка"
+                                Position.Belongs -> "Принадлежит отрезку"
+                                Position.Right -> "Справа от отрезка"
+                            }
+                        }
+                    }
                     
                     else -> throw Exception("Invalid mode")
                 }
@@ -207,6 +232,8 @@ class AffineTransformations : Application() {
     fun addShape() {
         val shape = Shape(curPoints)
         curShapes.add(shape)
+        if (curPoints.count() == 2)
+            curEdges.add(shape)
         drawShape(shape)
         curPoints = LinkedList<Point>()
     }
