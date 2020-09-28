@@ -1,16 +1,24 @@
 package lab3
 
+import javafx.geometry.Orientation
 import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
+import javafx.scene.control.Button
 import javafx.scene.image.Image
 import javafx.scene.image.PixelReader
+import javafx.scene.layout.FlowPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import lab2.SceneWrapper
 import java.io.FileInputStream
 import java.util.*
+
+class DirPoint(val x: Int, val y: Int, val dir: Int) {
+    fun same(other: DirPoint): Boolean {
+        return x == other.x && y == other.y && dir == other.dir
+    }
+}
 
 class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 2") {
     private var mainCanvas = Canvas()
@@ -19,7 +27,7 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
     private var height = 0
 
     init {
-        val root = Group()
+        val root = FlowPane(Orientation.HORIZONTAL, 0.0, 30.0)
 
         val image = Image(FileInputStream("assets/lines.png"))
         width = image.width.toInt()
@@ -30,7 +38,14 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         mainCtx.drawImage(image, 0.0, 0.0, image.width, image.height)
         root.children.add(mainCanvas)
 
+        val clearButton = Button("Clear")
+        root.children.add(clearButton)
+
         scene = Scene(root)
+
+        clearButton.setOnMouseClicked {
+            mainCtx.drawImage(image, 0.0, 0.0, image.width, image.height)
+        }
 
         mainCanvas.setOnMouseClicked {
             val startPoint = Point(it.sceneX.toInt(), it.sceneY.toInt())
@@ -41,53 +56,73 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
     private fun highlightBorder(startPoint: Point, image: Image) {
         val pixelWriter = mainCtx.pixelWriter
 
-        val firstPixel = getFirstPixel(startPoint, image)
-        if (firstPixel.x == -1)
-            return
+        val firstPoint = getFirstPoint(startPoint, image) ?: return
 
+        val path = startPath(firstPoint, image)
+        for (point in path)
+            pixelWriter.setColor(point.x, point.y, Color.RED)
     }
 
-    private fun getFirstPixel(startPoint: Point, image: Image): Point {
+    private fun getFirstPoint(startPoint: Point, image: Image): DirPoint? {
         val pixelReader = image.pixelReader
+        // Going down
         for (y in (startPoint.y until height)) {
-            val pixel = pixelReader.getArgb(startPoint.x, y)
-            val test = pixel.toString()
+            val color = pixelReader.getColor(startPoint.x, y)
 
-            if (pixel.toLong() == 0xff000000) // If pixel is black
-                return Point(startPoint.x, startPoint.y)
+            if (color == Color.BLACK) // If pixel is black
+                return DirPoint(startPoint.x, y, 6)
         }
-        return Point(-1, -1)
+        return null
     }
 
-    private fun startPath(firstPoint: Point, image: Image): Vector<Point> {
-        var result = Vector<Point>()
+    private fun startPath(firstPoint: DirPoint, image: Image): Vector<DirPoint> {
+        val result = Vector<DirPoint>()
+        val pixelReader = image.pixelReader
 
-        var pixelReader = image.pixelReader
+        result.add(firstPoint)
+        val beginPoint = nextPoint(firstPoint, pixelReader) ?: return result
+        result.add(beginPoint)
 
-        var currentPoint = firstPoint
-        var dir = 4 // Going left
-
-        for (i in (0 until 8)) {
-            val point = nextPoint(currentPoint, dir)
-            val color = pixelReader.getArgb(point.x, point.y).toLong()
-            if (color == 0xff000000) {
-                dir -= 2
-                if (dir < 0)
-                    dir += 8
-                currentPoint = point
-            }
-            if (++dir == 8)
-                dir = 0
-        }
+        var currentPoint = beginPoint
 
         while (true) {
-            break
+            currentPoint = nextPoint(currentPoint, pixelReader) ?: return result
+
+            if (currentPoint.same(beginPoint))
+                break
+
+            result.add(currentPoint)
         }
 
         return result
     }
 
-    private fun nextPoint(currentPoint: Point, dir: Int): Point {
+    private fun nextPoint(currentPoint: DirPoint, pixelReader: PixelReader): DirPoint? {
+        var dir = currentPoint.dir - 2
+        dir = normalizeDir(dir)
+
+        for (i in (0 until 8)) {
+            val point = pointInDir(currentPoint, dir)
+            val color = pixelReader.getColor(point.x, point.y)
+
+            if (color == Color.BLACK) {
+                return point
+            }
+            dir += 1
+            dir = normalizeDir(dir)
+        }
+        return null
+    }
+
+    private fun normalizeDir(dir: Int): Int {
+        if (dir < 0)
+            return dir + 8
+        if (dir >= 8)
+            return dir - 8
+        return dir
+    }
+
+    private fun pointInDir(currentPoint: DirPoint, dir: Int): DirPoint {
         /*  3 2 1
             4 X 0
             5 6 7 */
@@ -95,14 +130,14 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         val x = currentPoint.x
         val y = currentPoint.y
         return when(dir) {
-            0 -> Point(x + 1, y)
-            1 -> Point(x + 1, y - 1)
-            2 -> Point(x,     y - 1)
-            3 -> Point(x - 1, y - 1)
-            4 -> Point(x - 1, y)
-            5 -> Point(x - 1, y + 1)
-            6 -> Point(x,     y + 1)
-            7 -> Point(x + 1, y + 1)
+            0 -> DirPoint(x + 1, y, dir)
+            1 -> DirPoint(x + 1, y - 1, dir)
+            2 -> DirPoint(x,     y - 1, dir)
+            3 -> DirPoint(x - 1, y - 1, dir)
+            4 -> DirPoint(x - 1, y, dir)
+            5 -> DirPoint(x - 1, y + 1, dir)
+            6 -> DirPoint(x,     y + 1, dir)
+            7 -> DirPoint(x + 1, y + 1, dir)
             else -> throw Exception("Invalid direction")
         }
     }

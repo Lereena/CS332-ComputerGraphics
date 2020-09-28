@@ -12,7 +12,11 @@ import lab2.SceneWrapper
 import java.util.*
 import kotlin.math.abs
 
-class Point(val x: Int, val y: Int, val color: Color = Color.BLACK)
+class Point(val x: Int, val y: Int, val color: Color = Color.BLACK) {
+    fun same(other: Point): Boolean {
+        return x == other.x && y == other.y
+    }
+}
 
 class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 3") {
     init {
