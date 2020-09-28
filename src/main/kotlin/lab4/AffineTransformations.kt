@@ -127,11 +127,11 @@ class AffineTransformations : Application() {
             redrawShapes()
         }
 
-        // rotate pane
+        // scale pane
         val trScalePane = GridPane()
         val trScaleTitle = Label("Масштабирование")
-        val trScaleKxField = TextField("0")
-        val trScaleKyField = TextField("0")
+        val trScaleKxField = TextField("1.0")
+        val trScaleKyField = TextField("1.0")
         val trScaleKxLabel = Label("kx: ")
         val trScaleKyLabel = Label("ky: ")
         val trScalePointButton =   ToggleButton("Выбрать точку")
@@ -147,7 +147,7 @@ class AffineTransformations : Application() {
         trScaleCenterButton.setOnAction {
             for (shape in curShapes)
                 shape.update(scaleAroundCenter(shape.points,
-                        trScaleKxField.text.toInt(), trScaleKyField.text.toInt()))
+                        trScaleKxField.text.toDouble(), trScaleKyField.text.toDouble()))
             redrawShapes()
         }
 
@@ -234,7 +234,7 @@ class AffineTransformations : Application() {
                         curPoints.clear()
                         for (shape in curShapes)
                             shape.update(scaleAroundPoint(shape.points, curPoint,
-                                    trScaleKxField.text.toInt(), trScaleKyField.text.toInt()))
+                                    trScaleKxField.text.toDouble(), trScaleKyField.text.toDouble()))
                         redrawShapes()
                     }
 

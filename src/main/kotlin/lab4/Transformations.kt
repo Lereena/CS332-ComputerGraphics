@@ -37,17 +37,17 @@ fun turnAroundCenter(polygon: LinkedList<Point>, angle: Double): LinkedList<Poin
     return turnAroundPoint(polygon, findCenter(polygon), angle)
 }
 
-fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point, kX: Int, kY: Int): LinkedList<Point> {
+fun scaleAroundPoint(polygon: LinkedList<Point>, point: Point, kX: Double, kY: Double): LinkedList<Point> {
     val transformationMatrix = arrayOf(
-        doubleArrayOf(kX.toDouble(), 0.0, 0.0),
-        doubleArrayOf(0.0, kY.toDouble(), 0.0),
-        doubleArrayOf(((1 - kX) * point.x).toDouble(), ((1 - kY) * point.y).toDouble(), 1.0)
+        doubleArrayOf(kX, 0.0, 0.0),
+        doubleArrayOf(0.0, kY, 0.0),
+        doubleArrayOf((1 - kX) * point.x, (1 - kY) * point.y, 1.0)
     )
 
     return makeTransformation(transformationMatrix, polygon)
 }
 
-fun scaleAroundCenter(polygon: LinkedList<Point>, kX: Int, kY: Int): LinkedList<Point> {
+fun scaleAroundCenter(polygon: LinkedList<Point>, kX: Double, kY: Double): LinkedList<Point> {
     return scaleAroundPoint(polygon, findCenter(polygon), kX, kY)
 }
 
