@@ -44,7 +44,7 @@ fun turnEdge(edge: LinkedList<Point>): LinkedList<Point> {
     throw NotImplementedError()
 }
 
-fun findCenter(polygon: LinkedList<Point>): Point {
+//fun findCenter(polygon: LinkedList<Point>): Point {
 //    val n = polygon.size
 //    var x = 0
 //    var y = 0
@@ -60,7 +60,7 @@ fun findCenter(polygon: LinkedList<Point>): Point {
 //    y += (last.y + first.y) * (last.x * first.y - first.x * last.y)
 //
 //    x /=
-}
+//}
 
 
 fun makeTransformation(transformationMatrix: Array<DoubleArray>, polygon: LinkedList<Point>): LinkedList<Point> {
