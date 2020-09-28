@@ -57,6 +57,7 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
         val pixelWriter = mainCtx.pixelWriter
 
         val firstPoint = getFirstPoint(startPoint, image) ?: return
+//        pixelWriter.setColor(startPoint.x, startPoint.y, Color.RED)
 
         val path = startPath(firstPoint, image)
         for (point in path)
@@ -98,7 +99,7 @@ class Task2(override val primaryStage: Stage): SceneWrapper(primaryStage, "Task 
     }
 
     private fun nextPoint(currentPoint: DirPoint, pixelReader: PixelReader): DirPoint? {
-        var dir = currentPoint.dir - 2
+        var dir = currentPoint.dir - 3
         dir = normalizeDir(dir)
 
         for (i in (0 until 8)) {
