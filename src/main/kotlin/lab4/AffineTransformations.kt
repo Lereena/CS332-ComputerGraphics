@@ -23,6 +23,12 @@ class Shape(var points: LinkedList<Point>) {
     }
 }
 
+fun getEdge(p1: Point, p2: Point): Shape {
+    val t = LinkedList<Point>()
+    t.add(p1); t.add(p2)
+    return Shape(t)
+}
+
 enum class Mode {
     NONE,
 
@@ -76,6 +82,7 @@ class AffineTransformations : Application() {
             mainGc.restore()
             curPoints.clear()
             curShapes.clear()
+            curEdges.clear()
         }
 
         drawPane.children.addAll(
@@ -157,8 +164,8 @@ class AffineTransformations : Application() {
             val points = checkEdgesIntersection(curEdges)
             for (point in points)
                 mainGc.strokeOval(
-                    point.x - 4.0,
-                    point.y - 4.0, 4.0, 4.0);
+                    point.x - 2.5,
+                    point.y - 2.5, 5.0, 5.0);
         }
 
         // check polygon
@@ -168,8 +175,8 @@ class AffineTransformations : Application() {
         val nonconvexCount = Label("")
         val checkPolygonsButton = ToggleButton("Выбрать точку")
         checkPolygonsPane.add(checkPolygonsTitle,  0, 0)
-        checkPolygonsPane.add(convexCount,        0, 1)
-        checkPolygonsPane.add(nonconvexCount,     0, 2)
+        checkPolygonsPane.add(convexCount,         0, 1)
+        checkPolygonsPane.add(nonconvexCount,      0, 2)
         checkPolygonsPane.add(checkPolygonsButton, 0, 3)
 
         // check edge
@@ -277,14 +284,6 @@ class AffineTransformations : Application() {
     }
 
     fun drawShape(shape: Shape) {
-        if (shape.points.count() == 1) {
-            val point = shape.points.first
-            mainGc.strokeOval(
-                    point.x - 3.0,
-                    point.y - 3.0, 3.0, 3.0);
-            return
-        }
-
         var prevPoint = shape.points.last
         for (point in shape.points) {
             mainGc.strokeLine(point.x.toDouble(), point.y.toDouble(),
@@ -292,7 +291,12 @@ class AffineTransformations : Application() {
             prevPoint = point
         }
 
-        mainGc.stroke()
+        if (shape.points.count() <= 2) {
+            val point = shape.points.last
+            mainGc.strokeOval(
+                    point.x - 1.5,
+                    point.y - 1.5, 3.0, 3.0);
+        }
     }
 
     fun redrawShapes() {
