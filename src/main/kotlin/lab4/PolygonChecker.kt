@@ -79,6 +79,17 @@ fun getPolygonConvexivity(shape: Shape, anchorPoint: Point) : Convexity {
         return Convexity.Undefined
 
     var prevPoint = shape.points.last
+    val pos = checkPointEdge(shape, anchorPoint)
+    for (point in shape.points) {
+        for (p in shape.points) {
+            if (checkPointEdgeByCoords(p.x, p.y, prevPoint.x, prevPoint.y,
+                    point.x, point.y) == Position.Left)
+                return Convexity.NonConvex
+        }
+        prevPoint = point
+    }
+                /*
+    var prevPoint = shape.points.last
     var firstPoint = shape.points.first
     val result = checkPointEdgeByCoords(
             anchorPoint.x, anchorPoint.y,
@@ -94,7 +105,7 @@ fun getPolygonConvexivity(shape: Shape, anchorPoint: Point) : Convexity {
         if (temp != result)
             return Convexity.NonConvex
         prevPoint = point
-    }
+    }*/
     return Convexity.Convex
 }
 
