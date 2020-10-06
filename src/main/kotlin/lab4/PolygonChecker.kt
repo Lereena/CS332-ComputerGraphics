@@ -79,13 +79,19 @@ fun getPolygonConvexivity(shape: Shape, anchorPoint: Point) : Convexity {
         return Convexity.Undefined
 
     var prevPoint = shape.points.last
+    var firstPoint = shape.points.first
+    val result = checkPointEdgeByCoords(
+            anchorPoint.x, anchorPoint.y,
+            prevPoint.x, prevPoint.y,
+            firstPoint.x, firstPoint.y
+    )
     for (point in shape.points) {
         val temp = checkPointEdgeByCoords(
                 anchorPoint.x, anchorPoint.y,
                 prevPoint.x, prevPoint.y,
                 point.x, point.y
         )
-        if (temp == Position.Left)
+        if (temp != result)
             return Convexity.NonConvex
         prevPoint = point
     }
