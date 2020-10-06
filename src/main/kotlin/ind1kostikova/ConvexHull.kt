@@ -20,10 +20,7 @@ class ConvexHull : Application() {
         val height = 600.0
         val canvas = Canvas(width, height)
         val dotsGC = canvas.graphicsContext2D
-        val hullGC = canvas.graphicsContext2D
-
         dotsGC.stroke = Color.BLACK
-        hullGC.stroke = Color.BLUEVIOLET
 
         root.children.add(canvas)
         primaryStage.scene = Scene(root)
@@ -44,19 +41,24 @@ class ConvexHull : Application() {
 
         hullButton.setOnMouseClicked {
             pointsButton.isSelected = false
-            drawHull(hullGC, getHull(canvasPoints))
+            dotsGC.beginPath()
+            drawHull(dotsGC, getHull(canvasPoints))
         }
 
         root.setOnMouseClicked {
             if (pointsButton.isSelected) {
                 val point = Point(it.sceneX.toInt(), it.sceneY.toInt())
-                dotsGC.strokeOval(point.x - 1.0, point.y - 1.0, 2.0, 2.0)
-                canvasPoints.add(point)
+                if (point.x <= canvas.width && point.y <= canvas.width) {
+                    dotsGC.strokeOval(point.x - 1.0, point.y - 1.0, 2.0, 2.0)
+                    canvasPoints.add(point)
+                }
             }
         }
     }
 
     fun drawHull(gc: GraphicsContext, hull: List<Point>) {
+        if (hull.size < 2)
+            return
         for (i in 0 until hull.size - 1) {
             val currentPoint = hull[i]
             val nextPoint = hull[i + 1]
