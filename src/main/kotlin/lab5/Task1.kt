@@ -123,6 +123,7 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
     val points = LinkedList<Point>()
     var currentAngle = 0.0
     when (direction) {
+        "down" -> currentAngle = 90.0
         "left" -> currentAngle = 180.0
         "up" -> currentAngle = 270.0
     }
@@ -198,7 +199,7 @@ fun scalePoints(points: LinkedList<Point>): LinkedList<Point> {
     val middlePoint = Point(((minX + maxX) / 2).toDouble(), ((minY + maxY) / 2).toDouble())
     val windowMiddle = Point(400.0, 300.0)
 
-    val coefX = 700.0 / (maxX - minX)
+    val coefX = 666.0 / (maxX - minX)
     val coefY = 500.0 / (maxY - minY)
     val coef = min(coefX, coefY)
 
