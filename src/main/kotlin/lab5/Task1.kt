@@ -62,20 +62,30 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                 "Из файла" -> {
                     val selectedFile = fileChooser.showOpenDialog(primaryStage)
                     if (selectedFile != null) {
-                        val system = selectedFile.readLines(Charsets.UTF_8)
-                        getSystem(gc, system, steps)
+                        val state = getState(selectedFile.readLines(Charsets.UTF_8), steps)
+                        drawState(gc, state.first, state.second, state.third)
                     }
                 }
-                "Кривая Коха" ->
-                    getSystem(gc, getSystemDescription("LSystems/koch-curve"), steps)
-                "Квадратный остров Коха" ->
-                    getSystem(gc, getSystemDescription("LSystems/koch-square-island"), steps)
-                "Кривая Гильберта" ->
-                    getSystem(gc, getSystemDescription("LSystems/hilbert-curve"), steps)
-                "Шестиугольная мозаика" ->
-                    getSystem(gc, getSystemDescription("LSystems/hexagonal-mosaic"), steps)
-                "Куст" ->
-                    getSystem(gc, getSystemDescription("LSystems/bush"), steps)
+                "Кривая Коха" -> {
+                    val state = getState(getSystemDescription("LSystems/koch-curve"), steps)
+                    drawState(gc, state.first, state.second, state.third)
+                }
+                "Квадратный остров Коха" -> {
+                    val state = getState(getSystemDescription("LSystems/koch-square-island"), steps)
+                    drawState(gc, state.first, state.second, state.third)
+                }
+                "Кривая Гильберта" -> {
+                    val state = getState(getSystemDescription("LSystems/hilbert-curve"), steps)
+                    drawState(gc, state.first, state.second, state.third)
+                }
+                "Шестиугольная мозаика" -> {
+                    val state = getState(getSystemDescription("LSystems/hexagonal-mosaic"), steps)
+                    drawState(gc, state.first, state.second, state.third)
+                }
+                "Куст" -> {
+                    val state = getState(getSystemDescription("LSystems/bush"), steps)
+                    drawState(gc, state.first, state.second, state.third)
+                }
             }
         }
     }
@@ -85,7 +95,7 @@ fun getSystemDescription(path: String): List<String> {
     return File(path).readLines(Charsets.UTF_8)
 }
 
-fun getSystem(gc: GraphicsContext, systemDescription: List<String>, stepsCount: Int) {
+fun getState(systemDescription: List<String>, stepsCount: Int): Triple<String, Double, String> {
     val rules = HashMap<Char, String>()
 
     val firstLine = systemDescription[0].split(' ')
@@ -106,13 +116,11 @@ fun getSystem(gc: GraphicsContext, systemDescription: List<String>, stepsCount: 
         currentState = nextState.toString()
     }
 
-    drawState(gc, currentState, angle, direction)
-    gc.stroke()
+    return Triple(currentState, angle, direction)
 }
 
 fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: String) {
     val points = LinkedList<Point>()
-    val length = 100
     var currentAngle = 0.0
     when (direction) {
         "left" -> currentAngle = 180.0
@@ -149,8 +157,8 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
                 angles.removeAt(size - 1)
             }
             'F' -> {
-                val newX = currentPoint.x + (length * cos(currentAngle / 180 * PI))
-                val newY = currentPoint.y + (length * sin(currentAngle / 180 * PI))
+                val newX = currentPoint.x + cos(currentAngle / 180 * PI)
+                val newY = currentPoint.y + sin(currentAngle / 180 * PI)
                 val nextPoint = Point(newX, newY)
                 currentPoint = nextPoint
                 points.addLast(currentPoint)
@@ -160,10 +168,21 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
             '+' -> currentAngle += angle
         }
 
-    var minX = Int.MAX_VALUE;
-    var maxX = Int.MIN_VALUE
-    var minY = Int.MAX_VALUE;
-    var maxY = Int.MIN_VALUE
+    val scaledPoints = scalePoints(points)
+
+    gc.moveTo(scaledPoints[0].x, scaledPoints[0].y)
+    for (i in 1 until scaledPoints.size) {
+        val point = scaledPoints[i]
+        gc.lineTo(point.x, point.y)
+        gc.moveTo(point.x, point.y)
+    }
+
+    gc.stroke()
+}
+
+fun scalePoints(points: LinkedList<Point>): LinkedList<Point> {
+    var minX = Int.MAX_VALUE; var maxX = Int.MIN_VALUE
+    var minY = Int.MAX_VALUE; var maxY = Int.MIN_VALUE
 
     for (i in points.indices) {
         if (points[i].x < minX)
@@ -179,21 +198,16 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
     val middlePoint = Point(((minX + maxX) / 2).toDouble(), ((minY + maxY) / 2).toDouble())
     val windowMiddle = Point(400.0, 300.0)
 
-    val coefX = 400.0 / (maxX - minX + 1)
-    val coefY = 300.0 / (maxY - minY)
+    val coefX = 700.0 / (maxX - minX)
+    val coefY = 500.0 / (maxY - minY)
     val coef = min(coefX, coefY)
 
-    val actualPoints = LinkedList<Point>()
+    val scaledPoints = LinkedList<Point>()
     for (i in points.indices) {
         val distanceX = (points[i].x - middlePoint.x) * coef
         val distanceY = (points[i].y - middlePoint.y) * coef
-        actualPoints.addLast(Point(windowMiddle.x + distanceX, windowMiddle.y + distanceY))
+        scaledPoints.addLast(Point(windowMiddle.x + distanceX, windowMiddle.y + distanceY))
     }
 
-    gc.moveTo(actualPoints[0].x, actualPoints[0].y)
-    for (i in 1 until actualPoints.size) {
-        val point = actualPoints[i]
-        gc.lineTo(point.x, point.y)
-        gc.moveTo(point.x, point.y)
-    }
+    return scaledPoints
 }
