@@ -1,19 +1,19 @@
 package lab5
 
 import javafx.collections.FXCollections
+import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
-import javafx.scene.control.Alert
-import javafx.scene.control.Button
-import javafx.scene.control.ComboBox
+import javafx.scene.control.*
 import javafx.scene.layout.FlowPane
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import lab2.SceneWrapper
 import java.io.File
+import java.lang.StringBuilder
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.PI
@@ -30,6 +30,8 @@ class Point(val x: Double, val y: Double) {
 class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 1") {
     init {
         val root = FlowPane(Orientation.HORIZONTAL, 0.0, 30.0)
+        root.padding = Insets(5.0, 5.0, 5.0, 5.0)
+        root.vgap = 4.0; root.hgap = 8.0
         val canvas = Canvas(800.0, 600.0)
         val gc = canvas.graphicsContext2D
         scene = Scene(root)
@@ -42,28 +44,38 @@ class Task1(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             "Куст", "Из файла"
         )
         val list = ComboBox(items)
+        val stepsLabel = Label("Количество шагов: ")
+        val stepsInputField = TextField("1")
         val drawButton = Button("Нарисовать кривую")
-        root.children.addAll(list, drawButton)
+        root.children.addAll(list, stepsLabel, stepsInputField, drawButton)
 
         val fileChooser = FileChooser()
         fileChooser.title = "Выберите файл с описанием L-системы"
         fileChooser.initialDirectory = File("LSystems")
-        
+
         drawButton.setOnMouseClicked {
+            gc.clearRect(0.0, 0.0, canvas.width, canvas.height)
+            gc.beginPath()
+            val steps = stepsInputField.text.toInt()
             when (list.value) {
                 null -> Alert(Alert.AlertType.ERROR, "Не выбран тип кривой")
                 "Из файла" -> {
                     val selectedFile = fileChooser.showOpenDialog(primaryStage)
                     if (selectedFile != null) {
                         val system = selectedFile.readLines(Charsets.UTF_8)
-                        getSystem(gc, system, 1)
+                        getSystem(gc, system, steps)
                     }
                 }
-                "Кривая Коха" -> getSystem(gc, getSystemDescription("LSystems/koch-curve"), 1)
-                "Квадратный остров Коха" -> getSystem(gc, getSystemDescription("LSystems/koch-square-island"), 1)
-                "Кривая Гильберта" -> getSystem(gc, getSystemDescription("LSystems/hilbert-curve"), 1)
-                "Шестиугольная мозаика" -> getSystem(gc, getSystemDescription("LSystems/hexagonal-mosaic"), 1)
-                "Куст" -> getSystem(gc, getSystemDescription("LSystems/bush"), 1)
+                "Кривая Коха" ->
+                    getSystem(gc, getSystemDescription("LSystems/koch-curve"), steps)
+                "Квадратный остров Коха" ->
+                    getSystem(gc, getSystemDescription("LSystems/koch-square-island"), steps)
+                "Кривая Гильберта" ->
+                    getSystem(gc, getSystemDescription("LSystems/hilbert-curve"), steps)
+                "Шестиугольная мозаика" ->
+                    getSystem(gc, getSystemDescription("LSystems/hexagonal-mosaic"), steps)
+                "Куст" ->
+                    getSystem(gc, getSystemDescription("LSystems/bush"), steps)
             }
         }
     }
@@ -84,14 +96,14 @@ fun getSystem(gc: GraphicsContext, systemDescription: List<String>, stepsCount: 
         rules[systemDescription[i][0]] = systemDescription[i].substring(2)
 
     for (i in 0..stepsCount) {
-        var nextState = ""
+        val nextState = StringBuilder()
         for (symbol in currentState)
             if (rules.containsKey(symbol))
-                nextState += rules[symbol]
+                nextState.append(rules[symbol])
             else
-                nextState += symbol
+                nextState.append(symbol)
 
-        currentState = nextState
+        currentState = nextState.toString()
     }
 
     drawState(gc, currentState, angle, direction)
@@ -115,7 +127,7 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
     val angles = LinkedList<Double>()
     angles.addLast(currentAngle)
 
-    for (symbol in state) {
+    for (symbol in state)
         when (symbol) {
             '[' -> {
                 val st = Stack<Point>()
@@ -148,41 +160,40 @@ fun drawState(gc: GraphicsContext, state: String, angle: Double, direction: Stri
             '+' -> currentAngle += angle
         }
 
-        var minX = Int.MAX_VALUE;
-        var maxX = Int.MIN_VALUE
-        var minY = Int.MAX_VALUE;
-        var maxY = Int.MIN_VALUE
+    var minX = Int.MAX_VALUE;
+    var maxX = Int.MIN_VALUE
+    var minY = Int.MAX_VALUE;
+    var maxY = Int.MIN_VALUE
 
-        for (i in points.indices) {
-            if (points[i].x < minX)
-                minX = points[i].x.toInt()
-            if (points[i].x < maxX)
-                maxX = points[i].x.toInt()
-            if (points[i].y < minY)
-                minY = points[i].y.toInt()
-            if (points[i].y < maxY)
-                maxY = points[i].y.toInt()
-        }
+    for (i in points.indices) {
+        if (points[i].x < minX)
+            minX = points[i].x.toInt()
+        if (points[i].x > maxX)
+            maxX = points[i].x.toInt()
+        if (points[i].y < minY)
+            minY = points[i].y.toInt()
+        if (points[i].y > maxY)
+            maxY = points[i].y.toInt()
+    }
 
-        val middlePoint = Point(((minX + maxX) / 2).toDouble(), ((minY + maxY) / 2).toDouble())
-        val windowMiddle = Point(400.0, 300.0)
+    val middlePoint = Point(((minX + maxX) / 2).toDouble(), ((minY + maxY) / 2).toDouble())
+    val windowMiddle = Point(400.0, 300.0)
 
-        val coefX = 400.0 / (maxX - minX + 1)
-        val coefY = 300.0 / (maxY - minY)
-        val coef = min(coefX, coefY)
+    val coefX = 400.0 / (maxX - minX + 1)
+    val coefY = 300.0 / (maxY - minY)
+    val coef = min(coefX, coefY)
 
-        val actualPoints = LinkedList<Point>()
-        for (i in points.indices) {
-            val distanceX = (points[i].x - middlePoint.x) * coef
-            val distanceY = (points[i].y - middlePoint.y) * coef
-            actualPoints.addLast(Point(windowMiddle.x + distanceX, windowMiddle.y + distanceY))
-        }
+    val actualPoints = LinkedList<Point>()
+    for (i in points.indices) {
+        val distanceX = (points[i].x - middlePoint.x) * coef
+        val distanceY = (points[i].y - middlePoint.y) * coef
+        actualPoints.addLast(Point(windowMiddle.x + distanceX, windowMiddle.y + distanceY))
+    }
 
-        gc.moveTo(actualPoints[0].x, actualPoints[0].y)
-        for (i in 1 until actualPoints.size) {
-            val point = actualPoints[i]
-            gc.lineTo(point.x, point.y)
-            gc.moveTo(point.x, point.y)
-        }
+    gc.moveTo(actualPoints[0].x, actualPoints[0].y)
+    for (i in 1 until actualPoints.size) {
+        val point = actualPoints[i]
+        gc.lineTo(point.x, point.y)
+        gc.moveTo(point.x, point.y)
     }
 }
