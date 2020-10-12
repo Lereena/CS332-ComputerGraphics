@@ -88,10 +88,11 @@ class TriangulationInvading : Application() {
     }
 
     private fun isVertexConvex(vertex: Vertex): Boolean {
-        val b = vertex.prev!!
+        val c = vertex.next!!
+        val b = vertex
         val a = b.prev!!
 
-        return classifyPoint(vertex.point, a.point, b.point) == Position.Right
+        return classifyPoint(c.point, a.point, b.point) == Position.Right
     }
 
     fun classifyPoint(p: DoublePoint, p1: DoublePoint, p2: DoublePoint): Position {
@@ -100,9 +101,9 @@ class TriangulationInvading : Application() {
         val sa =  a.x * b.y - b.x * a.y;
 
         if (sa > 0.0)
-            return Position.Left
-        if (sa < 0.0)
             return Position.Right
+        if (sa < 0.0)
+            return Position.Left
         return Position.Belongs
     }
 
@@ -111,21 +112,22 @@ class TriangulationInvading : Application() {
         var result: Vertex? = null
         var curVertex = polygon.root!!
         do {
-            if (!vertexInTriangle(curVertex, triangle))
-                continue
-            val dist = distFromPointToEdge(curVertex, triangle[2], triangle[0])
-            if (dist > 0.0 && dist > minD) {
-                minD = dist
-                result = curVertex
+            if (vertexInTriangle(curVertex, triangle)) {
+                val dist = distFromPointToEdge(curVertex, triangle[2], triangle[0])
+                if (dist > 0.0 && dist > minD) {
+                    minD = dist
+                    result = curVertex
+                }
             }
+            curVertex = curVertex.next!!
         } while (curVertex != polygon.root)
         return result
     }
 
     private fun vertexInTriangle(vertex: Vertex, triangle: List<DoublePoint>): Boolean {
-        return  (classifyPoint(vertex.point, triangle[0], triangle[1]) != Position.Left) &&
-                (classifyPoint(vertex.point, triangle[1], triangle[2]) != Position.Left) &&
-                (classifyPoint(vertex.point, triangle[2], triangle[0]) != Position.Left)
+        return  (classifyPoint(vertex.point, triangle[0], triangle[1]) == Position.Right) &&
+                (classifyPoint(vertex.point, triangle[1], triangle[2]) == Position.Right) &&
+                (classifyPoint(vertex.point, triangle[2], triangle[0]) == Position.Right)
     }
 
     private fun distFromPointToEdge(vertex: Vertex, a: DoublePoint, b: DoublePoint): Double {

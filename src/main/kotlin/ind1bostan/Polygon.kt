@@ -26,6 +26,7 @@ class Polygon() {
         val newNode = Vertex(point, root, root!!.prev)
         if (root!!.next == root)
             root!!.next = newNode
+        root!!.prev!!.next = newNode
         root!!.prev = newNode
     }
 
@@ -42,6 +43,8 @@ class Polygon() {
         val bT = Vertex(b.point, b.next, b.prev)
         aT.next = bT
         bT.prev = aT
+        a.prev!!.next = aT
+        b.next!!.prev = bT
 
         a.prev = b
         b.next = a
@@ -60,6 +63,7 @@ class Polygon() {
         vertex.next!!.prev = vertex.prev
         if (vertex == root)
             root = vertex.next
+        count--
     }
 
     fun count(): Int {
