@@ -4,14 +4,12 @@ import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
-import javafx.scene.control.ToggleButton
 import javafx.scene.layout.FlowPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import lab2.SceneWrapper
 import lab3.Point
 import lab3.drawLine
-import lab3.drawWuLine
 import java.util.*
 
 class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 3") {
@@ -48,7 +46,7 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                 // для каждой четверки с шагом 3 рисуем кривую безье и ОНО НЕ РАБОТАЕТ
                 // !!!
                 var index = 0
-                while (index <= points.size) {
+                while (index <= points.size - 4) {
                     drawLineBezier(gc, points[index], points[index + 1], points[index + 2], points[index + 3])
                     index += 3
                 }
@@ -76,15 +74,21 @@ fun drawLineBezier(gc: GraphicsContext, p0: Point, p1: Point, p2: Point, p3: Poi
     var t = 0.00
     while (t <= 1) {
         t += 0.005
-        endPoint = Point((p0.x * (1 - t) * (1 - t) * (1 - t) +
-                        3 * p1.x * (1 - t) * (1 - t) * t +
-                        3 * p2.x * (1 - t) * t * t +
-                        p3.x * t * t * t).toInt(),
-                         (p0.y * (1 - t) * (1 - t) * (1 - t) +
-                        3 * p1.y * (1 - t) * (1 - t) * t +
-                        3 * p2.y * (1 - t) * t * t +
-                        p3.y * t * t * t).toInt())
-        drawLine(gc, Color.BLACK, startPoint!!, endPoint!!)
+        endPoint = formula(p0, p1, p2, p3, t)
+        gc.moveTo(startPoint.x.toDouble(), startPoint.y.toDouble())
+        gc.lineTo(endPoint.x.toDouble(), endPoint.y.toDouble())
         startPoint = endPoint
     }
+    gc.stroke()
+}
+
+fun formula(p0: Point, p1: Point, p2: Point, p3: Point, t: Double): Point {
+    return Point((p0.x * (1 - t) * (1 - t) * (1 - t) +
+            3 * p1.x * (1 - t) * (1 - t) * t +
+            3 * p2.x * (1 - t) * t * t +
+            p3.x * t * t * t).toInt(),
+        (p0.y * (1 - t) * (1 - t) * (1 - t) +
+                3 * p1.y * (1 - t) * (1 - t) * t +
+                3 * p2.y * (1 - t) * t * t +
+                p3.y * t * t * t).toInt())
 }
