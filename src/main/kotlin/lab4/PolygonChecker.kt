@@ -4,7 +4,7 @@ import lab3.Point
 import java.util.*
 import kotlin.math.min
 
-enum class Convexity {Convex, NonConvex, Undefined}
+enum class Convexity { Convex, NonConvex, Undefined}
 enum class Position { Left, Right, Belongs }
 
 class lineFunction(val k: Double, val b: Double) {
@@ -88,24 +88,6 @@ fun getPolygonConvexivity(shape: Shape, anchorPoint: Point) : Convexity {
         }
         prevPoint = point
     }
-                /*
-    var prevPoint = shape.points.last
-    var firstPoint = shape.points.first
-    val result = checkPointEdgeByCoords(
-            anchorPoint.x, anchorPoint.y,
-            prevPoint.x, prevPoint.y,
-            firstPoint.x, firstPoint.y
-    )
-    for (point in shape.points) {
-        val temp = checkPointEdgeByCoords(
-                anchorPoint.x, anchorPoint.y,
-                prevPoint.x, prevPoint.y,
-                point.x, point.y
-        )
-        if (temp != result)
-            return Convexity.NonConvex
-        prevPoint = point
-    }*/
     return Convexity.Convex
 }
 
