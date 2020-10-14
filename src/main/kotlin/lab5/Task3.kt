@@ -27,7 +27,9 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val moveBut = ToggleButton("Move point")
         val clearBut = ToggleButton("Clear")
         val pointNum = TextField("1")
-        root.children.addAll(deleteBut, moveBut, closeBut, clearBut, pointNum)
+        val upDownBut = TextField("0")
+        val leftRightBut = TextField("0")
+        root.children.addAll(deleteBut, moveBut, closeBut, clearBut, pointNum, upDownBut, leftRightBut)
         primaryStage.show()
 
         var points = LinkedList<Point>()
@@ -58,6 +60,50 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
             gc.clearRect(0.0, 0.0, canvas.width, canvas.height)
             gc.beginPath()
             clearBut.isSelected = false
+        }
+
+        moveBut.setOnMouseClicked {
+            var index = pointNum.text.toInt()
+            var upDown = upDownBut.text.toInt()
+            var leftRight = leftRightBut.text.toInt()
+            if (index < points.size) {
+                if (index == 1) {
+                    val x0 = points[0].x + leftRight
+                    val y0 = points[0].y - upDown
+                    val x1 = points[1].x + leftRight
+                    val y1 = points[1].y - upDown
+                    points.removeAt(0)
+                    points.removeAt(0)
+                    points.add(0, Point(x1, y1))
+                    points.add(0, Point(x0, y0))
+                    redraw(canvas, gc, points)
+                } else if (((points.size - 4) / 3) + 2 == index) {
+                    val x0 = points[points.size - 2].x + leftRight
+                    val y0 = points[points.size - 2].y - upDown
+                    val x1 = points[points.size - 1].x + leftRight
+                    val y1 = points[points.size - 1].y - upDown
+                    points.removeAt(points.size - 1)
+                    points.removeAt(points.size - 1)
+                    points.add(Point(x0, y0))
+                    points.add(Point(x1, y1))
+                    redraw(canvas, gc, points)
+                } else {
+                    val x0 = points[3 * (index - 1) - 1].x + leftRight
+                    val y0 = points[3 * (index - 1) - 1].y - upDown
+                    val x1 = points[3 * (index - 1)].x + leftRight
+                    val y1 = points[3 * (index - 1)].y - upDown
+                    val x2 = points[3 * (index - 1) + 1].x + leftRight
+                    val y2 = points[3 * (index - 1) + 1].y - upDown
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.add(3 * (index - 1) - 1, Point(x2, y2))
+                    points.add(3 * (index - 1) - 1, Point(x1, y1))
+                    points.add(3 * (index - 1) - 1, Point(x0, y0))
+                    redraw(canvas, gc, points)
+                }
+            }
+            moveBut.isSelected = false
         }
 
         deleteBut.setOnMouseClicked {
