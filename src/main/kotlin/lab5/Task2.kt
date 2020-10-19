@@ -118,42 +118,40 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun diamond() {
+        val mult = 2.8 * (heightMap[0][1].x - heightMap[0][0].x)
         for (i in (0 until heightMap.size)) {
             val d = if (i % 2 == 0) 1 else 0
 
             for (j in (d until heightMap.size - d)) {
-                val point = getSafe(i, j)
+                val point = heightMap[i][j]
                 val point1 = getSafe(i - 1, j)
                 val point2 = getSafe(i + 1, j)
                 val point3 = getSafe(i, j - 1)
                 val point4 = getSafe(i, j + 1)
 
-                val temp = point1.length(point4) * R
+                val temp = mult * R
                 point.z = normalizeHeight(average(point1, point2, point3, point4) +
                         Math.random() * (2 * temp) - temp)
             }
         }
     }
 
-    private fun getSafe(y: Int, x: Int): PointIntZ {
-        val yt: Int
-        val xt: Int
-        if (y < 0)
-            yt = heightMap.size + y
-        else if (y >= heightMap.size)
-            yt = y - heightMap.size
-        else yt = y
+    private fun getSafe(y: Int, x: Int): PointIntZ? {
+        if (y < 0 || y >= heightMap.size ||
+            x < 0 || x >= heightMap.size)
+            return null
 
-        if (x < 0)
-            xt = heightMap.size + x
-        else if (x >= heightMap.size)
-            xt = x - heightMap.size
-        else xt = x
-        return heightMap[yt][xt]
+        return heightMap[y][x]
     }
 
-    private fun average(vararg points: PointIntZ): Double {
-        return points.fold(0.0) { acc, p -> acc + p.z } / points.size
+    private fun average(vararg points: PointIntZ?): Double {
+        var result = 0.0
+        for (point in points)
+            if (point != null) {
+                result += point.z
+            }
+
+        return result / points.size
     }
 
     private fun randomHeight(): Double {
