@@ -1,7 +1,8 @@
 package lab5
 
+import javafx.beans.value.ChangeListener
+import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
-import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
@@ -16,6 +17,7 @@ import javafx.stage.Stage
 import lab2.SceneWrapper
 import kotlin.math.pow
 import kotlin.math.sqrt
+
 
 class PointIntZ(val x: Int, val y: Int, var z: Double = 0.0) {
     override fun toString(): String {
@@ -40,6 +42,7 @@ class PointIntZ(val x: Int, val y: Int, var z: Double = 0.0) {
 class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 2") {
     private lateinit var heightMap: List<List<PointIntZ>>
     private var R = 5.0
+    private var colorMode = 0
 
     init {
         val root = FlowPane(Orientation.HORIZONTAL, 0.0, 30.0)
@@ -49,6 +52,12 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         scene = Scene(root)
         root.children.add(canvas)
 
+        val items = FXCollections.observableArrayList(
+                "Черно-белая раскраска", "Географически-цветная раскраска"
+        )
+        val list = ComboBox(items)
+        val applyColorButton = Button("Применить схему")
+
         val stepsLabel = Label("Количество шагов:")
         val stepsCounter = Label("0")
         val actionButton = Button("Сделать один шаг")
@@ -56,7 +65,8 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val scatterInputField = TextField("5.0")
         val resetButton = Button("Сброс")
 
-        root.children.addAll(stepsLabel, stepsCounter,
+        root.children.addAll(list, applyColorButton,
+                stepsLabel, stepsCounter,
                 actionButton,
                 scatterLabel, scatterInputField,
                 resetButton)
@@ -74,6 +84,15 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         resetButton.setOnMouseClicked {
             stepsCounter.text = "0"
             initMap()
+            drawMap(gc)
+        }
+
+        applyColorButton.setOnMouseClicked {
+            colorMode = when (list.value) {
+                "Черно-белая раскраска" -> 0
+                "Географически-цветная раскраска" -> 1
+                else -> 1
+            }
             drawMap(gc)
         }
     }
@@ -193,16 +212,19 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun heightToColor(z: Double): Color {
-        return when {
-            z < 30.0 -> Color.DARKBLUE
-            z < 60.0 -> Color.BLUE
-            z < 90.0 -> Color.DARKGREEN
-            z < 120.0 -> Color.GREEN
-            z < 150.0 -> Color.YELLOW
-            z < 180.0 -> Color.ORANGE
-            z < 210.0 -> Color.RED
-            else -> Color.DARKRED
-        }
+        if (colorMode == 1)
+            return when {
+                z < 30.0 -> Color.DARKBLUE
+                z < 60.0 -> Color.BLUE
+                z < 90.0 -> Color.DARKGREEN
+                z < 120.0 -> Color.GREEN
+                z < 150.0 -> Color.YELLOW
+                z < 180.0 -> Color.ORANGE
+                z < 210.0 -> Color.RED
+                else -> Color.DARKRED
+            }
+        val temp = z / 255.0
+        return Color(temp, temp, temp, 1.0)
     }
 
     private fun normalizeHeight(z: Double): Double {
