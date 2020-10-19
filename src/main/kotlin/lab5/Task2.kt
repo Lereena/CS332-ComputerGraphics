@@ -19,7 +19,7 @@ import kotlin.math.sqrt
 
 class PointIntZ(val x: Int, val y: Int, var z: Double = 0.0) {
     override fun toString(): String {
-        return "($x, $y)"
+        return "($x, $y, $z)"
     }
 
     fun between(other: PointIntZ): PointIntZ {
@@ -135,7 +135,7 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun diamond() {
-        val mult = 2.8 * (heightMap[0][1].x - heightMap[0][0].x)
+        val mult = 2.8 * (heightMap[0][1].y - heightMap[0][0].y)
         for (i in (0 until heightMap.size)) {
             val d = if (i % 2 == 0) 1 else 0
 
