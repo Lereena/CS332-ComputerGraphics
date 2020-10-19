@@ -8,8 +8,6 @@ import javafx.scene.layout.FlowPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 
-class Point3D(var x: Int, var y: Int, var z: Int)
-
 class Affine3D : Application() {
     override fun start(primaryStage: Stage) {
         primaryStage.title = "Affine transformations 3D"
