@@ -4,23 +4,23 @@ import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-fun move(polyhedron: LinkedList<Point3D>, dx: Int, dy: Int, dz: Int): LinkedList<Point3D> {
+fun move(polyhedron: Polyhedron, dx: Int, dy: Int, dz: Int): Polyhedron {
     TODO("Not yet implemented")
 }
 
-fun rotateAroundCenter(polyhedron: LinkedList<Point3D>, axis: Axis, angle: Double): LinkedList<Point3D> {
+fun rotateAroundCenter(polyhedron: Polyhedron, axis: Axis, angle: Double): Polyhedron {
     TODO("Not yet implemented")
 }
 
-fun rotateAroundLine(polyhedron: LinkedList<Point3D>, line: Line, angle: Double): LinkedList<Point3D> {
+fun rotateAroundLine(polyhedron: Polyhedron, line: Line, angle: Double): Polyhedron {
     TODO("Not yet implemented")
 }
 
-fun scale(polyhedron: LinkedList<Point3D>, kX: Double, kY: Double, kZ: Double): LinkedList<Point3D> {
+fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double): Polyhedron {
     TODO("Not yet implemented")
 }
 
-fun reflect(polyhedron: LinkedList<Point3D>, axis1: Axis, axis2: Axis): LinkedList<Point3D> {
+fun reflect(polyhedron: Polyhedron, axis1: Axis, axis2: Axis): Polyhedron {
     TODO("Not yet implemented")
 }
 
@@ -40,12 +40,12 @@ fun translationMatrix(tX: Double, tY: Double, tZ: Double): Array<DoubleArray> {
     )
 }
 
-fun scaleMatrix(mX: Double, mY: Double, mZ: Double): Array<Array<Double>> {
+fun scaleMatrix(mX: Double, mY: Double, mZ: Double): Array<DoubleArray> {
     return arrayOf(
-        arrayOf(mX, 0.0, 0.0, 0.0),
-        arrayOf(0.0, mY, 0.0, 0.0),
-        arrayOf(0.0, 0.0, mZ, 0.0),
-        arrayOf(0.0, 0.0, 0.0, 1.0),
+        doubleArrayOf(mX, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, mY, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, mZ, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 1.0),
     )
 }
 
