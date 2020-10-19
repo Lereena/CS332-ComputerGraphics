@@ -4,7 +4,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 fun move(polyhedron: Polyhedron, dx: Double, dy: Double, dz: Double): Polyhedron {
-    TODO("Not yet implemented")
+    val matrix = translationMatrix(dx, dy, dz)
+    return transform(polyhedron, matrix)
 }
 
 fun rotateAroundCenter(polyhedron: Polyhedron, axis: Axis, angle: Double): Polyhedron {
@@ -12,7 +13,10 @@ fun rotateAroundCenter(polyhedron: Polyhedron, axis: Axis, angle: Double): Polyh
 }
 
 fun rotateAroundLine(polyhedron: Polyhedron, line: Line, angle: Double): Polyhedron {
-    TODO("Not yet implemented")
+    val point = line.point1
+    val move = translationMatrix(-point.x, -point.y, -point.z)
+
+//    val matrix = matrixMultiplication()
 }
 
 fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double): Polyhedron {
@@ -75,3 +79,33 @@ fun rotationZMatrix(angle: Double): Array<DoubleArray> {
     )
 }
 
+fun transform(polyhedron: Polyhedron, matrix: Array<DoubleArray>): Polyhedron {
+    val newPolyhedron = Polyhedron()
+    for (polygon in polyhedron) {
+        val newPolygon = Polygon()
+        for (line in polygon) {
+            val p1 = line.point1
+            val p2 = line.point2
+            val p1new = multiplyMatrices(matrix, pointToMatrix(p1))
+            val p2new = multiplyMatrices(matrix, pointToMatrix(p2))
+            newPolygon.addLast(
+                Line(
+                    Point3D(p1new[0][0], p1new[1][0], p1new[2][0]),
+                    Point3D(p2new[0][0], p2new[1][0], p2new[2][0])
+                )
+            )
+        }
+        newPolyhedron.addLast(newPolygon)
+    }
+
+    return newPolyhedron
+}
+
+fun pointToMatrix(point: Point3D): Array<DoubleArray> {
+    return arrayOf(
+        doubleArrayOf(point.x),
+        doubleArrayOf(point.y),
+        doubleArrayOf(point.z),
+        doubleArrayOf(1.0)
+    )
+}
