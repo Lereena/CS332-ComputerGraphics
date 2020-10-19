@@ -1,6 +1,7 @@
 package lab6
 
 import java.util.*
+import kotlin.math.sqrt
 
 data class Point3D(var x: Double, var y: Double, var z: Double)
 
@@ -12,8 +13,18 @@ typealias Polyhedron = LinkedList<Polygon>
 
 typealias Polygon = LinkedList<Line>
 
+typealias Matrix = Array<DoubleArray>
+
 data class Line(val point1: Point3D, val point2: Point3D) {
-    val directionVector = DirectionVector(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z)
+    val directionVector = normalizeDirectionVector()
+
+    private fun normalizeDirectionVector(): DirectionVector {
+        val l = point2.x - point1.x
+        val m = point2.y - point1.y
+        val n = point2.z - point1.z
+        val length = sqrt(l * l + m * m + n * n)
+        return DirectionVector(l / length, m / length, n / length)
+    }
 }
 
 fun multiplyMatrices(matrix1: Array<DoubleArray>, matrix2: Array<DoubleArray>): Array<DoubleArray> {
