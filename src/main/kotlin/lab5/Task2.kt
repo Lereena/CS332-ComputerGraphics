@@ -193,8 +193,16 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun heightToColor(z: Double): Color {
-        val temp = z / 255.0
-        return Color(temp, temp, temp, 1.0)
+        return when {
+            z < 30.0 -> Color.DARKBLUE
+            z < 60.0 -> Color.BLUE
+            z < 90.0 -> Color.DARKGREEN
+            z < 120.0 -> Color.GREEN
+            z < 150.0 -> Color.YELLOW
+            z < 180.0 -> Color.ORANGE
+            z < 210.0 -> Color.RED
+            else -> Color.DARKRED
+        }
     }
 
     private fun normalizeHeight(z: Double): Double {
