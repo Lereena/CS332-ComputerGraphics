@@ -73,6 +73,11 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun interpolate() {
+        square()
+        diamond()
+    }
+
+    private fun square() {
         val newMap = mutableListOf<List<PointIntZ>>()
         for (i in (1 until heightMap.size)) {
             val newLine1 = mutableListOf<PointIntZ>()
@@ -83,15 +88,17 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                 val point2 = heightMap[i - 1][j]
                 val point3 = heightMap[i][j - 1]
                 val point4 = heightMap[i][j]
+
                 val newP1 = point1.between(point2)
                 val newP2 = point1.between(point3)
                 val newP3 = point1.between(point4)
-                val temp = point1.length(point4) * R
-                newP3.z = normalizeHeight(average(point1, point2, point3, point4) +
-                        Math.random() * (2 * temp) - temp)
 
                 newLine1.add(point1); newLine1.add(newP1)
                 newLine2.add(newP2); newLine2.add(newP3)
+
+                val temp = point1.length(point4) * R
+                newP3.z = normalizeHeight(average(point1, point2, point3, point4) +
+                        Math.random() * (2 * temp) - temp)
             }
             newLine1.add(heightMap[i - 1].last())
             newLine2.add(heightMap[i - 1].last().between(heightMap[i].last()))
@@ -108,6 +115,41 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         newMap.add(newLine)
 
         heightMap = newMap
+    }
+
+    private fun diamond() {
+        for (i in (0 until heightMap.size)) {
+            val d = if (i % 2 == 0) 1 else 0
+
+            for (j in (d until heightMap.size - d)) {
+                val point = getSafe(i, j)
+                val point1 = getSafe(i - 1, j)
+                val point2 = getSafe(i + 1, j)
+                val point3 = getSafe(i, j - 1)
+                val point4 = getSafe(i, j + 1)
+
+                val temp = point1.length(point4) * R
+                point.z = normalizeHeight(average(point1, point2, point3, point4) +
+                        Math.random() * (2 * temp) - temp)
+            }
+        }
+    }
+
+    private fun getSafe(y: Int, x: Int): PointIntZ {
+        val yt: Int
+        val xt: Int
+        if (y < 0)
+            yt = heightMap.size + y
+        else if (y >= heightMap.size)
+            yt = y - heightMap.size
+        else yt = y
+
+        if (x < 0)
+            xt = heightMap.size + x
+        else if (x >= heightMap.size)
+            xt = x - heightMap.size
+        else xt = x
+        return heightMap[yt][xt]
     }
 
     private fun average(vararg points: PointIntZ): Double {
