@@ -1,10 +1,9 @@
 package lab6
 
-import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-fun move(polyhedron: Polyhedron, dx: Int, dy: Int, dz: Int): Polyhedron {
+fun move(polyhedron: Polyhedron, dx: Double, dy: Double, dz: Double): Polyhedron {
     TODO("Not yet implemented")
 }
 
