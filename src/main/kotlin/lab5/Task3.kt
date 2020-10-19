@@ -4,6 +4,7 @@ import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
+import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.control.ToggleButton
 import javafx.scene.layout.FlowPane
@@ -12,6 +13,8 @@ import javafx.stage.Stage
 import lab2.SceneWrapper
 import lab3.Point
 import lab3.drawLine
+import kotlin.math.sin
+import kotlin.math.cos
 import java.util.*
 
 class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 3") {
@@ -25,11 +28,21 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val closeBut = ToggleButton("Close spline")
         val deleteBut = ToggleButton("Delete point")
         val moveBut = ToggleButton("Move point")
+        val rotateBut = ToggleButton("Rotate")
         val clearBut = ToggleButton("Clear")
         val pointNum = TextField("1")
         val upDownBut = TextField("0")
         val leftRightBut = TextField("0")
-        root.children.addAll(deleteBut, moveBut, closeBut, clearBut, pointNum, upDownBut, leftRightBut)
+        val angleBut = TextField("5")
+        root.children.addAll(deleteBut, moveBut, rotateBut, closeBut, clearBut)
+        val label1 = Label("                              Номер точки: ")
+        root.children.addAll(label1, pointNum);
+        val label2 = Label("  Угол поворота: ")
+        root.children.addAll(label2, angleBut);
+        val label3 = Label("  Сдвиг по х: ")
+        root.children.addAll(label3, upDownBut);
+        val label4 = Label("  Сдвиг по y: ")
+        root.children.addAll(label4, leftRightBut);
         primaryStage.show()
 
         var points = LinkedList<Point>()
@@ -104,6 +117,66 @@ class Task3(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                 }
             }
             moveBut.isSelected = false
+        }
+
+
+        rotateBut.setOnMouseClicked {
+            var index = pointNum.text.toInt()
+            var angle = angleBut.text.toInt()
+            val f = angle * 3.1415 / 180
+            if (index < points.size) {
+                if (index == 1) {
+                    val mid = Point((points[0].x + points[1].x) / 2,
+                                    (points[0].y + points[1].y) / 2)
+                    var x0 = points[0].x - mid.x
+                    var y0 = points[0].y - mid.y
+                    var x1 = points[1].x - mid.x
+                    var y1 = points[1].y - mid.y
+                    x0 = (x0 * cos(f) - y0 * sin(f)).toInt()
+                    y0 = (y0 * cos(f) + x0 * sin(f)).toInt()
+                    x1 = (x1 * cos(f) - y1 * sin(f)).toInt()
+                    y1 = (y1 * cos(f) + x1 * sin(f)).toInt()
+                    points.removeAt(0)
+                    points.removeAt(0)
+                    points.add(0, Point(x1 + mid.x, y1 + mid.y))
+                    points.add(0, Point(x0 + mid.x, y0 + mid.y))
+                    redraw(canvas, gc, points)
+                } else if (((points.size - 4) / 3) + 2 == index) {
+                    val mid = Point((points[points.size - 2].x + points[points.size - 1].x) / 2,
+                                    (points[points.size - 2].y + points[points.size - 1].y) / 2)
+                    var x0 = points[points.size - 2].x - mid.x
+                    var y0 = points[points.size - 2].y - mid.y
+                    var x1 = points[points.size - 1].x - mid.x
+                    var y1 = points[points.size - 1].y - mid.y
+                    x0 = (x0 * cos(f) - y0 * sin(f)).toInt()
+                    y0 = (y0 * cos(f) + x0 * sin(f)).toInt()
+                    x1 = (x1 * cos(f) - y1 * sin(f)).toInt()
+                    y1 = (y1 * cos(f) + x1 * sin(f)).toInt()
+                    points.removeAt(points.size - 1)
+                    points.removeAt(points.size - 1)
+                    points.add(Point(x0 + mid.x, y0 + mid.y))
+                    points.add(Point(x1 + mid.x, y1 + mid.y))
+                    redraw(canvas, gc, points)
+                } else {
+                    val mid = points[3 * (index - 1)]
+                    var x0 = points[3 * (index - 1) - 1].x - mid.x
+                    var y0 = points[3 * (index - 1) - 1].y - mid.y
+                    var x1 = points[3 * (index - 1) + 1].x - mid.x
+                    var y1 = points[3 * (index - 1) + 1].y - mid.y
+                    x0 = (x0 * cos(f) - y0 * sin(f)).toInt()
+                    y0 = (y0 * cos(f) + x0 * sin(f)).toInt()
+                    x1 = (x1 * cos(f) - y1 * sin(f)).toInt()
+                    y1 = (y1 * cos(f) + x1 * sin(f)).toInt()
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.removeAt(3 * (index - 1) - 1)
+                    points.add(3 * (index - 1) - 1, Point(x1 + mid.x, y1 + mid.y))
+                    points.add(3 * (index - 1) - 1, mid)
+                    points.add(3 * (index - 1) - 1, Point(x0 + mid.x, y0 + mid.y))
+                    redraw(canvas, gc, points)
+                }
+            }
+            rotateBut.isSelected = false
         }
 
         deleteBut.setOnMouseClicked {
