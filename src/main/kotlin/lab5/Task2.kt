@@ -38,8 +38,8 @@ class PointIntZ(val x: Int, val y: Int, var z: Double = 0.0) {
 }
 
 class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task 2") {
-    private var heightMap: List<List<PointIntZ>>
-    private val R = 5.0
+    private lateinit var heightMap: List<List<PointIntZ>>
+    private var R = 5.0
 
     init {
         val root = FlowPane(Orientation.HORIZONTAL, 0.0, 30.0)
@@ -52,8 +52,33 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
         val stepsLabel = Label("Количество шагов:")
         val stepsCounter = Label("0")
         val actionButton = Button("Сделать один шаг")
-        root.children.addAll(stepsLabel, stepsCounter, actionButton)
+        val scatterLabel = Label("Множитель разброса: ")
+        val scatterInputField = TextField("5.0")
+        val resetButton = Button("Сброс")
 
+        root.children.addAll(stepsLabel, stepsCounter,
+                actionButton,
+                scatterLabel, scatterInputField,
+                resetButton)
+
+        initMap()
+        drawMap(gc)
+
+        actionButton.setOnMouseClicked {
+            stepsCounter.text = (stepsCounter.text.toInt() + 1).toString()
+            R = scatterInputField.text.toDouble()
+            interpolate()
+            drawMap(gc)
+        }
+
+        resetButton.setOnMouseClicked {
+            stepsCounter.text = "0"
+            initMap()
+            drawMap(gc)
+        }
+    }
+
+    private fun initMap() {
         heightMap = listOf(
                 listOf(
                         PointIntZ(0, 0, randomHeight()),
@@ -62,14 +87,6 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
                         PointIntZ(511, 0, randomHeight()),
                         PointIntZ(511, 511, randomHeight()))
         )
-
-        drawMap(gc)
-
-        actionButton.setOnMouseClicked {
-            stepsCounter.text = (stepsCounter.text.toInt() + 1).toString()
-            interpolate()
-            drawMap(gc)
-        }
     }
 
     private fun interpolate() {
