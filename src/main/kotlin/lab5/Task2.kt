@@ -191,7 +191,7 @@ class Task2(override val primaryStage: Stage) : SceneWrapper(primaryStage, "Task
     }
 
     private fun randomHeight(): Double {
-        return Math.random() * 100 + 77
+        return Math.random()
     }
 
     private fun drawMap(gc: GraphicsContext) {
