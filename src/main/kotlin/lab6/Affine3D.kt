@@ -23,10 +23,9 @@ class Affine3D : Application() {
         primaryStage.scene = Scene(root)
         primaryStage.show()
 
-        var cube = Cube();
-        orthographic_projection(canvas, dotsGC, cube, Axis.X)
-        //orthographic_projection(canvas, dotsGC, cube, Axis.Y)
-        //orthographic_projection(canvas, dotsGC, cube, Axis.Z)
+        var model = Polyhedron("assets/3dmodels/rooster.obj")
+        scale(model, 50.0, 50.0, 50.0)
+        orthographic_projection(canvas, dotsGC, model, Axis.Z)
     }
 
     companion object {
@@ -37,103 +36,57 @@ class Affine3D : Application() {
     }
 }
 
-fun Cube() : Polyhedron {
-    var p1 = Point3D(0.0, 0.0, 0.0)
-    var p2 = Point3D(0.0, 0.0, 200.0)
-    var p3 = Point3D(0.0, 150.0, 0.0)
-    var p4 = Point3D(0.0, 150.0, 200.0)
-    var p5 = Point3D(150.0, 0.0, 0.0)
-    var p6 = Point3D(150.0, 0.0, 200.0)
-    var p7 = Point3D(150.0, 150.0, 0.0)
-    var p8 = Point3D(150.0, 150.0, 200.0)
-
-    var line1 = Line(p1, p2)
-    var line2 = Line(p1, p3)
-    var line3 = Line(p1, p5)
-    var line4 = Line(p4, p2)
-    var line5 = Line(p4, p3)
-    var line6 = Line(p4, p8)
-    var line7 = Line(p6, p2)
-    var line8 = Line(p6, p5)
-    var line9 = Line(p6, p8)
-    var line10 = Line(p7, p3)
-    var line11 = Line(p7, p5)
-    var line12 = Line(p7, p8)
-
-    var polygon1 = Polygon();
-    polygon1.add(line1);
-    polygon1.add(line2);
-    polygon1.add(line4);
-    polygon1.add(line5);
-
-    var polygon2 = Polygon();
-    polygon2.add(line1);
-    polygon2.add(line3);
-    polygon2.add(line7);
-    polygon2.add(line8);
-
-    var polygon3 = Polygon();
-    polygon3.add(line2);
-    polygon3.add(line3);
-    polygon3.add(line10);
-    polygon3.add(line12);
-
-    var polygon4 = Polygon();
-    polygon4.add(line4);
-    polygon4.add(line6);
-    polygon4.add(line7);
-    polygon4.add(line9);
-
-    var polygon5 = Polygon();
-    polygon5.add(line5);
-    polygon5.add(line6);
-    polygon5.add(line10);
-    polygon5.add(line11);
-
-    var polygon6 = Polygon();
-    polygon6.add(line8);
-    polygon6.add(line9);
-    polygon6.add(line11);
-    polygon6.add(line12);
-
-    var model = Polyhedron();
-    model.add(polygon1);
-    model.add(polygon2);
-    model.add(polygon3);
-    model.add(polygon4);
-    model.add(polygon5);
-    model.add(polygon6);
-
-    return model;
-}
+//fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+//    when (ax) {
+//        Axis.Z -> for (i_p in 0 until model.size) {
+//            for (i_l in 0 until model[i_p].size) {
+//                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
+//                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
+//                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
+//                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
+//                gc.stroke()
+//            }
+//        }
+//        Axis.X -> for (i_p in 0 until model.size) {
+//            for (i_l in 0 until model[i_p].size) {
+//                gc.moveTo(model[i_p][i_l].point1.z + canvas.width / 2,
+//                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
+//                gc.lineTo(model[i_p][i_l].point2.z + canvas.width / 2,
+//                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
+//                gc.stroke()
+//            }
+//        }
+//        Axis.Y -> for (i_p in 0 until model.size) {
+//            for (i_l in 0 until model[i_p].size) {
+//                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
+//                        model[i_p][i_l].point1.z * (-1) + canvas.height / 2)
+//                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
+//                        model[i_p][i_l].point2.z * (-1) + canvas.height / 2)
+//                gc.stroke()
+//            }
+//        }
+//    }
+//}
 
 fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    when (ax) {
-        Axis.Z -> for (i_p in 0 until model.size) {
-            for (i_l in 0 until model[i_p].size) {
-                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
-                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
-                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
-                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
-                gc.stroke()
-            }
-        }
-        Axis.X -> for (i_p in 0 until model.size) {
-            for (i_l in 0 until model[i_p].size) {
-                gc.moveTo(model[i_p][i_l].point1.z + canvas.width / 2,
-                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
-                gc.lineTo(model[i_p][i_l].point2.z + canvas.width / 2,
-                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
-                gc.stroke()
-            }
-        }
-        Axis.Y -> for (i_p in 0 until model.size) {
-            for (i_l in 0 until model[i_p].size) {
-                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
-                        model[i_p][i_l].point1.z * (-1) + canvas.height / 2)
-                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
-                        model[i_p][i_l].point2.z * (-1) + canvas.height / 2)
-                gc.stroke()
+    for (polygon in model.polygons) {
+        for (i in polygon.points.indices) {
+            when (ax) {
+                Axis.Z -> {
+                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.width / 2)
+                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.width / 2)
+                    gc.stroke()
+                }
+                Axis.X -> {
+                    gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.width / 2)
+                    gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.width / 2)
+                    gc.stroke()
+                }
+                Axis.Y -> {
+                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.width / 2)
+                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.width / 2)
+                    gc.stroke()
+                }
             }
         }
     }

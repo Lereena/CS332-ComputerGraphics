@@ -1,17 +1,53 @@
 package lab6
 
-import java.util.*
+import java.io.File
+import kotlin.collections.ArrayList
 import kotlin.math.sqrt
 
-data class Point3D(var x: Double, var y: Double, var z: Double)
+class Point3D(var x: Double, var y: Double, var z: Double)
 
 enum class Axis { X, Y, Z }
 
 data class DirectionVector(val l: Double, val m: Double, val n: Double)
 
-typealias Polyhedron = LinkedList<Polygon>
+class Polygon {
+    val points = ArrayList<Point3D>()
 
-typealias Polygon = LinkedList<Line>
+    operator fun get(i: Int) = points[(i % points.size)]
+
+    fun add(point: Point3D) = points.add(point)
+}
+
+class Polyhedron(filename: String) {
+    var vertices = ArrayList<Point3D>()
+    var polygons = ArrayList<Polygon>()
+
+    init {
+        File(filename).forEachLine {
+            if (it.isNotEmpty()) {
+                val sLine = it.split(' ')
+                when (sLine[0]) {
+                    "v" -> {
+                        vertices.add(Point3D(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
+                    }
+                    "f" -> {
+                        val polygon = Polygon()
+                        for (i in 1 until sLine.size) {
+                            val number = sLine[i].substringBefore('/').toInt() - 1
+                            polygon.add(vertices[number])
+                        }
+                        polygons.add(polygon)
+                    }
+                }
+            }
+        }
+    }
+
+    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>) : this("") {
+        this.vertices = vertices
+        this.polygons = polygons
+    }
+}
 
 typealias Matrix = Array<DoubleArray>
 
