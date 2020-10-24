@@ -25,6 +25,9 @@ class Affine3D : Application() {
 
         var model = Polyhedron("assets/3dmodels/hexahedron.obj")
         scale(model, 50.0, 50.0, 50.0)
+        rotateAroundCenter(model, Axis.Y, 90.0)
+        reflect(model, Axis.X, Axis.Z)
+        move(model, 100.0, 100.0, 100.0)
         //orthographic_projection(canvas, dotsGC, model, Axis.Z)
         perspective_projection(canvas, dotsGC, model, Axis.Z)
     }

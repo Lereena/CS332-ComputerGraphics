@@ -4,61 +4,58 @@ import java.security.InvalidParameterException
 import kotlin.math.cos
 import kotlin.math.sin
 
-//fun move(polyhedron: Polyhedron, dx: Double, dy: Double, dz: Double): Polyhedron {
-//    val matrix = translationMatrix(dx, dy, dz)
-////    return transform(polyhedron, matrix)
-//}
-//
-//fun rotateAroundCenter(polyhedron: Polyhedron, axis: Axis, angle: Double): Polyhedron {
-//    val rotation = when (axis) {
-//        Axis.X -> rotationXMatrix(angle)
-//        Axis.Y -> rotationYMatrix(angle)
-//        Axis.Z -> rotationZMatrix(angle)
-//    }
-//
-//    return transform(polyhedron, rotation)
-//}
-//
-//fun rotateAroundLine(polyhedron: Polyhedron, line: Line, angle: Double): Polyhedron {
-//    val dirVect = line.directionVector
-//    val point = line.point1
-//
-//    val move = translationMatrix(-point.x, -point.y, -point.z)
-//    val rotate = generalRotationMatrix(angle, dirVect)
-//    val moveBack = translationMatrix(point.x, point.y, point.z)
-//
-//    val transformationMatrix = multiplyMatrices(moveBack, multiplyMatrices(rotate, move))
-//    return transform(polyhedron, transformationMatrix)
-//}
-
-fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double) {
-//    val scale = scaleMatrix(kX, kY, kZ)
-    transform(polyhedron, scaleMatrix(kX, kY, kZ))
-//    return transform(polyhedron, scale)
+fun move(polyhedron: Polyhedron, dx: Double, dy: Double, dz: Double) {
+    transform(polyhedron, translationMatrix(dx, dy, dz))
 }
 
-//fun reflect(polyhedron: Polyhedron, axis1: Axis, axis2: Axis): Polyhedron {
-//    val transformationMatrix = identityMatrix
-//    when (axis1) {
-//        Axis.X -> when (axis2) {
-//            Axis.Y -> transformationMatrix[2][2] = -1.0
-//            Axis.Z -> transformationMatrix[1][1] = -1.0
-//            Axis.X -> throw InvalidParameterException()
-//        }
-//        Axis.Y -> when (axis2) {
-//            Axis.X -> transformationMatrix[2][2] = -1.0
-//            Axis.Z -> transformationMatrix[0][0] = -1.0
-//            Axis.Y -> throw InvalidParameterException()
-//        }
-//        Axis.Z -> when (axis2) {
-//            Axis.X -> transformationMatrix[1][1] = -1.0
-//            Axis.Y -> transformationMatrix[0][0] = -1.0
-//            Axis.Z -> throw InvalidParameterException()
-//        }
-//    }
-//
-//    return transform(polyhedron, transformationMatrix)
-//}
+fun rotateAroundCenter(polyhedron: Polyhedron, axis: Axis, angle: Double) {
+    val rotation = when (axis) {
+        Axis.X -> rotationXMatrix(angle)
+        Axis.Y -> rotationYMatrix(angle)
+        Axis.Z -> rotationZMatrix(angle)
+    }
+
+    transform(polyhedron, rotation)
+}
+
+fun rotateAroundLine(polyhedron: Polyhedron, line: Line, angle: Double) {
+    val dirVect = line.directionVector
+    val point = line.point1
+
+    val move = translationMatrix(-point.x, -point.y, -point.z)
+    val rotate = generalRotationMatrix(angle, dirVect)
+    val moveBack = translationMatrix(point.x, point.y, point.z)
+
+    val transformationMatrix = multiplyMatrices(moveBack, multiplyMatrices(rotate, move))
+    transform(polyhedron, transformationMatrix)
+}
+
+fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double) {
+    transform(polyhedron, scaleMatrix(kX, kY, kZ))
+}
+
+fun reflect(polyhedron: Polyhedron, axis1: Axis, axis2: Axis) {
+    val transformationMatrix = identityMatrix
+    when (axis1) {
+        Axis.X -> when (axis2) {
+            Axis.Y -> transformationMatrix[2][2] = -1.0
+            Axis.Z -> transformationMatrix[1][1] = -1.0
+            Axis.X -> throw InvalidParameterException()
+        }
+        Axis.Y -> when (axis2) {
+            Axis.X -> transformationMatrix[2][2] = -1.0
+            Axis.Z -> transformationMatrix[0][0] = -1.0
+            Axis.Y -> throw InvalidParameterException()
+        }
+        Axis.Z -> when (axis2) {
+            Axis.X -> transformationMatrix[1][1] = -1.0
+            Axis.Y -> transformationMatrix[0][0] = -1.0
+            Axis.Z -> throw InvalidParameterException()
+        }
+    }
+
+    transform(polyhedron, transformationMatrix)
+}
 
 val identityMatrix = arrayOf(
     doubleArrayOf(1.0, 0.0, 0.0, 0.0),
@@ -149,21 +146,6 @@ fun transform(polyhedron: Polyhedron, matrix: Matrix) {
         polyhedron.vertices[i].y = transformed[1][0]
         polyhedron.vertices[i].z = transformed[2][0]
     }
-//    for (polygon in polyhedron.polygons) {
-//        val newPolygon = Polygon()
-//        for (line in polygon) {
-//            val p1 = line.point1
-//            val p2 = line.point2
-//            val p1new = multiplyMatrices(matrix, pointToMatrix(p1))
-//            val p2new = multiplyMatrices(matrix, pointToMatrix(p2))
-//            newPolygon.addLast(
-//                Line(
-//                    Point3D(p1new[0][0], p1new[1][0], p1new[2][0]),
-//                    Point3D(p2new[0][0], p2new[1][0], p2new[2][0])
-//                )
-//            )
-//        }
-//    }
 }
 
 fun pointToMatrix(point: Point3D): Matrix {
