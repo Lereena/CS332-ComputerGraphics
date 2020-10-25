@@ -151,26 +151,42 @@ class Affine3D : Application() {
         }
 
 
-//        // rotate pane
-//        val trRotatePane = GridPane()
-//        val trRotateTitle = Label("Поворот")
-//        val trAngleField = TextField("0")
-//        val trAngleLabel = Label("Угол: ")
-//        val trRotatePointButton =  ToggleButton("Выбрать точку")
-//        val trRotateCenterButton = Button("Относительно центров")
-//        trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
-//        trRotatePane.add(trAngleLabel,  0, 1)
-//        trRotatePane.add(trAngleField,  1, 1)
-//        trRotatePane.add(trRotatePointButton,  0, 3, 2, 1)
-//        trRotatePane.add(trRotateCenterButton, 0, 4, 2, 1)
-//
-//        trRotateCenterButton.setOnAction {
-//            for (shape in curShapes)
-//                shape.update(turnAroundCenter(shape.points, trAngleField.text.toDouble()))
-//            redrawShapes()
-//        }
+        // rotate pane
+        val trRotatePane = GridPane()
+        val trRotateTitle = Label("Поворот")
+        val trAngleField = TextField("0.0")
+        val trAngleLabel = Label("Угол: ")
 
-        transformationPane.children.addAll(trMovePane, trScalePane)
+        val trRotateLineButton =  ToggleButton("Вокруг прямой")
+
+        var curRotateAxis = Axis.X
+        val axesRotItems = FXCollections.observableArrayList("X", "Y", "Z")
+        val axesRotList = ComboBox(axesRotItems)
+        axesRotList.value = "X"
+        val trRotateCenterButton = Button("Параллельно оси")
+
+        trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
+        trRotatePane.add(trAngleLabel,  0, 1)
+        trRotatePane.add(trAngleField,  1, 1)
+        trRotatePane.add(axesRotList,  0, 3, 2, 1)
+        trRotatePane.add(trRotateCenterButton, 0, 5, 2, 1)
+//        trRotatePane.add(trRotatePointButton,  0, 4, 2, 1)
+
+        axesRotList.setOnAction {
+            curRotateAxis = when (axesRotList.value) {
+                "X" -> Axis.X
+                "Y" -> Axis.Y
+                "Z" -> Axis.Z
+                else -> Axis.X
+            }
+        }
+
+        trRotateCenterButton.setOnAction {
+            rotateAroundCenter(currentModel, curRotateAxis, trAngleField.text.toDouble())
+            redraw(mainCanvas, mainGc)
+        }
+
+        transformationPane.children.addAll(trMovePane, trScalePane, trRotatePane)
 //
         primaryStage.title = "Affine transformations 3D"
 
