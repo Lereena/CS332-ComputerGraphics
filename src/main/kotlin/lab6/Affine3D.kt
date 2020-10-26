@@ -239,7 +239,7 @@ class Affine3D : Application() {
                 trScalePane,
                 trRotatePane,
                 trRotateLinePane)
-//
+
         primaryStage.title = "Affine transformations 3D"
 
         primaryStage.scene = Scene(mainGroup)
@@ -263,38 +263,6 @@ class Affine3D : Application() {
     }
 }
 
-//fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-//    when (ax) {
-//        Axis.Z -> for (i_p in 0 until model.size) {
-//            for (i_l in 0 until model[i_p].size) {
-//                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
-//                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
-//                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
-//                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
-//                gc.stroke()
-//            }
-//        }
-//        Axis.X -> for (i_p in 0 until model.size) {
-//            for (i_l in 0 until model[i_p].size) {
-//                gc.moveTo(model[i_p][i_l].point1.z + canvas.width / 2,
-//                        model[i_p][i_l].point1.y * (-1) + canvas.height / 2)
-//                gc.lineTo(model[i_p][i_l].point2.z + canvas.width / 2,
-//                        model[i_p][i_l].point2.y * (-1) + canvas.height / 2)
-//                gc.stroke()
-//            }
-//        }
-//        Axis.Y -> for (i_p in 0 until model.size) {
-//            for (i_l in 0 until model[i_p].size) {
-//                gc.moveTo(model[i_p][i_l].point1.x + canvas.width / 2,
-//                        model[i_p][i_l].point1.z * (-1) + canvas.height / 2)
-//                gc.lineTo(model[i_p][i_l].point2.x + canvas.width / 2,
-//                        model[i_p][i_l].point2.z * (-1) + canvas.height / 2)
-//                gc.stroke()
-//            }
-//        }
-//    }
-//}
-
 fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     gc.moveTo(canvas.width / 2, 0.0)
     gc.lineTo(canvas.width / 2, canvas.height)
@@ -308,21 +276,19 @@ fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedr
                 Axis.Z -> {
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                    gc.stroke()
                 }
                 Axis.X -> {
                     gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                    gc.stroke()
                 }
                 Axis.Y -> {
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
-                    gc.stroke()
                 }
             }
         }
     }
+    gc.stroke()
 }
 
 
@@ -342,7 +308,6 @@ fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedro
                             ((polygon[i].y + (-1 / c)) * (1 - (polygon[i].z + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
                     gc.lineTo(((polygon[i + 1].x + (-1 / c)) * (1 - (polygon[i + 1].z + (-1 / c)) / c) + canvas.width / 2),
                             ((polygon[i + 1].y + (-1 / c)) * (1 - (polygon[i + 1].z + (-1 / c)) / c) * (-1) + canvas.height / 2))
-                    gc.stroke()
                 }
                 Axis.X -> {
                     var c = 150
@@ -350,7 +315,6 @@ fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedro
                             ((polygon[i].y + (-1 / c)) * (1 - (polygon[i].x + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
                     gc.lineTo(((polygon[i + 1].z + (-1 / c)) * (1 - (polygon[i + 1].x + (-1 / c)) / c) + canvas.width / 2),
                             ((polygon[i + 1].y + (-1 / c)) * (1 - (polygon[i + 1].x + (-1 / c)) / c) * (-1) + canvas.height / 2))
-                    gc.stroke()
                 }
                 Axis.Y -> {
                     var c = 150
@@ -358,10 +322,10 @@ fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedro
                             ((polygon[i].z + (-1 / c)) * (1 - (polygon[i].y + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
                     gc.lineTo(((polygon[i + 1].x + (-1 / c)) * (1 - (polygon[i + 1].y + (-1 / c)) / c) + canvas.width / 2),
                             ((polygon[i + 1].z + (-1 / c)) * (1 - (polygon[i + 1].y + (-1 / c)) / c) * (-1) + canvas.height / 2))
-                    gc.stroke()
                 }
             }
         }
     }
+    gc.stroke()
 }
 
