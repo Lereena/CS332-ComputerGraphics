@@ -138,6 +138,33 @@ fun rotationZMatrix(angle: Double): Matrix {
     )
 }
 
+fun perspectiveZMatrix(dist: Double): Matrix {
+    return arrayOf(
+            doubleArrayOf(1.0, 0.0, 0.0,     0.0),
+            doubleArrayOf(0.0, 1.0, 0.0,     0.0),
+            doubleArrayOf(0.0, 0.0, 0.0,     0.0),
+            doubleArrayOf(0.0, 0.0, -1/dist, 1.0),
+    )
+}
+
+fun perspectiveYMatrix(dist: Double): Matrix {
+    return arrayOf(
+            doubleArrayOf(1.0, 0.0,     0.0, 0.0),
+            doubleArrayOf(0.0, 0.0,     0.0, 0.0),
+            doubleArrayOf(0.0, 0.0,     1.0, 0.0),
+            doubleArrayOf(0.0, -1/dist, 0.0, 1.0),
+    )
+}
+
+fun perspectiveXMatrix(dist: Double): Matrix {
+    return arrayOf(
+            doubleArrayOf(0.0,     0.0, 0.0, 0.0),
+            doubleArrayOf(0.0,     1.0, 0.0, 0.0),
+            doubleArrayOf(0.0,     0.0, 1.0, 0.0),
+            doubleArrayOf(-1/dist, 0.0, 0.0, 1.0),
+    )
+}
+
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
@@ -146,6 +173,12 @@ fun transform(polyhedron: Polyhedron, matrix: Matrix) {
         polyhedron.vertices[i].y = transformed[1][0]
         polyhedron.vertices[i].z = transformed[2][0]
     }
+}
+
+fun multiplePointAndMatrix(point: Point3D, matrix: Matrix): Point3D {
+    val transformed = multiplyMatrices(matrix, pointToMatrix(point))
+    val k = transformed[3][0]
+    return Point3D(transformed[0][0] / k, transformed[1][0] / k, transformed[2][0] / k)
 }
 
 fun pointToMatrix(point: Point3D): Matrix {

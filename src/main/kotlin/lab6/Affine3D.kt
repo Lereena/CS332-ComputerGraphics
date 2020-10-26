@@ -266,10 +266,8 @@ class Affine3D : Application() {
 fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     gc.moveTo(canvas.width / 2, 0.0)
     gc.lineTo(canvas.width / 2, canvas.height)
-    gc.stroke()
     gc.moveTo(0.0, canvas.height / 2)
     gc.lineTo(canvas.width, canvas.height / 2)
-    gc.stroke()
     for (polygon in model.polygons) {
         for (i in polygon.points.indices) {
             when (ax) {
@@ -277,13 +275,13 @@ fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedr
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
-                Axis.X -> {
-                    gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                }
                 Axis.Y -> {
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
+                }
+                Axis.X -> {
+                    gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
+                    gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
             }
         }
@@ -295,35 +293,34 @@ fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedr
 fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     gc.moveTo(canvas.width / 2, 0.0)
     gc.lineTo(canvas.width / 2, canvas.height)
-    gc.stroke()
     gc.moveTo(0.0, canvas.height / 2)
     gc.lineTo(canvas.width, canvas.height / 2)
-    gc.stroke()
+    val matrix = when (ax) {
+        Axis.Z -> perspectiveZMatrix(300.0)
+        Axis.Y -> perspectiveYMatrix(300.0)
+        Axis.X -> perspectiveXMatrix(300.0)
+    }
     for (polygon in model.polygons) {
-        for (i in polygon.points.indices) {
+        val projPoints = polygon.points.map { point ->
+            multiplePointAndMatrix(point, matrix)
+        }
+        var prevPoint = projPoints.last()
+        for (point in projPoints) {
             when (ax) {
                 Axis.Z -> {
-                    var c = 150
-                    gc.moveTo((polygon[i].x + (-1 / c)) *  (1 - (polygon[i].z + (-1 / c)) / c)  + canvas.width / 2 ,
-                            ((polygon[i].y + (-1 / c)) * (1 - (polygon[i].z + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
-                    gc.lineTo(((polygon[i + 1].x + (-1 / c)) * (1 - (polygon[i + 1].z + (-1 / c)) / c) + canvas.width / 2),
-                            ((polygon[i + 1].y + (-1 / c)) * (1 - (polygon[i + 1].z + (-1 / c)) / c) * (-1) + canvas.height / 2))
-                }
-                Axis.X -> {
-                    var c = 150
-                    gc.moveTo((polygon[i].z + (-1 / c)) *  (1 - (polygon[i].x + (-1 / c)) / c)  + canvas.width / 2 ,
-                            ((polygon[i].y + (-1 / c)) * (1 - (polygon[i].x + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
-                    gc.lineTo(((polygon[i + 1].z + (-1 / c)) * (1 - (polygon[i + 1].x + (-1 / c)) / c) + canvas.width / 2),
-                            ((polygon[i + 1].y + (-1 / c)) * (1 - (polygon[i + 1].x + (-1 / c)) / c) * (-1) + canvas.height / 2))
+                    gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
+                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
                 Axis.Y -> {
-                    var c = 150
-                    gc.moveTo((polygon[i].x + (-1 / c)) *  (1 - (polygon[i].y + (-1 / c)) / c)  + canvas.width / 2 ,
-                            ((polygon[i].z + (-1 / c)) * (1 - (polygon[i].y + (-1 / c)) / c) * (-1 ) + canvas.height / 2))
-                    gc.lineTo(((polygon[i + 1].x + (-1 / c)) * (1 - (polygon[i + 1].y + (-1 / c)) / c) + canvas.width / 2),
-                            ((polygon[i + 1].z + (-1 / c)) * (1 - (polygon[i + 1].y + (-1 / c)) / c) * (-1) + canvas.height / 2))
+                    gc.moveTo(point.x + canvas.width / 2, -point.z + canvas.height / 2)
+                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.z + canvas.height / 2)
+                }
+                Axis.X -> {
+                    gc.moveTo(point.z + canvas.width / 2, -point.y + canvas.height / 2)
+                    gc.lineTo(prevPoint.z + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
             }
+            prevPoint = point
         }
     }
     gc.stroke()
