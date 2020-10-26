@@ -88,38 +88,6 @@ fun flower(x:Double, y: Double): Double {
     return 100 - 3 / sqrt(x * x + y * y) + sin(sqrt(x * x + y * y)) + sqrt(200 - x * x + y * y + 10 * sin(x) + 10 * sin(y)) / 1000
 }
 
-//fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
-//    val plot = Polyhedron(ArrayList(), ArrayList())
-//    val processedPoints = HashMap<Int, Point3D>()
-//
-//    var x = x0
-//    while (x <= x1 - step) {
-//        var y = y0
-//        while (y <= y1 - step) {
-//            val polygon = Polygon()
-//            val currentPoints = ArrayList<Point3D>()
-//            currentPoints.add(Point3D(x, y, f(x, y)))
-//            currentPoints.add(Point3D(x + step, y, f(x + step, y)))
-//            currentPoints.add(Point3D(x, y + step, f(x, y + step)))
-//            currentPoints.add(Point3D(x + step, y + step, f(x + step, y + step)))
-//            for (point in currentPoints) {
-//                val hash = point.hashCode()
-//                if (processedPoints.containsKey(hash))
-//                    polygon.add(processedPoints[hash]!!)
-//                else {
-//                    plot.vertices.add(point)
-//                    processedPoints[hash] = point
-//                }
-//            }
-//            if (polygon.points.size == 4)
-//                plot.polygons.add(polygon)
-//            y += step
-//        }
-//        x += step
-//    }
-//    return plot
-//}
-
 fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
     val plot = Polyhedron(ArrayList(), ArrayList())
     val builtPoints = ArrayList<Point3D>()
@@ -129,9 +97,9 @@ fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Dou
     var i = 0
     var curEst = 0
     var x = x0
-    while (x <= x1 - step) {
+    while (x <= x1 - step + 0.001) {
         var y = y0
-        while (y <= y1 - step) {
+        while (y <= y1 - step + 0.001) {
             val currentPoints = ArrayList<Point3D>()
             currentPoints.add(Point3D(x, y, f(x, y)))
             currentPoints.add(Point3D(x + step, y, f(x + step, y)))
