@@ -157,8 +157,6 @@ class Affine3D : Application() {
         val trAngleField = TextField("0.0")
         val trAngleLabel = Label("Угол: ")
 
-        val trRotateLineButton =  ToggleButton("Вокруг прямой")
-
         var curRotateAxis = Axis.X
         val axesRotItems = FXCollections.observableArrayList("X", "Y", "Z")
         val axesRotList = ComboBox(axesRotItems)
@@ -168,9 +166,8 @@ class Affine3D : Application() {
         trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
         trRotatePane.add(trAngleLabel,  0, 1)
         trRotatePane.add(trAngleField,  1, 1)
-        trRotatePane.add(axesRotList,  0, 3, 2, 1)
-        trRotatePane.add(trRotateCenterButton, 0, 5, 2, 1)
-//        trRotatePane.add(trRotatePointButton,  0, 4, 2, 1)
+        trRotatePane.add(axesRotList,   0, 3, 2, 1)
+        trRotatePane.add(trRotateCenterButton,   0, 4, 2, 1)
 
         axesRotList.setOnAction {
             curRotateAxis = when (axesRotList.value) {
@@ -186,7 +183,62 @@ class Affine3D : Application() {
             redraw(mainCanvas, mainGc)
         }
 
-        transformationPane.children.addAll(trMovePane, trScalePane, trRotatePane)
+        val trRotateLinePane = GridPane()
+        val trRotateLineTitle = Label("Координаты точек")
+        val trRotateP1XField = TextField("0.0")
+        val trRotateP1YField = TextField("0.0")
+        val trRotateP1ZField = TextField("0.0")
+        val trRotateP2XField = TextField("0.0")
+        val trRotateP2YField = TextField("0.0")
+        val trRotateP2ZField = TextField("0.0")
+        val trRotateP1XLabel = Label("X")
+        val trRotateP1YLabel = Label("Y")
+        val trRotateP1ZLabel = Label("Z")
+        val trRotateP2XLabel = Label("X")
+        val trRotateP2YLabel = Label("Y")
+        val trRotateP2ZLabel = Label("Z")
+
+        val trRotateLineButton = Button("Вокруг прямой")
+
+        trRotateLinePane.add(trRotateLineTitle, 0, 0, 2, 1)
+        trRotateLinePane.add(trRotateP1XLabel, 0, 1)
+        trRotateLinePane.add(trRotateP1XField, 1, 1)
+        trRotateLinePane.add(trRotateP1YLabel, 0, 2)
+        trRotateLinePane.add(trRotateP1YField, 1, 2)
+        trRotateLinePane.add(trRotateP1ZLabel, 0, 3)
+        trRotateLinePane.add(trRotateP1ZField, 1, 3)
+
+        trRotateLinePane.add(trRotateP2XLabel, 0, 4)
+        trRotateLinePane.add(trRotateP2XField, 1, 4)
+        trRotateLinePane.add(trRotateP2YLabel, 0, 5)
+        trRotateLinePane.add(trRotateP2YField, 1, 5)
+        trRotateLinePane.add(trRotateP2ZLabel, 0, 6)
+        trRotateLinePane.add(trRotateP2ZField, 1, 6)
+        trRotateLinePane.add(trRotateLineButton, 0, 7, 2, 1)
+
+        trRotateLineButton.setOnAction {
+            val point1 = Point3D(
+                    trRotateP1XField.text.toDouble(),
+                    trRotateP1YField.text.toDouble(),
+                    trRotateP1ZField.text.toDouble())
+            val point2 = Point3D(
+                    trRotateP2XField.text.toDouble(),
+                    trRotateP2YField.text.toDouble(),
+                    trRotateP2ZField.text.toDouble())
+            val line = Line(point1, point2)
+            rotateAroundLine(currentModel, line, trAngleField.text.toDouble())
+            redraw(mainCanvas, mainGc)
+            val tempLine = getLinePolyhedron(line)
+            if (currentProjectionMode == Projection.ORTHOGRAPHIC)
+                orthographic_projection(mainCanvas, mainGc, tempLine, currentAxis)
+            else
+                perspective_projection(mainCanvas, mainGc, tempLine, currentAxis)
+        }
+
+        transformationPane.children.addAll(trMovePane,
+                trScalePane,
+                trRotatePane,
+                trRotateLinePane)
 //
         primaryStage.title = "Affine transformations 3D"
 

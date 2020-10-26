@@ -18,11 +18,11 @@ class Polygon {
     fun add(point: Point3D) = points.add(point)
 }
 
-class Polyhedron(filename: String) {
+class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
 
-    init {
+    constructor(filename: String) {
         File(filename).forEachLine {
             if (it.isNotEmpty()) {
                 val sLine = it.split(' ')
@@ -43,10 +43,19 @@ class Polyhedron(filename: String) {
         }
     }
 
-    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>) : this("") {
+    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>) {
         this.vertices = vertices
         this.polygons = polygons
     }
+}
+
+fun getLinePolyhedron(line: Line): Polyhedron {
+    val vertices = arrayListOf<Point3D>(line.point1, line.point2)
+    val polygon = Polygon()
+    polygon.add(line.point1)
+    polygon.add(line.point2)
+    val polygons = arrayListOf<Polygon>(polygon)
+    return Polyhedron(vertices, polygons)
 }
 
 typealias Matrix = Array<DoubleArray>
