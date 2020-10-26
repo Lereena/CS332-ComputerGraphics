@@ -252,7 +252,7 @@ class Affine3D : Application() {
         val plotButton = Button("Получить график")
         funcPlotPane.add(plotButton, 0, 1)
         plotButton.setOnAction {
-            val plot = plot3D(-100.0, -100.0, 100.0, 100.0, 1.0) { x, y -> flower(x, y) }
+            val plot = plot3D(-50.0, -50.0, 50.0, 50.0, 0.5) { x, y -> sin(x + y) }
             currentModel = plot
             redraw(mainCanvas, mainGc)
         }
