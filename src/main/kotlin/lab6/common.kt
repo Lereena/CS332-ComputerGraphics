@@ -88,9 +88,8 @@ fun multiplyMatrices(left: Array<DoubleArray>, right: Array<DoubleArray>): Array
 
 val functions = arrayListOf<(Double, Double) -> Double>(
     { x, y -> sin(x + y) },
-    { x, y -> x.pow(2) + y.pow(2) },
-    { x, y -> sin(x + y) / (x + y)}
-)
+    { x, y -> sin(x + y) / (x + y) },
+    )
 
 fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
     val plot = Polyhedron(ArrayList(), ArrayList())
@@ -160,6 +159,6 @@ fun processPoints(
         }
         relationships[i]!!.add(pointNums[point]!!)
     }
-    plot.polygons.add(polygon)
+    if (polygon.points.size >= 3) plot.polygons.add(polygon)
     return currentEst
 }
