@@ -2,8 +2,10 @@ package lab6
 
 import java.io.File
 import kotlin.collections.ArrayList
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.tan
 
 data class Point3D(var x: Double, var y: Double, var z: Double)
 
@@ -84,9 +86,11 @@ fun multiplyMatrices(matrix1: Array<DoubleArray>, matrix2: Array<DoubleArray>): 
     return result
 }
 
-fun flower(x:Double, y: Double): Double {
-    return 100 - 3 / sqrt(x * x + y * y) + sin(sqrt(x * x + y * y)) + sqrt(200 - x * x + y * y + 10 * sin(x) + 10 * sin(y)) / 1000
-}
+val functions = arrayListOf<(Double, Double) -> Double>(
+    { x, y -> sin(x + y) },
+    { x, y -> x.pow(2) + y.pow(2) },
+    { x, y -> sin(x + y) / (x + y)}
+)
 
 fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
     val plot = Polyhedron(ArrayList(), ArrayList())
@@ -97,14 +101,15 @@ fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Dou
     var i = 0
     var curEst = 0
     var x = x0
-    while (x <= x1 - step + 0.001) {
+    while (x <= x1 - step) {
         var y = y0
-        while (y <= y1 - step + 0.001) {
-            val currentPoints = ArrayList<Point3D>()
-            currentPoints.add(Point3D(x, y, f(x, y)))
-            currentPoints.add(Point3D(x + step, y, f(x + step, y)))
-            currentPoints.add(Point3D(x, y + step, f(x, y + step)))
-            currentPoints.add(Point3D(x + step, y + step, f(x + step, y + step)))
+        while (y <= y1 - step) {
+            val currentPoints = arrayListOf(
+                Point3D(x, y, f(x, y)),
+                Point3D(x + step, y, f(x + step, y)),
+                Point3D(x, y + step, f(x, y + step)),
+                Point3D(x + step, y + step, f(x + step, y + step))
+            )
             curEst = processPoints(currentPoints, plot, relationships, builtPoints, pointNums, curEst, i)
             i++
             y += step
@@ -134,37 +139,12 @@ fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Dou
         }
     }
 
-//    var max = f(x0, y0)
-//    var min = f(x0, y0)
-//    var x = x0
-//    var i = 0
-//    while (x <= x1 + step / 10000.0) {
-//        var y = y0
-//        while (y <= y1 + step / 10000.0) {
-//            val z = f(x, y)
-//            if (z < min) min = z
-//            if (x > max) max = z
-//            plot.vertices.add(Point3D(x, y, z))
-//            if (y != y0) {
-//                plot.edges.add(Line(plot.vertices[i], plot.vertices[i + 1]))
-//                i++
-//            }
-//            y += step
-//        }
-//        i++
-//        x += step
-//    }
     return plot
 }
 
 fun processPoints(
-    currentPoints: ArrayList<Point3D>,
-    plot: Polyhedron,
-    relationships: HashMap<Int, ArrayList<Int>>,
-    builtPoints: ArrayList<Point3D>,
-    pointNums: HashMap<Point3D, Int>,
-    curEst: Int,
-    i: Int
+    currentPoints: ArrayList<Point3D>, plot: Polyhedron, relationships: HashMap<Int, ArrayList<Int>>,
+    builtPoints: ArrayList<Point3D>, pointNums: HashMap<Point3D, Int>, curEst: Int, i: Int
 ): Int {
     relationships[i] = ArrayList()
     val polygon = Polygon()
