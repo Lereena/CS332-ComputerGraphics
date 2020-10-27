@@ -11,9 +11,10 @@ import javafx.scene.control.*
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
-import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.PI
 
 enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
@@ -220,7 +221,7 @@ class Affine3D : Application() {
         val trReflectButton = Button("Отразить")
 
         trReflectPane.add(trReflectTitle, 0, 0, 2, 1)
-        trReflectPane.add(axesReflList,   0, 1)
+        trReflectPane.add(axesReflList, 0, 1)
         trReflectPane.add(trReflectButton, 0, 2, 2, 1)
 
         axesReflList.setOnAction {
@@ -294,6 +295,12 @@ class Affine3D : Application() {
             }
         }
 
+        val functions = arrayListOf<(Double, Double) -> Double>(
+            { x, y -> sin(x + y) },
+            { x, y -> sin(x + y) / (x + y) },
+            { x, y -> x + y.pow(2) },
+        )
+
         val funcPlotPane = GridPane()
 
         val funcPlotTitle = Label("Построение графика")
@@ -310,7 +317,9 @@ class Affine3D : Application() {
 
         val funcPlotFunctionsItems = FXCollections.observableArrayList(
             "sin(x + y)",
-            "sin(x + y) / (x + y)")
+            "sin(x + y) / (x + y)",
+            "x + y^2",
+        )
         val funcPlotFunctionsList = ComboBox(funcPlotFunctionsItems)
 
         val funcPlotButton = Button("Нарисовать график")
@@ -336,11 +345,7 @@ class Affine3D : Application() {
             val x1 = funcPlotX1Field.text.toDouble()
             val y1 = funcPlotY1Field.text.toDouble()
             val step = funcPlotStepField.text.toDouble()
-            val func = when (funcPlotFunctionsList.value) {
-                "sin(x + y)" -> 0
-                "sin(x + y) / (x + y)" -> 1
-                else -> throw Exception()
-            }
+            val func = funcPlotFunctionsItems.indexOf(funcPlotFunctionsList.value)
             currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
             redraw(mainCanvas, mainGcA, mainGc)
         }

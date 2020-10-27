@@ -2,10 +2,7 @@ package lab6
 
 import java.io.File
 import kotlin.collections.ArrayList
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.math.tan
+import kotlin.math.*
 
 data class Point3D(var x: Double, var y: Double, var z: Double)
 
@@ -22,15 +19,14 @@ class Polygon {
         this.points = points
     }
 
+    val indices = points.indices
     operator fun get(i: Int) = points[(i % points.size)]
-
     fun add(point: Point3D) = points.add(point)
 }
 
 class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
-    var edges = ArrayList<Line>()
 
     constructor(filename: String) {
         File(filename).forEachLine {
@@ -91,11 +87,6 @@ fun multiplyMatrices(left: Array<DoubleArray>, right: Array<DoubleArray>): Array
 
     return result
 }
-
-val functions = arrayListOf<(Double, Double) -> Double>(
-    { x, y -> sin(x + y) },
-    { x, y -> sin(x + y) / (x + y) }
-)
 
 fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
     val plot = Polyhedron(ArrayList(), ArrayList())
@@ -167,4 +158,8 @@ fun processPoints(
     }
     if (polygon.points.size >= 3) plot.polygons.add(polygon)
     return currentEst
+}
+
+fun pointsDistance(point1: Point3D, point2: Point3D): Double {
+    return sqrt((point1.x - point2.x).pow(2) + (point1.y - point2.y).pow(2) + (point1.y - point2.y).pow(2))
 }
