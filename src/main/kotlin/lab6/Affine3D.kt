@@ -31,9 +31,13 @@ class Affine3D : Application() {
         mainGroup.vgap = 10.0;
 
         val mainCanvas = Canvas(800.0, 600.0)
+        val mainCanvasA = Canvas(800.0, 600.0)
         val mainGc = mainCanvas.graphicsContext2D
+        val mainGcA = mainCanvasA.graphicsContext2D
+        mainGcA.stroke = Color.RED
+        mainGc.stroke = Color.BLACK
 
-        val canvasGroup = StackPane(mainCanvas)
+        val canvasGroup = StackPane(mainCanvas, mainCanvasA)
         canvasGroup.border = Border(
             BorderStroke(
                 Color.BLACK,
@@ -58,7 +62,7 @@ class Affine3D : Application() {
         fileList.setOnAction {
             val shapePath = "assets/3dmodels/" + fileList.value
             currentModel = Polyhedron(shapePath)
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
 
         val axesItems = FXCollections.observableArrayList("XY", "XZ", "YZ")
@@ -72,7 +76,7 @@ class Affine3D : Application() {
                 "YZ" -> {
                     currentAxis = Axis.X; }
             }
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
         axesList.value = "XY"
 
@@ -86,7 +90,7 @@ class Affine3D : Application() {
             if (state) {
                 perModeButton.isSelected = false
                 currentProjectionMode = Projection.ORTHOGRAPHIC
-                redraw(mainCanvas, mainGc)
+                redraw(mainCanvas, mainGcA, mainGc)
             } else
                 ortModeButton.isSelected = true
         }
@@ -96,7 +100,7 @@ class Affine3D : Application() {
             if (state) {
                 ortModeButton.isSelected = false
                 currentProjectionMode = Projection.PERSPECTIVE
-                redraw(mainCanvas, mainGc)
+                redraw(mainCanvas, mainGcA, mainGc)
             } else
                 perModeButton.isSelected = true
         }
@@ -127,7 +131,7 @@ class Affine3D : Application() {
                 trDyField.text.toDouble(),
                 trDzField.text.toDouble()
             )
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
 
         // scale pane
@@ -156,7 +160,7 @@ class Affine3D : Application() {
                 trScaleKyField.text.toDouble(),
                 trScaleKzField.text.toDouble()
             )
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
 
 
@@ -189,7 +193,7 @@ class Affine3D : Application() {
 
         trRotateCenterButton.setOnAction {
             rotateAroundCenter(currentModel, curRotateAxis, trAngleField.text.toDouble())
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
 
         val trRotateLinePane = GridPane()
@@ -238,12 +242,12 @@ class Affine3D : Application() {
             )
             val line = Line(point1, point2)
             rotateAroundLine(currentModel, line, trAngleField.text.toDouble())
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
             val tempLine = getLinePolyhedron(line)
             if (currentProjectionMode == Projection.ORTHOGRAPHIC)
-                orthographic_projection(mainCanvas, mainGc, tempLine, currentAxis)
+                orthographic_projection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
             else
-                perspective_projection(mainCanvas, mainGc, tempLine, currentAxis)
+                perspective_projection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
         }
 
         val funcPlotPane = GridPane()
@@ -251,7 +255,7 @@ class Affine3D : Application() {
         funcPlotPane.add(plotButton, 0, 1)
         plotButton.setOnAction {
             currentModel = plot3D(-10.0, -10.0, 10.0, 10.0, 0.1, functions[1])
-            redraw(mainCanvas, mainGc)
+            redraw(mainCanvas, mainGcA, mainGc)
         }
 
         transformationPane.children.addAll(
@@ -275,33 +279,40 @@ class Affine3D : Application() {
         }
     }
 
-    fun redraw(canvas: Canvas, gc: GraphicsContext) {
+    fun redraw(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext) {
         gc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         gc.beginPath()
         if (currentProjectionMode == Projection.ORTHOGRAPHIC)
-            orthographic_projection(canvas, gc, currentModel, currentAxis)
+            orthographic_projection(canvas, gcA, gc, currentModel, currentAxis)
         else
-            perspective_projection(canvas, gc, currentModel, currentAxis)
+            perspective_projection(canvas, gcA, gc, currentModel, currentAxis)
     }
 }
 
-fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gc.moveTo(canvas.width / 2, 0.0)
-    gc.lineTo(canvas.width / 2, canvas.height)
-    gc.moveTo(0.0, canvas.height / 2)
-    gc.lineTo(canvas.width, canvas.height / 2)
+fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+    gcA.moveTo(canvas.width / 2, 0.0)
+    gcA.lineTo(canvas.width / 2, canvas.height)
+    gcA.moveTo(0.0, canvas.height / 2)
+    gcA.lineTo(canvas.width, canvas.height / 2)
+    gcA.stroke()
     for (polygon in model.polygons) {
         for (i in polygon.points.indices) {
             when (ax) {
                 Axis.Z -> {
+                    gc.strokeText("Y", 410.0, 30.0)
+                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
                 Axis.Y -> {
+                    gc.strokeText("Z", 410.0, 30.0)
+                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
                 }
                 Axis.X -> {
+                    gc.strokeText("Y", 410.0, 30.0)
+                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
@@ -312,11 +323,12 @@ fun orthographic_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedr
 }
 
 
-fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gc.moveTo(canvas.width / 2, 0.0)
-    gc.lineTo(canvas.width / 2, canvas.height)
-    gc.moveTo(0.0, canvas.height / 2)
-    gc.lineTo(canvas.width, canvas.height / 2)
+fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+    gcA.moveTo(canvas.width / 2, 0.0)
+    gcA.lineTo(canvas.width / 2, canvas.height)
+    gcA.moveTo(0.0, canvas.height / 2)
+    gcA.lineTo(canvas.width, canvas.height / 2)
+    gcA.stroke()
     val matrix = when (ax) {
         Axis.Z -> perspectiveZMatrix(300.0)
         Axis.Y -> perspectiveYMatrix(300.0)
@@ -330,14 +342,20 @@ fun perspective_projection(canvas: Canvas, gc: GraphicsContext, model: Polyhedro
         for (point in projPoints) {
             when (ax) {
                 Axis.Z -> {
+                    gc.strokeText("Y", 410.0, 30.0)
+                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
                     gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
                 Axis.Y -> {
+                    gc.strokeText("Z", 410.0, 30.0)
+                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(point.x + canvas.width / 2, -point.z + canvas.height / 2)
                     gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.z + canvas.height / 2)
                 }
                 Axis.X -> {
+                    gc.strokeText("Y", 410.0, 30.0)
+                    gc.strokeText("Z", 770.0, 290.0)
                     gc.moveTo(point.z + canvas.width / 2, -point.y + canvas.height / 2)
                     gc.lineTo(prevPoint.z + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
