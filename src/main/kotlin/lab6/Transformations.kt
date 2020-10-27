@@ -35,7 +35,7 @@ fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double) {
 }
 
 fun reflect(polyhedron: Polyhedron, axis: Axis) {
-    val transformationMatrix = identityMatrix
+    val transformationMatrix = identityMatrix()
     when (axis) {
         Axis.Z -> transformationMatrix[2][2] = -1.0
         Axis.Y -> transformationMatrix[1][1] = -1.0
@@ -45,12 +45,13 @@ fun reflect(polyhedron: Polyhedron, axis: Axis) {
     transform(polyhedron, transformationMatrix)
 }
 
-val identityMatrix = arrayOf(
-    doubleArrayOf(1.0, 0.0, 0.0, 0.0),
-    doubleArrayOf(0.0, 1.0, 0.0, 0.0),
-    doubleArrayOf(0.0, 0.0, 1.0, 0.0),
-    doubleArrayOf(0.0, 0.0, 0.0, 1.0),
-)
+fun identityMatrix(): Matrix {
+    return arrayOf(
+            doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+            doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+            doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+            doubleArrayOf(0.0, 0.0, 0.0, 1.0))
+}
 
 fun translationMatrix(tX: Double, tY: Double, tZ: Double): Matrix {
     return arrayOf(
