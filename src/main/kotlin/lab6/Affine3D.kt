@@ -258,10 +258,11 @@ class Affine3D : Application() {
             rotateAroundLine(currentModel, line, trAngleField.text.toDouble())
             redraw(mainCanvas, mainGcA, mainGc)
             val tempLine = getLinePolyhedron(line)
-            if (currentProjectionMode == Projection.ORTHOGRAPHIC)
-                orthographic_projection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
-            else
-                perspective_projection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
+            when (currentProjectionMode) {
+                Projection.ORTHOGRAPHIC -> orthographicProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
+                Projection.PERSPECTIVE -> perspectiveProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
+                Projection.AXONOMETRIC -> axonometricProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
+            }
         }
 
         val funcPlotPane = GridPane()
@@ -295,40 +296,30 @@ class Affine3D : Application() {
 
     fun redraw(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext) {
         gc.clearRect(0.0, 0.0, 1000.0, 1000.0)
+        gcA.clearRect(0.0, 0.0, 1000.0, 1000.0)
+        drawAxes(canvas, gcA, gc, currentAxis)
         gc.beginPath()
-        if (currentProjectionMode == Projection.ORTHOGRAPHIC)
-            orthographic_projection(canvas, gcA, gc, currentModel, currentAxis)
-        else if (currentProjectionMode == Projection.PERSPECTIVE)
-                 perspective_projection(canvas, gcA, gc, currentModel, currentAxis)
-             else axonometric_projection(canvas, gcA, gc, currentModel, currentAxis)
+        when (currentProjectionMode) {
+            Projection.ORTHOGRAPHIC -> orthographicProjection(canvas, gcA, gc, currentModel, currentAxis)
+            Projection.PERSPECTIVE -> perspectiveProjection(canvas, gcA, gc, currentModel, currentAxis)
+            Projection.AXONOMETRIC -> axonometricProjection(canvas, gcA, gc, currentModel, currentAxis)
+        }
     }
 }
 
-fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height)
-    gcA.moveTo(0.0, canvas.height / 2)
-    gcA.lineTo(canvas.width, canvas.height / 2)
-    gcA.stroke()
+fun orthographicProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     for (polygon in model.polygons) {
         for (i in polygon.points.indices) {
             when (ax) {
                 Axis.Z -> {
-                    gc.strokeText("Y", 410.0, 30.0)
-                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
                 Axis.Y -> {
-                    gc.strokeText("Z", 410.0, 30.0)
-                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
                 }
                 Axis.X -> {
-                    gc.strokeText("Y", 410.0, 30.0)
-                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
                     gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
                 }
@@ -339,13 +330,7 @@ fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCo
 }
 
 
-fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height)
-    gcA.moveTo(0.0, canvas.height / 2)
-    gcA.lineTo(canvas.width, canvas.height / 2)
-    gcA.stroke()
+fun perspectiveProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     val matrix = when (ax) {
         Axis.Z -> perspectiveZMatrix(300.0)
         Axis.Y -> perspectiveYMatrix(300.0)
@@ -359,20 +344,14 @@ fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCon
         for (point in projPoints) {
             when (ax) {
                 Axis.Z -> {
-                    gc.strokeText("Y", 410.0, 30.0)
-                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
                     gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
                 Axis.Y -> {
-                    gc.strokeText("Z", 410.0, 30.0)
-                    gc.strokeText("X", 770.0, 290.0)
                     gc.moveTo(point.x + canvas.width / 2, -point.z + canvas.height / 2)
                     gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.z + canvas.height / 2)
                 }
                 Axis.X -> {
-                    gc.strokeText("Y", 410.0, 30.0)
-                    gc.strokeText("Z", 770.0, 290.0)
                     gc.moveTo(point.z + canvas.width / 2, -point.y + canvas.height / 2)
                     gc.lineTo(prevPoint.z + canvas.width / 2, -prevPoint.y + canvas.height / 2)
                 }
@@ -384,19 +363,7 @@ fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCon
 }
 
 
-fun axonometric_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
-    gcA.beginPath()
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height / 2)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(0.0, canvas.height)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(canvas.width, canvas.height)
-    gcA.stroke()
-    gc.strokeText("Y", 410.0, 30.0)
-    gc.strokeText("X", 23.0, 570.0)
-    gc.strokeText("Z", 770.0, 570.0)
+fun axonometricProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     for (polygon in model.polygons) {
         val projPoints = polygon.points.map { point ->
             multiplePointAndMatrix(point, axonometricMatrix(145.0 * 3.14 / 180, 45.0 * 3.14 / 180))
@@ -409,4 +376,37 @@ fun axonometric_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCon
         }
     }
     gc.stroke()
+}
+
+fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis) {
+    gcA.beginPath()
+//    gcA.moveTo(canvas.width / 2, 0.0)
+//    gcA.lineTo(canvas.width / 2, canvas.height / 2)
+//    gcA.moveTo(canvas.width / 2, canvas.height / 2)
+//    gcA.lineTo(0.0, canvas.height)
+//    gcA.moveTo(canvas.width / 2, canvas.height / 2)
+//    gcA.lineTo(canvas.width, canvas.height)
+    gcA.moveTo(canvas.width / 2, 0.0)
+    gcA.lineTo(canvas.width / 2, canvas.height)
+    gcA.moveTo(0.0, canvas.height / 2)
+    gcA.lineTo(canvas.width, canvas.height / 2)
+    gcA.stroke()
+    when (ax) {
+        Axis.Z -> {
+            gc.strokeText("Y", 410.0, 30.0)
+            gc.strokeText("X", 770.0, 290.0)
+        }
+        Axis.Y -> {
+            gc.strokeText("Z", 410.0, 30.0)
+            gc.strokeText("X", 770.0, 290.0)
+        }
+        Axis.X -> {
+            gc.strokeText("Y", 410.0, 30.0)
+            gc.strokeText("Z", 770.0, 290.0)
+        }
+    }
+
+//    gc.strokeText("Y", 410.0, 30.0)
+//    gc.strokeText("X", 23.0, 570.0)
+//    gc.strokeText("Z", 770.0, 570.0)
 }
