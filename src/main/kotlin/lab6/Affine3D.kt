@@ -306,6 +306,7 @@ class Affine3D : Application() {
 
 fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     gcA.clearRect(0.0, 0.0, 800.0, 600.0)
+    gcA.beginPath()
     gcA.moveTo(canvas.width / 2, 0.0)
     gcA.lineTo(canvas.width / 2, canvas.height)
     gcA.moveTo(0.0, canvas.height / 2)
@@ -341,6 +342,7 @@ fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCo
 
 fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
     gcA.clearRect(0.0, 0.0, 800.0, 600.0)
+    gcA.beginPath()
     gcA.moveTo(canvas.width / 2, 0.0)
     gcA.lineTo(canvas.width / 2, canvas.height)
     gcA.moveTo(0.0, canvas.height / 2)

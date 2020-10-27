@@ -164,13 +164,22 @@ fun perspectiveXMatrix(dist: Double): Matrix {
             doubleArrayOf(-1/dist, 0.0, 0.0, 1.0),
     )
 }
+/*
+fun axonometricMatrix(fi: Double, psi: Double): Matrix {
+    return arrayOf(
+            doubleArrayOf(cos(psi),             0.0,                    sin(psi),   0.0),
+            doubleArrayOf(sin(fi) * sin(psi),   cos(fi),                0.0,        0.0),
+            doubleArrayOf(0.0,                  -sin(fi) * cos(psi),    0.0,        0.0),
+            doubleArrayOf(0.0,                  0.0,                    0.0,        1.0),
+    )
+}*/
 
 fun axonometricMatrix(fi: Double, psi: Double): Matrix {
     return arrayOf(
-            doubleArrayOf(cos(psi), sin(fi) * sin(psi),  0.0, 0.0),
-            doubleArrayOf(0.0,      cos(fi),             0.0, 0.0),
-            doubleArrayOf(sin(psi), -sin(fi) * cos(psi), 0.0, 0.0),
-            doubleArrayOf(0.0,      0.0,                 0.0, 1.0),
+            doubleArrayOf(cos(psi),             0.0,      sin(psi),             0.0),
+            doubleArrayOf(sin(fi) * sin(psi),   cos(fi),  -sin(fi) * cos(psi),  0.0),
+            doubleArrayOf(0.0,                  0.0,      0.0,                  0.0),
+            doubleArrayOf(0.0,                  0.0,      0.0,                  1.0),
     )
 }
 
