@@ -88,8 +88,6 @@ class Affine3D : Application() {
 
         shapePane.children.addAll(fileList, axesList, ortModeButton, perModeButton, axModeButton)
 
-        saveModel(currentModel, "test.obj")
-
         ortModeButton.setOnAction {
             val state = ortModeButton.isSelected
             if (state) {
@@ -393,14 +391,28 @@ class Affine3D : Application() {
             redraw(mainCanvas, mainGcA, mainGc)
         }
 
+        val svMovePane = GridPane()
+        val svMoveTitle = Label("Сохранение")
+        val svDzField = TextField("default")
+        val svDxLabel = Label("Имя: ")
+        val svMoveButton = Button("Сохранить")
+        svMovePane.add(svMoveTitle, 0, 0, 2, 1)
+        svMovePane.add(svDxLabel, 0, 1)
+        svMovePane.add(svDzField, 1, 1)
+        svMovePane.add(svMoveButton, 0, 4, 2, 1)
+        svMoveButton.setOnAction {
+            saveModel(currentModel, svDzField.text.toString())
+        }
+
         transformationPane.children.addAll(
-            trMovePane,
-            trScalePane,
-            trReflectPane,
-            trRotatePane,
-            trRotateLinePane,
-            funcPlotPane,
-            crRotationShapePane
+                trMovePane,
+                trScalePane,
+                trReflectPane,
+                trRotatePane,
+                trRotateLinePane,
+                funcPlotPane,
+                crRotationShapePane,
+                svMovePane
         )
 
         primaryStage.title = "Affine transformations 3D"
@@ -536,7 +548,7 @@ fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis
 }
 
 fun saveModel(model: Polyhedron, fileName: String) {
-    val writer = File("assets/3dmodels/" + fileName).bufferedWriter()
+    val writer = File("assets/3dmodels/" + fileName + ".obj").bufferedWriter()
     writer.write("v ")
     writer.write(model.vertices[0].x.toString())
     writer.write(" ")
