@@ -11,9 +11,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
-import lab4.Mode
-import lab4.scaleAroundCenter
-import lab4.turnAroundCenter
+import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -251,10 +249,53 @@ class Affine3D : Application() {
         }
 
         val funcPlotPane = GridPane()
-        val plotButton = Button("Получить график")
-        funcPlotPane.add(plotButton, 0, 1)
-        plotButton.setOnAction {
-            currentModel = plot3D(-10.0, -10.0, 10.0, 10.0, 0.1, functions[1])
+
+        val funcPlotTitle = Label("Построение графика")
+        val funcPlotX0Field = TextField("-10.0")
+        val funcPlotY0Field = TextField("-10.0")
+        val funcPlotX1Field = TextField("10.0")
+        val funcPlotY1Field = TextField("10.0")
+        val funcPlotX0Label = Label("X0")
+        val funcPlotY0Label = Label("Y0")
+        val funcPlotX1Label = Label("X1")
+        val funcPlotY1Label = Label("Y1")
+        val funcPlotStepField = TextField("0.1")
+        val funcPlotStepLabel = Label("Шаг")
+
+        val funcPlotFunctionsItems = FXCollections.observableArrayList(
+            "sin(x + y)",
+            "sin(x + y) / (x + y)")
+        val funcPlotFunctionsList = ComboBox(funcPlotFunctionsItems)
+
+        val funcPlotButton = Button("Нарисовать график")
+
+        funcPlotPane.add(funcPlotTitle, 0, 0, 2, 1)
+        funcPlotPane.add(funcPlotX0Label, 0, 1)
+        funcPlotPane.add(funcPlotX0Field, 1, 1)
+        funcPlotPane.add(funcPlotY0Label, 0, 2)
+        funcPlotPane.add(funcPlotY0Field, 1, 2)
+        funcPlotPane.add(funcPlotX1Label, 0, 3)
+        funcPlotPane.add(funcPlotX1Field, 1, 3)
+        funcPlotPane.add(funcPlotY1Label, 0, 4)
+        funcPlotPane.add(funcPlotY1Field, 1, 4)
+        funcPlotPane.add(funcPlotStepLabel, 0, 5)
+        funcPlotPane.add(funcPlotStepField, 1, 5)
+        funcPlotPane.add(funcPlotFunctionsList, 0, 6, 2, 1)
+
+        funcPlotPane.add(funcPlotButton, 0, 7, 2, 1)
+
+        funcPlotButton.setOnAction {
+            val x0 = funcPlotX0Field.text.toDouble()
+            val y0 = funcPlotY0Field.text.toDouble()
+            val x1 = funcPlotX1Field.text.toDouble()
+            val y1 = funcPlotY1Field.text.toDouble()
+            val step = funcPlotStepField.text.toDouble()
+            val func = when (funcPlotFunctionsList.value) {
+                "sin(x + y)" -> 0
+                "sin(x + y) / (x + y)" -> 1
+                else -> throw Exception()
+            }
+            currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
             redraw(mainCanvas, mainGcA, mainGc)
         }
 

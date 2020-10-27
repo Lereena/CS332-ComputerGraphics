@@ -88,8 +88,8 @@ fun multiplyMatrices(left: Array<DoubleArray>, right: Array<DoubleArray>): Array
 
 val functions = arrayListOf<(Double, Double) -> Double>(
     { x, y -> sin(x + y) },
-    { x, y -> sin(x + y) / (x + y) },
-    )
+    { x, y -> sin(x + y) / (x + y) }
+)
 
 fun plot3D(x0: Double, y0: Double, x1: Double, y1: Double, step: Double, f: (Double, Double) -> Double): Polyhedron {
     val plot = Polyhedron(ArrayList(), ArrayList())
