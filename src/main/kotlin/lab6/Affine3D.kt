@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package lab6
 
 import javafx.application.Application
@@ -11,6 +13,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
+import javafx.event.EventHandler
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.math.pow
@@ -21,29 +24,29 @@ import java.io.File as File
 enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
 
 class Affine3D : Application() {
-    var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
-    var currentProjectionMode = Projection.ORTHOGRAPHIC
-    var currentAxis = Axis.Z
+    private var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
+    private var currentProjectionMode = Projection.ORTHOGRAPHIC
+    private var currentAxis = Axis.Z
+    private val mainCanvas = Canvas(800.0, 600.0)
+    private val mainCanvasA = Canvas(800.0, 600.0)
+    private val mainGc = mainCanvas.graphicsContext2D
+    private val mainGcA = mainCanvasA.graphicsContext2D
 
     override fun start(primaryStage: Stage) {
         val mainGroup = GridPane()
         mainGroup.alignment = Pos.BASELINE_CENTER
-        mainGroup.hgap = 10.0;
-        mainGroup.vgap = 10.0;
+        mainGroup.hgap = 10.0
+        mainGroup.vgap = 10.0
 
-        val mainCanvas = Canvas(800.0, 600.0)
-        val mainCanvasA = Canvas(800.0, 600.0)
-        val mainGc = mainCanvas.graphicsContext2D
-        val mainGcA = mainCanvasA.graphicsContext2D
         mainGcA.stroke = Color.RED
         mainGc.stroke = Color.BLACK
 
         val canvasGroup = StackPane(mainCanvas, mainCanvasA)
         canvasGroup.border = Border(
-            BorderStroke(
-                Color.BLACK,
-                BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT
-            )
+                BorderStroke(
+                        Color.BLACK,
+                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT
+                )
         )
 
         val shapePane = FlowPane(Orientation.HORIZONTAL, 10.0, 0.0)
@@ -63,7 +66,7 @@ class Affine3D : Application() {
         fileList.setOnAction {
             val shapePath = "assets/3dmodels/" + fileList.value
             currentModel = Polyhedron(shapePath)
-            redraw(mainCanvas, mainGcA, mainGc)
+            redraw()
         }
 
         val axesItems = FXCollections.observableArrayList("XY", "XZ", "YZ")
@@ -77,342 +80,216 @@ class Affine3D : Application() {
                 "YZ" -> {
                     currentAxis = Axis.X; }
             }
-            redraw(mainCanvas, mainGcA, mainGc)
+            redraw()
         }
         axesList.value = "XY"
 
         val ortModeButton = ToggleButton("Orthographic")
-        ortModeButton.isSelected = true
         val perModeButton = ToggleButton("Perspective")
         val axModeButton = ToggleButton("Axonometric")
+        ortModeButton.isSelected = true
 
-        shapePane.children.addAll(fileList, axesList, ortModeButton, perModeButton, axModeButton)
+        shapePane.children.addAll(fileList,
+                axesList, 
+                ortModeButton,
+                perModeButton,
+                axModeButton
+        )
 
-        ortModeButton.setOnAction {
-            val state = ortModeButton.isSelected
-            if (state) {
-                perModeButton.isSelected = false
-                axModeButton.isSelected = false
-                currentProjectionMode = Projection.ORTHOGRAPHIC
-                redraw(mainCanvas, mainGcA, mainGc)
-            } else
-                ortModeButton.isSelected = true
-        }
-
-        perModeButton.setOnAction {
-            val state = perModeButton.isSelected
-            if (state) {
-                ortModeButton.isSelected = false
-                axModeButton.isSelected = false
-                currentProjectionMode = Projection.PERSPECTIVE
-                redraw(mainCanvas, mainGcA, mainGc)
-            } else
-                perModeButton.isSelected = true
-        }
-
-        axModeButton.setOnAction {
-            val state = axModeButton.isSelected
-            if (state) {
-                ortModeButton.isSelected = false
-                perModeButton.isSelected = false
-                currentProjectionMode = Projection.AXONOMETRIC
-                redraw(mainCanvas, mainGcA, mainGc)
-            } else
-                perModeButton.isSelected = true
-        }
+        val toggleButtons = arrayOf(
+                ortModeButton,
+                perModeButton,
+                axModeButton,
+        )
+        setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
+        setModeButton(perModeButton, Projection.PERSPECTIVE,  toggleButtons)
+        setModeButton(axModeButton,  Projection.AXONOMETRIC, toggleButtons)
 
         // TRANSFORMATION PANE
         // move pane
-        val trMovePane = GridPane()
-        val trMoveTitle = Label("Смещение")
-        val trDxField = TextField("0.0")
-        val trDyField = TextField("0.0")
-        val trDzField = TextField("0.0")
-        val trDxLabel = Label("dx: ")
-        val trDyLabel = Label("dy: ")
-        val trDzLabel = Label("dz: ")
-        val trMoveButton = Button("Сдвинуть")
-        trMovePane.add(trMoveTitle, 0, 0, 2, 1)
-        trMovePane.add(trDxLabel, 0, 1)
-        trMovePane.add(trDxField, 1, 1)
-        trMovePane.add(trDyLabel, 0, 2)
-        trMovePane.add(trDyField, 1, 2)
-        trMovePane.add(trDzLabel, 0, 3)
-        trMovePane.add(trDzField, 1, 3)
-        trMovePane.add(trMoveButton, 0, 4, 2, 1)
-        trMoveButton.setOnAction {
-            move(
-                currentModel,
-                trDxField.text.toDouble(),
-                trDyField.text.toDouble(),
-                trDzField.text.toDouble()
-            )
-            redraw(mainCanvas, mainGcA, mainGc)
+        val trMoveSection = InterfaceSection("Смещение")
+        with(trMoveSection) {
+            val dXInput = addInput("dX", "0.0")
+            val dYInput = addInput("dY", "0.0")
+            val dZInput = addInput("dZ", "0.0")
+            addButton("Сдвинуть", EventHandler {
+                move(
+                        currentModel,
+                        dXInput.text.toDouble(),
+                        dYInput.text.toDouble(),
+                        dZInput.text.toDouble(),
+                )
+                redraw()
+            })
         }
 
         // scale pane
-        val trScalePane = GridPane()
-        val trScaleTitle = Label("Масштабирование")
-        val trScaleKxField = TextField("1.0")
-        val trScaleKyField = TextField("1.0")
-        val trScaleKzField = TextField("1.0")
-        val trScaleKxLabel = Label("kx: ")
-        val trScaleKyLabel = Label("ky: ")
-        val trScaleKzLabel = Label("kz: ")
-        val trScaleCenterButton = Button("Масштабировать")
-        trScalePane.add(trScaleTitle, 0, 0, 2, 1)
-        trScalePane.add(trScaleKxLabel, 0, 1)
-        trScalePane.add(trScaleKxField, 1, 1)
-        trScalePane.add(trScaleKyLabel, 0, 2)
-        trScalePane.add(trScaleKyField, 1, 2)
-        trScalePane.add(trScaleKzLabel, 0, 3)
-        trScalePane.add(trScaleKzField, 1, 3)
-        trScalePane.add(trScaleCenterButton, 0, 4, 2, 1)
-
-        trScaleCenterButton.setOnAction {
-            scale(
-                currentModel,
-                trScaleKxField.text.toDouble(),
-                trScaleKyField.text.toDouble(),
-                trScaleKzField.text.toDouble()
-            )
-            redraw(mainCanvas, mainGcA, mainGc)
+        val trScaleSection = InterfaceSection("Масштабирование")
+        with(trScaleSection) {
+            val kXInput = addInput("kX", "1.0")
+            val kYInput = addInput("kY", "1.0")
+            val kZInput = addInput("kZ", "1.0")
+            addButton("Масштабировать", EventHandler {
+                scale(
+                        currentModel,
+                        kXInput.text.toDouble(),
+                        kYInput.text.toDouble(),
+                        kZInput.text.toDouble()
+                )
+                redraw()
+            })
         }
-
 
         // rotate pane
-        val trRotatePane = GridPane()
-        val trRotateTitle = Label("Поворот")
-        val trAngleField = TextField("0.0")
-        val trAngleLabel = Label("Угол: ")
+        val trRotateSection = InterfaceSection("Поворот")
+        with(trRotateSection) {
+            val angleInput = addInput("Угол", "0.0")
+            val axesItems = FXCollections.observableArrayList("X", "Y", "Z")
+            val axesList = ComboBox(axesItems)
+            axesList.value = "X"
+            addComboBox(axesList)
 
-        var curRotateAxis = Axis.X
-        val axesRotItems = FXCollections.observableArrayList("X", "Y", "Z")
-        val axesRotList = ComboBox(axesRotItems)
-        axesRotList.value = "X"
-        val trRotateCenterButton = Button("Параллельно оси")
+            addButton("Вокруг оси", EventHandler {
+                val rotationAxis = when (axesList.value) {
+                    "X" -> Axis.X
+                    "Y" -> Axis.Y
+                    "Z" -> Axis.Z
+                    else -> Axis.X
+                }
+                rotateAroundCenter(currentModel, rotationAxis,
+                        angleInput.text.toDouble())
+                redraw()
+            })
 
-        trRotatePane.add(trRotateTitle, 0, 0, 2, 1)
-        trRotatePane.add(trAngleLabel, 0, 1)
-        trRotatePane.add(trAngleField, 1, 1)
-        trRotatePane.add(axesRotList, 0, 3, 2, 1)
-        trRotatePane.add(trRotateCenterButton, 0, 4, 2, 1)
-
-        axesRotList.setOnAction {
-            curRotateAxis = when (axesRotList.value) {
-                "X" -> Axis.X
-                "Y" -> Axis.Y
-                "Z" -> Axis.Z
-                else -> Axis.X
-            }
-        }
-
-        trRotateCenterButton.setOnAction {
-            rotateAroundCenter(currentModel, curRotateAxis, trAngleField.text.toDouble())
-            redraw(mainCanvas, mainGcA, mainGc)
+            addLabel("Координаты точек прямой")
+            val p1XInput = addInput("aX", "0.0")
+            val p1YInput = addInput("aY", "0.0")
+            val p1ZInput = addInput("aZ", "0.0")
+            val p2XInput = addInput("aX", "0.0")
+            val p2YInput = addInput("aY", "0.0")
+            val p2ZInput = addInput("aZ", "0.0")
+            addButton("Вокруг прямой", EventHandler {
+                val point1 = Point3D(
+                        p1XInput.text.toDouble(),
+                        p1YInput.text.toDouble(),
+                        p1ZInput.text.toDouble()
+                )
+                val point2 = Point3D(
+                        p2XInput.text.toDouble(),
+                        p2YInput.text.toDouble(),
+                        p2ZInput.text.toDouble()
+                )
+                val line = Line(point1, point2)
+                rotateAroundLine(currentModel, line, angleInput.text.toDouble())
+                redraw()
+                val tempLine = getLinePolyhedron(line)
+                draw(tempLine)
+            })
         }
 
         // reflect pane
-        val trReflectPane = GridPane()
-        val trReflectTitle = Label("Отражение")
-
-        var curReflAxis = Axis.Z
-        val axesReflItems = FXCollections.observableArrayList("XY", "YZ", "XZ")
-        val axesReflList = ComboBox(axesReflItems)
-        axesReflList.value = "XY"
-        val trReflectButton = Button("Отразить")
-
-        trReflectPane.add(trReflectTitle, 0, 0, 2, 1)
-        trReflectPane.add(axesReflList, 0, 1)
-        trReflectPane.add(trReflectButton, 0, 2, 2, 1)
-
-        axesReflList.setOnAction {
-            curReflAxis = when (axesReflList.value) {
-                "XY" -> Axis.Z
-                "YZ" -> Axis.X
-                "XZ" -> Axis.Y
-                else -> Axis.X
-            }
+        val trReflectSection = InterfaceSection("Отражение")
+        with(trReflectSection) {
+            val axesItems = FXCollections.observableArrayList("XY", "YZ", "XZ")
+            val axesList = ComboBox(axesItems)
+            axesList.value = "XY"
+            addComboBox(axesList)
+            addButton("Отразить", EventHandler {
+                val reflectAxis = when (axesList.value) {
+                    "XY" -> Axis.Z
+                    "YZ" -> Axis.X
+                    "XZ" -> Axis.Y
+                    else -> Axis.X
+                }
+                reflect(currentModel, reflectAxis)
+                redraw()
+            })
         }
 
-        trReflectButton.setOnAction {
-            reflect(currentModel, curReflAxis)
-            redraw(mainCanvas, mainGcA, mainGc)
-        }
-
-        // Rotate around line
-
-        val trRotateLinePane = GridPane()
-        val trRotateLineTitle = Label("Координаты точек")
-        val trRotateP1XField = TextField("0.0")
-        val trRotateP1YField = TextField("0.0")
-        val trRotateP1ZField = TextField("0.0")
-        val trRotateP2XField = TextField("0.0")
-        val trRotateP2YField = TextField("0.0")
-        val trRotateP2ZField = TextField("0.0")
-        val trRotateP1XLabel = Label("X")
-        val trRotateP1YLabel = Label("Y")
-        val trRotateP1ZLabel = Label("Z")
-        val trRotateP2XLabel = Label("X")
-        val trRotateP2YLabel = Label("Y")
-        val trRotateP2ZLabel = Label("Z")
-
-        val trRotateLineButton = Button("Вокруг прямой")
-
-        trRotateLinePane.add(trRotateLineTitle, 0, 0, 2, 1)
-        trRotateLinePane.add(trRotateP1XLabel, 0, 1)
-        trRotateLinePane.add(trRotateP1XField, 1, 1)
-        trRotateLinePane.add(trRotateP1YLabel, 0, 2)
-        trRotateLinePane.add(trRotateP1YField, 1, 2)
-        trRotateLinePane.add(trRotateP1ZLabel, 0, 3)
-        trRotateLinePane.add(trRotateP1ZField, 1, 3)
-
-        trRotateLinePane.add(trRotateP2XLabel, 0, 4)
-        trRotateLinePane.add(trRotateP2XField, 1, 4)
-        trRotateLinePane.add(trRotateP2YLabel, 0, 5)
-        trRotateLinePane.add(trRotateP2YField, 1, 5)
-        trRotateLinePane.add(trRotateP2ZLabel, 0, 6)
-        trRotateLinePane.add(trRotateP2ZField, 1, 6)
-        trRotateLinePane.add(trRotateLineButton, 0, 7, 2, 1)
-
-        trRotateLineButton.setOnAction {
-            val point1 = Point3D(
-                trRotateP1XField.text.toDouble(),
-                trRotateP1YField.text.toDouble(),
-                trRotateP1ZField.text.toDouble()
+        // plot pane
+        val funcPlotSection = InterfaceSection("Построение графика")
+        with (funcPlotSection) {
+            val x0Field = addInput("X0", "-10.0")
+            val y0Field = addInput("Y0", "-10.0")
+            val x1Field = addInput("X1", "10.0")
+            val y1Field = addInput("Y1", "10.0")
+            val stepField = addInput("Шаг", "0.1")
+            val funcItems = FXCollections.observableArrayList(
+                    "sin(x + y)",
+                    "sin(x + y) / (x + y)",
+                    "x + y^2",
             )
-            val point2 = Point3D(
-                trRotateP2XField.text.toDouble(),
-                trRotateP2YField.text.toDouble(),
-                trRotateP2ZField.text.toDouble()
+            val funcList = ComboBox(funcItems)
+            addComboBox(funcList)
+            val functions = arrayListOf<(Double, Double) -> Double>(
+                    { x, y -> sin(x + y) },
+                    { x, y -> sin(x + y) / (x + y) },
+                    { x, y -> x + y.pow(2) },
             )
-            val line = Line(point1, point2)
-            rotateAroundLine(currentModel, line, trAngleField.text.toDouble())
-            redraw(mainCanvas, mainGcA, mainGc)
-            val tempLine = getLinePolyhedron(line)
-            when (currentProjectionMode) {
-                Projection.ORTHOGRAPHIC -> orthographicProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
-                Projection.PERSPECTIVE -> perspectiveProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
-                Projection.AXONOMETRIC -> axonometricProjection(mainCanvas, mainGcA, mainGc, tempLine, currentAxis)
-            }
-        }
-
-        val functions = arrayListOf<(Double, Double) -> Double>(
-            { x, y -> sin(x + y) },
-            { x, y -> sin(x + y) / (x + y) },
-            { x, y -> x + y.pow(2) },
-        )
-
-        val funcPlotPane = GridPane()
-
-        val funcPlotTitle = Label("Построение графика")
-        val funcPlotX0Field = TextField("-10.0")
-        val funcPlotY0Field = TextField("-10.0")
-        val funcPlotX1Field = TextField("10.0")
-        val funcPlotY1Field = TextField("10.0")
-        val funcPlotX0Label = Label("X0")
-        val funcPlotY0Label = Label("Y0")
-        val funcPlotX1Label = Label("X1")
-        val funcPlotY1Label = Label("Y1")
-        val funcPlotStepField = TextField("0.1")
-        val funcPlotStepLabel = Label("Шаг")
-
-        val funcPlotFunctionsItems = FXCollections.observableArrayList(
-            "sin(x + y)",
-            "sin(x + y) / (x + y)",
-            "x + y^2",
-        )
-        val funcPlotFunctionsList = ComboBox(funcPlotFunctionsItems)
-
-        val funcPlotButton = Button("Нарисовать график")
-
-        funcPlotPane.add(funcPlotTitle, 0, 0, 2, 1)
-        funcPlotPane.add(funcPlotX0Label, 0, 1)
-        funcPlotPane.add(funcPlotX0Field, 1, 1)
-        funcPlotPane.add(funcPlotY0Label, 0, 2)
-        funcPlotPane.add(funcPlotY0Field, 1, 2)
-        funcPlotPane.add(funcPlotX1Label, 0, 3)
-        funcPlotPane.add(funcPlotX1Field, 1, 3)
-        funcPlotPane.add(funcPlotY1Label, 0, 4)
-        funcPlotPane.add(funcPlotY1Field, 1, 4)
-        funcPlotPane.add(funcPlotStepLabel, 0, 5)
-        funcPlotPane.add(funcPlotStepField, 1, 5)
-        funcPlotPane.add(funcPlotFunctionsList, 0, 6, 2, 1)
-
-        funcPlotPane.add(funcPlotButton, 0, 7, 2, 1)
-
-        funcPlotButton.setOnAction {
-            val x0 = funcPlotX0Field.text.toDouble()
-            val y0 = funcPlotY0Field.text.toDouble()
-            val x1 = funcPlotX1Field.text.toDouble()
-            val y1 = funcPlotY1Field.text.toDouble()
-            val step = funcPlotStepField.text.toDouble()
-            val func = funcPlotFunctionsItems.indexOf(funcPlotFunctionsList.value)
-            currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
-            redraw(mainCanvas, mainGcA, mainGc)
+            addButton("Построить график", EventHandler {
+                val x0 = x0Field.text.toDouble()
+                val y0 = y0Field.text.toDouble()
+                val x1 = x1Field.text.toDouble()
+                val y1 = y1Field.text.toDouble()
+                val step = stepField.text.toDouble()
+                val func = funcItems.indexOf(funcList.value)
+                currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
+                redraw()
+            })
         }
 
         // Rotation shape
+        val crRotationShapeSection = InterfaceSection("Фигура вращения")
+        with (crRotationShapeSection) {
+            addLabel("Координаты точек")
+            val xInput = addInput("X", "0.0")
+            val yInput = addInput("Y", "0.0")
+            val zInput = addInput("Z", "0.0")
 
-        val crRotationShapePane = GridPane()
-        val crRotationShapeTitle = Label("Координаты точек")
-        val crRotationShapeXField = TextField("0.0")
-        val crRotationShapeYField = TextField("0.0")
-        val crRotationShapeZField = TextField("0.0")
-        val crRotationShapeXLabel = Label("X")
-        val crRotationShapeYLabel = Label("Y")
-        val crRotationShapeZLabel = Label("Z")
-        val crAddRotShapeButton = Button("Добавить точку")
+            val generatrixPoints = ArrayList<Point3D>()
+            addButton("Добавить точку", EventHandler {
+                val point = Point3D(
+                        xInput.text.toDouble(),
+                        yInput.text.toDouble(),
+                        zInput.text.toDouble()
+                )
+                generatrixPoints.add(point)
+            })
 
-        val crRotationShapeButton = Button("Создать фигуру вращения")
+            val stepsInput = addInput("Разбиения", "5")
+            val axesItems = FXCollections.observableArrayList("X", "Y", "Z")
+            val axesList = ComboBox(axesItems)
+            axesList.value = "X"
 
-        crRotationShapePane.add(crRotationShapeTitle,  0, 0, 2, 1)
-        crRotationShapePane.add(crRotationShapeXLabel, 0, 1)
-        crRotationShapePane.add(crRotationShapeXField, 1, 1)
-        crRotationShapePane.add(crRotationShapeYLabel, 0, 2)
-        crRotationShapePane.add(crRotationShapeYField, 1, 2)
-        crRotationShapePane.add(crRotationShapeZLabel, 0, 3)
-        crRotationShapePane.add(crRotationShapeZField, 1, 3)
-        crRotationShapePane.add(crAddRotShapeButton,   0, 4, 2, 1)
-        crRotationShapePane.add(crRotationShapeButton, 0, 6, 2, 1)
-
-        var generatrixPoints = ArrayList<Point3D>()
-        crAddRotShapeButton.setOnAction {
-            val point = Point3D(
-                    crRotationShapeXField.text.toDouble(),
-                    crRotationShapeYField.text.toDouble(),
-                    crRotationShapeZField.text.toDouble()
-            )
-            generatrixPoints.add(point)
+            addButton("Создать фигуру", EventHandler {
+                val axis = when (axesList.value) {
+                    "X" -> Axis.X
+                    "Y" -> Axis.Y
+                    "Z" -> Axis.Z
+                    else -> Axis.X
+                }
+                currentModel = rotationShape(generatrixPoints,
+                        stepsInput.text.toInt(), axis)
+                redraw()
+            })
         }
 
-        crRotationShapeButton.setOnAction {
-            currentModel = rotationShape(generatrixPoints, 10, Axis.Y)
-            redraw(mainCanvas, mainGcA, mainGc)
-        }
-
-        val svMovePane = GridPane()
-        val svMoveTitle = Label("Сохранение")
-        val svDzField = TextField("default")
-        val svDxLabel = Label("Имя: ")
-        val svMoveButton = Button("Сохранить")
-        svMovePane.add(svMoveTitle, 0, 0, 2, 1)
-        svMovePane.add(svDxLabel, 0, 1)
-        svMovePane.add(svDzField, 1, 1)
-        svMovePane.add(svMoveButton, 0, 4, 2, 1)
-        svMoveButton.setOnAction {
-            saveModel(currentModel, svDzField.text.toString())
+        val saveSection = InterfaceSection("Сохранение")
+        with(saveSection) {
+            val nameInput = addInput("Имя:", "default")
+            addButton("Сохранить", EventHandler {
+                saveModel(currentModel, nameInput.text.toString())
+            })
         }
 
         transformationPane.children.addAll(
-                trMovePane,
-                trScalePane,
-                trReflectPane,
-                trRotatePane,
-                trRotateLinePane,
-                funcPlotPane,
-                crRotationShapePane,
-                svMovePane
+                trMoveSection.sectionPane,
+                trScaleSection.sectionPane,
+                trReflectSection.sectionPane,
+                trRotateSection.sectionPane,
+                funcPlotSection.sectionPane,
+                crRotationShapeSection.sectionPane,
+                saveSection.sectionPane
         )
 
         primaryStage.title = "Affine transformations 3D"
@@ -428,14 +305,31 @@ class Affine3D : Application() {
         }
     }
 
-    fun redraw(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext) {
-        gc.clearRect(0.0, 0.0, 1000.0, 1000.0)
-        gcA.clearRect(0.0, 0.0, 1000.0, 1000.0)
-        gc.beginPath()
+    fun redraw() {
+        mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
+        mainGcA.clearRect(0.0, 0.0, 1000.0, 1000.0)
+        mainGc.beginPath()
+        draw(currentModel)
+    }
+
+    private fun draw(model: Polyhedron) {
         when (currentProjectionMode) {
-            Projection.ORTHOGRAPHIC -> orthographicProjection(canvas, gcA, gc, currentModel, currentAxis)
-            Projection.PERSPECTIVE -> perspectiveProjection(canvas, gcA, gc, currentModel, currentAxis)
-            Projection.AXONOMETRIC -> axonometricProjection(canvas, gcA, gc, currentModel, currentAxis)
+            Projection.ORTHOGRAPHIC -> orthographicProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
+            Projection.PERSPECTIVE -> perspectiveProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
+            Projection.AXONOMETRIC -> axonometricProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
+        }
+    }
+
+    private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
+        button.setOnAction {
+            val state = button.isSelected
+            if (state) {
+                for (button in all_buttons)
+                    button.isSelected = false
+                currentProjectionMode = mode
+                redraw()
+            }
+            button.isSelected = true
         }
     }
 }
@@ -548,7 +442,7 @@ fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis
 }
 
 fun saveModel(model: Polyhedron, fileName: String) {
-    val writer = File("assets/3dmodels/" + fileName + ".obj").bufferedWriter()
+    val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
     writer.write("v ")
     writer.write(model.vertices[0].x.toString())
     writer.write(" ")

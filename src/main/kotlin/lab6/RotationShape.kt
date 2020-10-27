@@ -13,6 +13,7 @@ fun rotationShape(points: ArrayList<Point3D>, iterations: Int, axis: Axis): Poly
         Axis.Z -> rotationZMatrix(angle)
     }
 
+    vertices.addAll(points)
     var prevPoints = points.toList()
     for (i in (0 until iterations)) {
         val newPoints = prevPoints.map { point -> multiplePointAndMatrix(point, matrix) }
