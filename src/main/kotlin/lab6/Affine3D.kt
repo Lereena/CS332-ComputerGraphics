@@ -17,7 +17,7 @@ import lab4.turnAroundCenter
 import java.nio.file.Files
 import java.nio.file.Paths
 
-enum class Projection { ORTHOGRAPHIC, PERSPECTIVE }
+enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
 
 class Affine3D : Application() {
     var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
@@ -83,12 +83,14 @@ class Affine3D : Application() {
         val ortModeButton = ToggleButton("Orthographic")
         ortModeButton.isSelected = true
         val perModeButton = ToggleButton("Perspective")
+        val axModeButton = ToggleButton("Axonometric")
 
-        shapePane.children.addAll(fileList, axesList, ortModeButton, perModeButton)
+        shapePane.children.addAll(fileList, axesList, ortModeButton, perModeButton, axModeButton)
         ortModeButton.setOnAction {
             val state = ortModeButton.isSelected
             if (state) {
                 perModeButton.isSelected = false
+                axModeButton.isSelected = false
                 currentProjectionMode = Projection.ORTHOGRAPHIC
                 redraw(mainCanvas, mainGcA, mainGc)
             } else
@@ -99,7 +101,19 @@ class Affine3D : Application() {
             val state = perModeButton.isSelected
             if (state) {
                 ortModeButton.isSelected = false
+                axModeButton.isSelected = false
                 currentProjectionMode = Projection.PERSPECTIVE
+                redraw(mainCanvas, mainGcA, mainGc)
+            } else
+                perModeButton.isSelected = true
+        }
+
+        axModeButton.setOnAction {
+            val state = axModeButton.isSelected
+            if (state) {
+                ortModeButton.isSelected = false
+                perModeButton.isSelected = false
+                currentProjectionMode = Projection.AXONOMETRIC
                 redraw(mainCanvas, mainGcA, mainGc)
             } else
                 perModeButton.isSelected = true
@@ -284,12 +298,14 @@ class Affine3D : Application() {
         gc.beginPath()
         if (currentProjectionMode == Projection.ORTHOGRAPHIC)
             orthographic_projection(canvas, gcA, gc, currentModel, currentAxis)
-        else
-            perspective_projection(canvas, gcA, gc, currentModel, currentAxis)
+        else if (currentProjectionMode == Projection.PERSPECTIVE)
+                 perspective_projection(canvas, gcA, gc, currentModel, currentAxis)
+             else axonometric_projection(canvas, gcA, gc, currentModel, currentAxis)
     }
 }
 
 fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
     gcA.moveTo(canvas.width / 2, 0.0)
     gcA.lineTo(canvas.width / 2, canvas.height)
     gcA.moveTo(0.0, canvas.height / 2)
@@ -324,6 +340,7 @@ fun orthographic_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCo
 
 
 fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
     gcA.moveTo(canvas.width / 2, 0.0)
     gcA.lineTo(canvas.width / 2, canvas.height)
     gcA.moveTo(0.0, canvas.height / 2)
@@ -366,3 +383,30 @@ fun perspective_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCon
     gc.stroke()
 }
 
+
+fun axonometric_projection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
+    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
+    gcA.beginPath()
+    gcA.moveTo(canvas.width / 2, 0.0)
+    gcA.lineTo(canvas.width / 2, canvas.height / 2)
+    gcA.moveTo(canvas.width / 2, canvas.height / 2)
+    gcA.lineTo(0.0, canvas.height)
+    gcA.moveTo(canvas.width / 2, canvas.height / 2)
+    gcA.lineTo(canvas.width, canvas.height)
+    gcA.stroke()
+    gc.strokeText("Y", 410.0, 30.0)
+    gc.strokeText("X", 23.0, 570.0)
+    gc.strokeText("Z", 770.0, 570.0)
+    for (polygon in model.polygons) {
+        val projPoints = polygon.points.map { point ->
+            multiplePointAndMatrix(point, axonometricMatrix(145.0 * 3.14 / 180, 45.0 * 3.14 / 180))
+        }
+        var prevPoint = projPoints.last()
+        for (point in projPoints) {
+            gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
+            gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
+            prevPoint = point
+        }
+    }
+    gc.stroke()
+}

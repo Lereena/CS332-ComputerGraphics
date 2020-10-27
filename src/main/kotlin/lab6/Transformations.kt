@@ -165,6 +165,15 @@ fun perspectiveXMatrix(dist: Double): Matrix {
     )
 }
 
+fun axonometricMatrix(fi: Double, psi: Double): Matrix {
+    return arrayOf(
+            doubleArrayOf(cos(psi), sin(fi) * sin(psi),  0.0, 0.0),
+            doubleArrayOf(0.0,      cos(fi),             0.0, 0.0),
+            doubleArrayOf(sin(psi), -sin(fi) * cos(psi), 0.0, 0.0),
+            doubleArrayOf(0.0,      0.0,                 0.0, 1.0),
+    )
+}
+
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
