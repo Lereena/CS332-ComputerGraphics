@@ -34,24 +34,12 @@ fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double) {
     transform(polyhedron, scaleMatrix(kX, kY, kZ))
 }
 
-fun reflect(polyhedron: Polyhedron, axis1: Axis, axis2: Axis) {
+fun reflect(polyhedron: Polyhedron, axis: Axis) {
     val transformationMatrix = identityMatrix
-    when (axis1) {
-        Axis.X -> when (axis2) {
-            Axis.Y -> transformationMatrix[2][2] = -1.0
-            Axis.Z -> transformationMatrix[1][1] = -1.0
-            Axis.X -> throw InvalidParameterException()
-        }
-        Axis.Y -> when (axis2) {
-            Axis.X -> transformationMatrix[2][2] = -1.0
-            Axis.Z -> transformationMatrix[0][0] = -1.0
-            Axis.Y -> throw InvalidParameterException()
-        }
-        Axis.Z -> when (axis2) {
-            Axis.X -> transformationMatrix[1][1] = -1.0
-            Axis.Y -> transformationMatrix[0][0] = -1.0
-            Axis.Z -> throw InvalidParameterException()
-        }
+    when (axis) {
+        Axis.Z -> transformationMatrix[2][2] = -1.0
+        Axis.Y -> transformationMatrix[1][1] = -1.0
+        Axis.X -> transformationMatrix[0][0] = -1.0
     }
 
     transform(polyhedron, transformationMatrix)
