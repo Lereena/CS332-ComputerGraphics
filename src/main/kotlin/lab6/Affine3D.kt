@@ -16,6 +16,7 @@ import java.nio.file.Paths
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.PI
+import java.io.File as File
 
 enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
 
@@ -86,6 +87,9 @@ class Affine3D : Application() {
         val axModeButton = ToggleButton("Axonometric")
 
         shapePane.children.addAll(fileList, axesList, ortModeButton, perModeButton, axModeButton)
+
+        saveModel(currentModel, "test.obj")
+
         ortModeButton.setOnAction {
             val state = ortModeButton.isSelected
             if (state) {
@@ -529,4 +533,37 @@ fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis
             gc.strokeText("Z", 770.0, 290.0)
         }
     }
+}
+
+fun saveModel(model: Polyhedron, fileName: String) {
+    val writer = File("assets/3dmodels/" + fileName).bufferedWriter()
+    writer.write("v ")
+    writer.write(model.vertices[0].x.toString())
+    writer.write(" ")
+    writer.write(model.vertices[0].y.toString())
+    writer.write(" ")
+    writer.write(model.vertices[0].z.toString())
+    for (i in 1 until model.vertices.size) {
+        writer.write("\nv ")
+        writer.write(model.vertices[i].x.toString())
+        writer.write(" ")
+        writer.write(model.vertices[i].y.toString())
+        writer.write(" ")
+        writer.write(model.vertices[i].z.toString())
+    }
+    model.polygons.forEach {
+        writer.write("\nf")
+        val polygon = it
+        polygon.points.forEach {
+            for (i in 0 until model.vertices.size) {
+                if (it.x == model.vertices[i].x &&
+                        it.y == model.vertices[i].y &&
+                        it.z == model.vertices[i].z) {
+                    writer.write(" " + (i + 1).toString())
+                    writer.write("//")
+                }
+            }
+        }
+    }
+    writer.close()
 }
