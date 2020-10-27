@@ -14,7 +14,13 @@ enum class Axis { X, Y, Z }
 data class DirectionVector(val l: Double, val m: Double, val n: Double)
 
 class Polygon {
-    val points = ArrayList<Point3D>()
+    var points = ArrayList<Point3D>()
+
+    constructor(){}
+
+    constructor(points: ArrayList<Point3D>) {
+        this.points = points
+    }
 
     operator fun get(i: Int) = points[(i % points.size)]
 

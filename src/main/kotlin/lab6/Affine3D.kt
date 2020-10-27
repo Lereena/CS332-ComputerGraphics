@@ -14,6 +14,7 @@ import javafx.stage.Stage
 import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.math.PI
 
 enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
 
@@ -208,7 +209,7 @@ class Affine3D : Application() {
             redraw(mainCanvas, mainGcA, mainGc)
         }
 
-        // reflext pane
+        // reflect pane
         val trReflectPane = GridPane()
         val trReflectTitle = Label("Отражение")
 
@@ -344,13 +345,53 @@ class Affine3D : Application() {
             redraw(mainCanvas, mainGcA, mainGc)
         }
 
+        // Rotation shape
+
+        val crRotationShapePane = GridPane()
+        val crRotationShapeTitle = Label("Координаты точек")
+        val crRotationShapeXField = TextField("0.0")
+        val crRotationShapeYField = TextField("0.0")
+        val crRotationShapeZField = TextField("0.0")
+        val crRotationShapeXLabel = Label("X")
+        val crRotationShapeYLabel = Label("Y")
+        val crRotationShapeZLabel = Label("Z")
+        val crAddRotShapeButton = Button("Добавить точку")
+
+        val crRotationShapeButton = Button("Создать фигуру вращения")
+
+        crRotationShapePane.add(crRotationShapeTitle,  0, 0, 2, 1)
+        crRotationShapePane.add(crRotationShapeXLabel, 0, 1)
+        crRotationShapePane.add(crRotationShapeXField, 1, 1)
+        crRotationShapePane.add(crRotationShapeYLabel, 0, 2)
+        crRotationShapePane.add(crRotationShapeYField, 1, 2)
+        crRotationShapePane.add(crRotationShapeZLabel, 0, 3)
+        crRotationShapePane.add(crRotationShapeZField, 1, 3)
+        crRotationShapePane.add(crAddRotShapeButton,   0, 4, 2, 1)
+        crRotationShapePane.add(crRotationShapeButton, 0, 6, 2, 1)
+
+        var generatrixPoints = ArrayList<Point3D>()
+        crAddRotShapeButton.setOnAction {
+            val point = Point3D(
+                    crRotationShapeXField.text.toDouble(),
+                    crRotationShapeYField.text.toDouble(),
+                    crRotationShapeZField.text.toDouble()
+            )
+            generatrixPoints.add(point)
+        }
+
+        crRotationShapeButton.setOnAction {
+            currentModel = rotationShape(generatrixPoints, 10, Axis.Y)
+            redraw(mainCanvas, mainGcA, mainGc)
+        }
+
         transformationPane.children.addAll(
             trMovePane,
             trScalePane,
             trReflectPane,
             trRotatePane,
             trRotateLinePane,
-            funcPlotPane
+            funcPlotPane,
+            crRotationShapePane
         )
 
         primaryStage.title = "Affine transformations 3D"
@@ -450,7 +491,7 @@ fun axonometricProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsCont
     gc.strokeText("Z", 770.0, 570.0)
     for (polygon in model.polygons) {
         val projPoints = polygon.points.map { point ->
-            multiplePointAndMatrix(point, axonometricMatrix(145.0 * 3.14 / 180, 45.0 * 3.14 / 180))
+            multiplePointAndMatrix(point, axonometricMatrix(145.0 * PI / 180, 45.0 * PI / 180))
         }
         var prevPoint = projPoints.last()
         for (point in projPoints) {
