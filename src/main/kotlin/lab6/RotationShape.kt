@@ -37,3 +37,18 @@ fun rotationShape(points: ArrayList<Point3D>, iterations: Int, axis: Axis): Poly
 
     return Polyhedron(vertices, polygons)
 }
+
+fun pointsToPolyhedron(points: ArrayList<Point3D>): Polyhedron {
+    if (points.size == 1) {
+        val polygon = Polygon(arrayListOf(points[0]))
+        return Polyhedron(arrayListOf(points[0]), arrayListOf(polygon))
+    }
+    val polygons = ArrayList<Polygon>(points.size - 1)
+    var prevPoint = points[0]
+    for (i in (1 until points.size)) {
+        val polygon = Polygon(arrayListOf(prevPoint, points[i]))
+        polygons.add(polygon)
+        prevPoint = points[i]
+    }
+    return Polyhedron(points, polygons)
+}

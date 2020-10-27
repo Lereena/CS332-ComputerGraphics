@@ -144,19 +144,10 @@ class Affine3D : Application() {
         val trRotateSection = InterfaceSection("Поворот")
         with(trRotateSection) {
             val angleInput = addInput("Угол", "0.0")
-            val axesItems = FXCollections.observableArrayList("X", "Y", "Z")
-            val axesList = ComboBox(axesItems)
-            axesList.value = "X"
-            addComboBox(axesList)
+            val axesList = addComboBox(arrayOf(Axis.X, Axis.Y, Axis.Z), Axis.X)
 
             addButton("Вокруг оси", EventHandler {
-                val rotationAxis = when (axesList.value) {
-                    "X" -> Axis.X
-                    "Y" -> Axis.Y
-                    "Z" -> Axis.Z
-                    else -> Axis.X
-                }
-                rotateAroundCenter(currentModel, rotationAxis,
+                rotateAroundCenter(currentModel, axesList.value,
                         angleInput.text.toDouble())
                 redraw()
             })
@@ -254,23 +245,18 @@ class Affine3D : Application() {
                         zInput.text.toDouble()
                 )
                 generatrixPoints.add(point)
+                currentModel = pointsToPolyhedron(generatrixPoints)
+                redraw()
             })
 
             val stepsInput = addInput("Разбиения", "5")
-            val axesItems = FXCollections.observableArrayList("X", "Y", "Z")
-            val axesList = ComboBox(axesItems)
-            axesList.value = "X"
+            val axesList = addComboBox(arrayOf(Axis.X, Axis.Y, Axis.Z), Axis.Y)
 
             addButton("Создать фигуру", EventHandler {
-                val axis = when (axesList.value) {
-                    "X" -> Axis.X
-                    "Y" -> Axis.Y
-                    "Z" -> Axis.Z
-                    else -> Axis.X
-                }
                 currentModel = rotationShape(generatrixPoints,
-                        stepsInput.text.toInt(), axis)
+                        stepsInput.text.toInt(), axesList.value)
                 redraw()
+                generatrixPoints.clear()
             })
         }
 

@@ -1,5 +1,6 @@
 package lab6
 
+import javafx.collections.FXCollections
 import javafx.scene.control.Button
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
@@ -46,9 +47,19 @@ class InterfaceSection(title: String) {
         return button
     }
 
-    fun addComboBox(comboBox: ComboBox<String>) {
+    fun <T> addComboBox(comboBox: ComboBox<T>) {
         sectionPane.add(comboBox, 0, lastRow, 2, 1)
         lastRow++
+    }
+
+    fun <T> addComboBox(items: Array<T>, defaultVal: T? = null): ComboBox<T> {
+        val itemsCol = FXCollections.observableArrayList<T>(*items)
+        val comboBox = ComboBox(itemsCol)
+        if (defaultVal != null)
+            comboBox.value = defaultVal
+        sectionPane.add(comboBox, 0, lastRow, 2, 1)
+        lastRow++
+        return comboBox
     }
 
     fun getValue(labelText: String): String {
