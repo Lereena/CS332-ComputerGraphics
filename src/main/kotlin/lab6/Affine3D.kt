@@ -436,6 +436,8 @@ fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis
 
 fun saveModel(model: Polyhedron, fileName: String) {
     val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
+
+    // добавляем вершины
     writer.write("v ")
     writer.write(model.vertices[0].x.toString())
     writer.write(" ")
@@ -450,6 +452,17 @@ fun saveModel(model: Polyhedron, fileName: String) {
         writer.write(" ")
         writer.write(model.vertices[i].z.toString())
     }
+
+    // добавляем нормали
+    model.polygons.forEach {
+        writer.write("\nvn")
+        val polygon = it
+        var normal = findNormal(polygon.points[0], polygon.points[1], polygon.points[2])
+        writer.write(" " + normal.x + " " + normal.y + " " + normal.x)
+    }
+
+    // добавляем поверхности
+    var p_i = 1
     model.polygons.forEach {
         writer.write("\nf")
         val polygon = it
@@ -459,10 +472,18 @@ fun saveModel(model: Polyhedron, fileName: String) {
                         it.y == model.vertices[i].y &&
                         it.z == model.vertices[i].z) {
                     writer.write(" " + (i + 1).toString())
-                    writer.write("//")
+                    writer.write("//" + p_i.toString())
                 }
             }
         }
+        p_i += 1
     }
     writer.close()
+}
+
+fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : Point3D {
+    val A = (p1.y - p0.y) * (p2.z - p0.z) - (p1.z - p0.z) * (p2.y - p0.y)
+    val B = (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z)
+    val C = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x)
+    return Point3D(A, B, C)
 }
