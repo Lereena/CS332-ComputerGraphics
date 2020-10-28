@@ -27,6 +27,7 @@ class Polygon {
 class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
+    var centerPoint = Point3D(0.0, 0.0, 0.0)
 
     constructor(filename: String) {
         File(filename).forEachLine {
@@ -49,9 +50,11 @@ class Polyhedron {
         }
     }
 
-    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>) {
+    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>,
+                centerPoint: Point3D = Point3D(0.0, 0.0, 0.0)) {
         this.vertices = vertices
         this.polygons = polygons
+        this.centerPoint = centerPoint
     }
 }
 

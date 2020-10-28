@@ -146,10 +146,17 @@ class Affine3D : Application() {
             val angleInput = addInput("Угол", "0.0")
             val axesList = addComboBox(arrayOf(Axis.X, Axis.Y, Axis.Z), Axis.X)
 
-            addButton("Вокруг оси", EventHandler {
-                rotateAroundCenter(currentModel, axesList.value,
-                        angleInput.text.toDouble())
+            addButton("Параллельно оси", EventHandler {
+                val cP = currentModel.centerPoint
+                val line = when(axesList.value) {
+                    Axis.X -> Line(Point3D(cP.x-50.0, cP.y, cP.z), Point3D(cP.x+50.0, cP.y, cP.z))
+                    Axis.Y -> Line(Point3D(cP.x, cP.y-50.0, cP.z), Point3D(cP.x, cP.y+50.0, cP.z))
+                    Axis.Z -> Line(Point3D(cP.x, cP.y, cP.z-50.0), Point3D(cP.x, cP.y, cP.z+50.0))
+                }
+                rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
+                val tempLine = getLinePolyhedron(line)
+                draw(tempLine)
             })
 
             addLabel("Координаты точек прямой")

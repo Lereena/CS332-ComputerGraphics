@@ -30,7 +30,13 @@ fun rotateAroundLine(polyhedron: Polyhedron, line: Line, angle: Double) {
 }
 
 fun scale(polyhedron: Polyhedron, kX: Double, kY: Double, kZ: Double) {
-    transform(polyhedron, scaleMatrix(kX, kY, kZ))
+    val cP = polyhedron.centerPoint
+    val move = translationMatrix(-cP.x, -cP.y, -cP.z)
+    val scale = scaleMatrix(kX, kY, kZ)
+    val moveBack = translationMatrix(cP.x, cP.y, cP.z)
+
+    val transformationMatrix = multiplyMatrices(moveBack, multiplyMatrices(scale, move))
+    transform(polyhedron, transformationMatrix)
 }
 
 fun reflect(polyhedron: Polyhedron, axis: Axis) {
@@ -163,6 +169,11 @@ fun axonometricMatrix(fi: Double, psi: Double): Matrix {
 }
 
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
+    val newCenterPoint = multiplyMatrices(matrix,
+            pointToMatrix(polyhedron.centerPoint))
+    polyhedron.centerPoint.x = newCenterPoint[0][0]
+    polyhedron.centerPoint.y = newCenterPoint[1][0]
+    polyhedron.centerPoint.z = newCenterPoint[2][0]
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
         val transformed = multiplyMatrices(matrix, pointToMatrix(point))
