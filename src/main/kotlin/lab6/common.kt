@@ -81,7 +81,7 @@ data class Line(val point1: Point3D, val point2: Point3D) {
     }
 }
 
-fun multiplyMatrices(left: Array<DoubleArray>, right: Array<DoubleArray>): Array<DoubleArray> {
+fun multiplyMatrices(left: Matrix, right: Matrix): Matrix {
     val result = Array(left.size) { DoubleArray(right[0].size) { 0.0 } }
     for (i in left.indices) // Rows
         for (j in right[0].indices) // Columns
