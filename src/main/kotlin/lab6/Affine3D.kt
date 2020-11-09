@@ -276,13 +276,13 @@ class Affine3D : Application() {
         }
 
         transformationPane.children.addAll(
+                saveSection.sectionPane,
                 trMoveSection.sectionPane,
                 trScaleSection.sectionPane,
                 trReflectSection.sectionPane,
                 trRotateSection.sectionPane,
                 funcPlotSection.sectionPane,
-                crRotationShapeSection.sectionPane,
-                saveSection.sectionPane
+                crRotationShapeSection.sectionPane
         )
 
         primaryStage.title = "Affine transformations 3D"
