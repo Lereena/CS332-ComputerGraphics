@@ -13,7 +13,7 @@ data class DirectionVector(val l: Double, val m: Double, val n: Double)
 class Polygon {
     var points = ArrayList<Point3D>()
 
-    constructor(){}
+    constructor() {}
 
     constructor(points: ArrayList<Point3D>) {
         this.points = points
@@ -27,6 +27,7 @@ class Polygon {
 class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
+    var normals = ArrayList<DirectionVector>()
     var centerPoint = Point3D(0.0, 0.0, 0.0)
 
     constructor(filename: String) {
@@ -36,6 +37,9 @@ class Polyhedron {
                 when (sLine[0]) {
                     "v" -> {
                         vertices.add(Point3D(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
+                    }
+                    "vn" -> {
+                        normals.add(DirectionVector(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
                     }
                     "f" -> {
                         val polygon = Polygon()
@@ -50,12 +54,48 @@ class Polyhedron {
         }
     }
 
-    constructor(vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>,
-                centerPoint: Point3D = Point3D(0.0, 0.0, 0.0)) {
+    constructor(
+        vertices: ArrayList<Point3D>, polygons: ArrayList<Polygon>,
+        centerPoint: Point3D = Point3D(0.0, 0.0, 0.0)
+    ) {
         this.vertices = vertices
         this.polygons = polygons
         this.centerPoint = centerPoint
+        for (polygon in polygons) {
+            if (polygon.points.size < 3)
+                throw Exception("Меньше трёх точек в полигоне")
+            normals.add(toDirVect(findNormal(polygon[0], polygon[1], polygon[2])))
+        }
     }
+
+    fun faces(viewVector: DirectionVector): Array<Boolean> {
+        val result = Array(polygons.size) { false }
+
+        for (i in result.indices) {
+            val polygon = polygons[i]
+            if (polygon.points.size < 3)
+                throw Exception("Меньше трёх точек в полигоне")
+
+            if (normals.size == 0) {
+                val normal = toDirVect(findNormal(polygon[0], polygon[1], polygon[2]))
+                result[i] = angleBetweenVectors(normal, viewVector) > PI / 2
+            } else
+                result[i] = angleBetweenVectors(normals[i], viewVector) > PI / 2
+        }
+
+        return result
+    }
+
+    private fun angleBetweenVectors(v1: DirectionVector, v2: DirectionVector): Double {
+        return acos((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
+                / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
+                * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
+    }
+}
+
+// надо договориться о том чтобы использовать в качестве вектора вектор, а не точку
+fun toDirVect(point: Point3D): DirectionVector {
+    return DirectionVector(point.x, point.y, point.z)
 }
 
 fun getLinePolyhedron(line: Line): Polyhedron {
@@ -78,6 +118,12 @@ data class Line(val point1: Point3D, val point2: Point3D) {
         val n = point2.z - point1.z
         val length = sqrt(l * l + m * m + n * n)
         return DirectionVector(l / length, m / length, n / length)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is Line)
+            return false
+        return point1.x == other.point1.x && point1.y == other.point1.y && point1.z == other.point1.z
     }
 }
 

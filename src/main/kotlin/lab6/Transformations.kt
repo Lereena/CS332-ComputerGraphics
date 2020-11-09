@@ -52,10 +52,11 @@ fun reflect(polyhedron: Polyhedron, axis: Axis) {
 
 fun identityMatrix(): Matrix {
     return arrayOf(
-            doubleArrayOf(1.0, 0.0, 0.0, 0.0),
-            doubleArrayOf(0.0, 1.0, 0.0, 0.0),
-            doubleArrayOf(0.0, 0.0, 1.0, 0.0),
-            doubleArrayOf(0.0, 0.0, 0.0, 1.0))
+        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 1.0)
+    )
 }
 
 fun translationMatrix(tX: Double, tY: Double, tZ: Double): Matrix {
@@ -134,43 +135,45 @@ fun rotationZMatrix(angle: Double): Matrix {
 
 fun perspectiveZMatrix(dist: Double): Matrix {
     return arrayOf(
-            doubleArrayOf(1.0, 0.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 1.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 0.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 0.0, -1/dist, 1.0),
+        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, -1 / dist, 1.0),
     )
 }
 
 fun perspectiveYMatrix(dist: Double): Matrix {
     return arrayOf(
-            doubleArrayOf(1.0, 0.0,     0.0, 0.0),
-            doubleArrayOf(0.0, 0.0,     0.0, 0.0),
-            doubleArrayOf(0.0, 0.0,     1.0, 0.0),
-            doubleArrayOf(0.0, -1/dist, 0.0, 1.0),
+        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+        doubleArrayOf(0.0, -1 / dist, 0.0, 1.0),
     )
 }
 
 fun perspectiveXMatrix(dist: Double): Matrix {
     return arrayOf(
-            doubleArrayOf(0.0,     0.0, 0.0, 0.0),
-            doubleArrayOf(0.0,     1.0, 0.0, 0.0),
-            doubleArrayOf(0.0,     0.0, 1.0, 0.0),
-            doubleArrayOf(-1/dist, 0.0, 0.0, 1.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+        doubleArrayOf(-1 / dist, 0.0, 0.0, 1.0),
     )
 }
 
 fun axonometricMatrix(fi: Double, psi: Double): Matrix {
     return arrayOf(
-            doubleArrayOf(cos(psi),             0.0,      sin(psi),             0.0),
-            doubleArrayOf(sin(fi) * sin(psi),   cos(fi),  -sin(fi) * cos(psi),  0.0),
-            doubleArrayOf(0.0,                  0.0,      0.0,                  0.0),
-            doubleArrayOf(0.0,                  0.0,      0.0,                  1.0),
+        doubleArrayOf(cos(psi), 0.0, sin(psi), 0.0),
+        doubleArrayOf(sin(fi) * sin(psi), cos(fi), -sin(fi) * cos(psi), 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 1.0),
     )
 }
 
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
-    val newCenterPoint = multiplyMatrices(matrix,
-            pointToMatrix(polyhedron.centerPoint))
+    val newCenterPoint = multiplyMatrices(
+        matrix,
+        pointToMatrix(polyhedron.centerPoint)
+    )
     polyhedron.centerPoint.x = newCenterPoint[0][0]
     polyhedron.centerPoint.y = newCenterPoint[1][0]
     polyhedron.centerPoint.z = newCenterPoint[2][0]
@@ -196,4 +199,18 @@ fun pointToMatrix(point: Point3D): Matrix {
         doubleArrayOf(point.z),
         doubleArrayOf(1.0)
     )
+}
+
+fun removeNonFace(polyhedron: Polyhedron, viewVector: DirectionVector): Array<Line> {
+    val visiblePolygons = polyhedron.faces(viewVector)
+    val visibleEdges = HashSet<Line>()
+
+    for (i in polyhedron.polygons.indices)
+        if (visiblePolygons[i]) {
+            val polygon = polyhedron.polygons[i]
+            for (j in polygon.indices)
+                visibleEdges.add(Line(polygon[i], polygon[i + 1]))
+        }
+
+    return visibleEdges.toTypedArray()
 }
