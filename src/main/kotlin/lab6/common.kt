@@ -2,6 +2,7 @@ package lab6
 
 import java.awt.Point
 import java.io.File
+import java.lang.Double.MAX_VALUE
 import kotlin.collections.ArrayList
 import kotlin.math.*
 
@@ -26,6 +27,8 @@ data class Point3D(var x: Double, var y: Double, var z: Double) {
 }
 
 enum class Axis { X, Y, Z }
+
+data class ZBuffCell(var is_obstructed: Boolean = false, var depth: Double = MAX_VALUE)
 
 data class DirectionVector(var l: Double, var m: Double, var n: Double) {
     constructor(p: Point3D): this(p.x, p.y, p.z)
