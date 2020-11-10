@@ -133,30 +133,12 @@ fun rotationZMatrix(angle: Double): Matrix {
     )
 }
 
-fun perspectiveZMatrix(dist: Double): Matrix {
+fun perspectiveMatrix(position: Point3D): Matrix {
     return arrayOf(
-        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, -1 / dist, 1.0),
-    )
-}
-
-fun perspectiveYMatrix(dist: Double): Matrix {
-    return arrayOf(
-        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
-        doubleArrayOf(0.0, -1 / dist, 0.0, 1.0),
-    )
-}
-
-fun perspectiveXMatrix(dist: Double): Matrix {
-    return arrayOf(
-        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
-        doubleArrayOf(-1 / dist, 0.0, 0.0, 1.0),
+        doubleArrayOf(1.0, 0.0, 0.0, -1.0 / position.x),
+        doubleArrayOf(0.0, 1.0, 0.0, -1.0 / position.y),
+        doubleArrayOf(0.0, 0.0, 1.0, -1.0 / position.z),
+        doubleArrayOf(0.0, 0.0, 0.0, 1.0)
     )
 }
 
@@ -208,8 +190,8 @@ fun removeNonFace(polyhedron: Polyhedron, viewVector: DirectionVector): Array<Li
     for (i in polyhedron.polygons.indices)
         if (visiblePolygons[i]) {
             val polygon = polyhedron.polygons[i]
-            for (j in polygon.indices)
-                visibleEdges.add(Line(polygon[i], polygon[i + 1]))
+            for (j in polygon.points.indices)
+                visibleEdges.add(Line(polygon[j], polygon[j + 1]))
         }
 
     return visibleEdges.toTypedArray()

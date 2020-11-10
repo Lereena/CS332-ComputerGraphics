@@ -21,16 +21,21 @@ import kotlin.math.sin
 import kotlin.math.PI
 import java.io.File as File
 
-enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
+enum class Projection { PERSPECTIVE, AXONOMETRIC }
 
 class Affine3D : Application() {
+    private var axesModel = Polyhedron("assets/3dmodels/axes.obj")
     private var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
-    private var currentProjectionMode = Projection.ORTHOGRAPHIC
-    private var currentAxis = Axis.Z
+    private var currentProjectionMode = Projection.PERSPECTIVE
     private val mainCanvas = Canvas(800.0, 600.0)
-    private val mainCanvasA = Canvas(800.0, 600.0)
     private val mainGc = mainCanvas.graphicsContext2D
-    private val mainGcA = mainCanvasA.graphicsContext2D
+
+    private val camera = Camera(
+            Point3D(0.0, 0.0, 300.0),
+            DirectionVector(0.0, 0.0, -100.0),
+            mainCanvas,
+            150.0 / Math.PI
+    )
 
     override fun start(primaryStage: Stage) {
         val mainGroup = GridPane()
@@ -38,10 +43,9 @@ class Affine3D : Application() {
         mainGroup.hgap = 10.0
         mainGroup.vgap = 10.0
 
-        mainGcA.stroke = Color.RED
         mainGc.stroke = Color.BLACK
 
-        val canvasGroup = StackPane(mainCanvas, mainCanvasA)
+        val canvasGroup = StackPane(mainCanvas)
         canvasGroup.border = Border(
                 BorderStroke(
                         Color.BLACK,
@@ -69,39 +73,19 @@ class Affine3D : Application() {
             redraw()
         }
 
-        val axesItems = FXCollections.observableArrayList("XY", "XZ", "YZ")
-        val axesList = ComboBox(axesItems)
-        axesList.setOnAction {
-            when (axesList.value) {
-                "XY" -> {
-                    currentAxis = Axis.Z; }
-                "XZ" -> {
-                    currentAxis = Axis.Y; }
-                "YZ" -> {
-                    currentAxis = Axis.X; }
-            }
-            redraw()
-        }
-        axesList.value = "XY"
-
-        val ortModeButton = ToggleButton("Orthographic")
         val perModeButton = ToggleButton("Perspective")
         val axModeButton = ToggleButton("Axonometric")
-        ortModeButton.isSelected = true
+        perModeButton.isSelected = true
 
         shapePane.children.addAll(fileList,
-                axesList, 
-                ortModeButton,
                 perModeButton,
                 axModeButton
         )
 
         val toggleButtons = arrayOf(
-                ortModeButton,
                 perModeButton,
                 axModeButton,
         )
-        setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
         setModeButton(perModeButton, Projection.PERSPECTIVE,  toggleButtons)
         setModeButton(axModeButton,  Projection.AXONOMETRIC, toggleButtons)
 
@@ -156,7 +140,7 @@ class Affine3D : Application() {
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
                 val tempLine = getLinePolyhedron(line)
-                draw(tempLine)
+                camera.draw(tempLine)
             })
 
             addLabel("Координаты точек прямой")
@@ -181,7 +165,7 @@ class Affine3D : Application() {
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
                 val tempLine = getLinePolyhedron(line)
-                draw(tempLine)
+                camera.draw(tempLine)
             })
         }
 
@@ -300,17 +284,9 @@ class Affine3D : Application() {
 
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
-        mainGcA.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        draw(currentModel)
-    }
-
-    private fun draw(model: Polyhedron) {
-        when (currentProjectionMode) {
-            Projection.ORTHOGRAPHIC -> orthographicProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-            Projection.PERSPECTIVE -> perspectiveProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-            Projection.AXONOMETRIC -> axonometricProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-        }
+        camera.draw(currentModel)
+//        camera.draw(axesModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
@@ -327,163 +303,39 @@ class Affine3D : Application() {
     }
 }
 
-fun orthographicProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    drawAxes(canvas, gcA, gc, ax)
-    for (polygon in model.polygons) {
-        for (i in polygon.points.indices) {
-            when (ax) {
-                Axis.Z -> {
-                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                }
-                Axis.Y -> {
-                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
-                }
-                Axis.X -> {
-                    gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                }
-            }
-        }
-    }
-    gc.stroke()
-}
-
-fun perspectiveProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    drawAxes(canvas, gcA, gc, ax)
-    val matrix = when (ax) {
-        Axis.Z -> perspectiveZMatrix(300.0)
-        Axis.Y -> perspectiveYMatrix(300.0)
-        Axis.X -> perspectiveXMatrix(300.0)
-    }
-    for (polygon in model.polygons) {
-        val projPoints = polygon.points.map { point ->
-            multiplePointAndMatrix(point, matrix)
-        }
-        var prevPoint = projPoints.last()
-        for (point in projPoints) {
-            when (ax) {
-                Axis.Z -> {
-                    gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
-                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-                }
-                Axis.Y -> {
-                    gc.moveTo(point.x + canvas.width / 2, -point.z + canvas.height / 2)
-                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.z + canvas.height / 2)
-                }
-                Axis.X -> {
-                    gc.moveTo(point.z + canvas.width / 2, -point.y + canvas.height / 2)
-                    gc.lineTo(prevPoint.z + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-                }
-            }
-            prevPoint = point
-        }
-    }
-    gc.stroke()
-}
-
-
-fun axonometricProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
-    gcA.beginPath()
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height / 2)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(0.0, 530.0)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(canvas.width, 530.0)
-    gcA.stroke()
-    gc.strokeText("Y", 410.0, 30.0)
-    gc.strokeText("X", 23.0, 570.0)
-    gc.strokeText("Z", 770.0, 570.0)
-    for (polygon in model.polygons) {
-        val projPoints = polygon.points.map { point ->
-            multiplePointAndMatrix(point, axonometricMatrix(145.0 * PI / 180, 45.0 * PI / 180))
-        }
-        var prevPoint = projPoints.last()
-        for (point in projPoints) {
-            gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
-            gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-            prevPoint = point
-        }
-    }
-    gc.stroke()
-}
-
-fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis) {
-    gcA.beginPath()
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height)
-    gcA.moveTo(0.0, canvas.height / 2)
-    gcA.lineTo(canvas.width, canvas.height / 2)
-    gcA.stroke()
-    when (ax) {
-        Axis.Z -> {
-            gc.strokeText("Y", 410.0, 30.0)
-            gc.strokeText("X", 770.0, 290.0)
-        }
-        Axis.Y -> {
-            gc.strokeText("Z", 410.0, 30.0)
-            gc.strokeText("X", 770.0, 290.0)
-        }
-        Axis.X -> {
-            gc.strokeText("Y", 410.0, 30.0)
-            gc.strokeText("Z", 770.0, 290.0)
-        }
-    }
-}
-
 fun saveModel(model: Polyhedron, fileName: String) {
     val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
 
     // добавляем вершины
-    writer.write("v ")
-    writer.write(model.vertices[0].x.toString())
-    writer.write(" ")
-    writer.write(model.vertices[0].y.toString())
-    writer.write(" ")
-    writer.write(model.vertices[0].z.toString())
-    for (i in 1 until model.vertices.size) {
-        writer.write("\nv ")
-        writer.write(model.vertices[i].x.toString())
-        writer.write(" ")
-        writer.write(model.vertices[i].y.toString())
-        writer.write(" ")
-        writer.write(model.vertices[i].z.toString())
+    for (vertice in model.vertices) {
+        writer.write("v ${vertice.x} ${vertice.y} ${vertice.z}\n")
     }
 
     // добавляем нормали
-    model.polygons.forEach {
-        writer.write("\nvn")
-        val polygon = it
-        var normal = findNormal(polygon.points[0], polygon.points[1], polygon.points[2])
-        writer.write(" " + normal.x + " " + normal.y + " " + normal.x)
+    for (polygon in model.polygons) {
+        val normal = findNormal(polygon.points[0], polygon.points[1], polygon.points[2])
+        writer.write("vn ${normal.l} ${normal.m} ${normal.n}\n")
     }
 
     // добавляем поверхности
-    var p_i = 1
-    model.polygons.forEach {
-        writer.write("\nf")
-        val polygon = it
-        polygon.points.forEach {
-            for (i in 0 until model.vertices.size) {
-                if (it.x == model.vertices[i].x &&
-                        it.y == model.vertices[i].y &&
-                        it.z == model.vertices[i].z) {
-                    writer.write(" " + (i + 1).toString())
-                    writer.write("//" + p_i.toString())
-                }
+    var faceIndex = 1
+    for (polygon in model.polygons) {
+        writer.write ("f")
+        for (point in polygon.points) {
+            for (i in model.vertices.indices) {
+                if (point == model.vertices[i])
+                    writer.write(" ${i + 1}//${faceIndex}")
             }
         }
-        p_i += 1
+        writer.write("\n")
+        faceIndex++
     }
     writer.close()
 }
 
-fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : Point3D {
+fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : DirectionVector {
     val A = (p1.y - p0.y) * (p2.z - p0.z) - (p1.z - p0.z) * (p2.y - p0.y)
     val B = (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z)
     val C = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x)
-    return Point3D(A, B, C)
+    return DirectionVector(A, B, C)
 }

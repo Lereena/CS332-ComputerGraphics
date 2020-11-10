@@ -1,10 +1,21 @@
 package lab6
 
+import java.awt.Point
 import java.io.File
 import kotlin.collections.ArrayList
 import kotlin.math.*
 
-data class Point3D(var x: Double, var y: Double, var z: Double)
+data class Point3D(var x: Double, var y: Double, var z: Double) {
+    constructor(other: Point3D): this(other.x, other.y, other.z)
+
+    override fun equals(other: Any?): Boolean {
+        if (other is Point3D)
+            return this.x == other.x &&
+                this.y == other.y &&
+                this.z == other.z
+        return false
+    }
+}
 
 enum class Axis { X, Y, Z }
 
@@ -18,8 +29,8 @@ class Polygon {
     constructor(points: ArrayList<Point3D>) {
         this.points = points
     }
-
     val indices = points.indices
+
     operator fun get(i: Int) = points[(i % points.size)]
     fun add(point: Point3D) = points.add(point)
 }
@@ -64,8 +75,22 @@ class Polyhedron {
         for (polygon in polygons) {
             if (polygon.points.size < 3)
                 throw Exception("Меньше трёх точек в полигоне")
-            normals.add(toDirVect(findNormal(polygon[0], polygon[1], polygon[2])))
+            normals.add(findNormal(polygon[0], polygon[1], polygon[2]))
         }
+    }
+
+    fun copy(): Polyhedron {
+        val vertices = ArrayList<Point3D>()
+        val polygons = ArrayList<Polygon>()
+        val centerPoint = Point3D(this.centerPoint)
+        for (polygon in this.polygons) {
+            val tempPoints = ArrayList<Point3D>()
+            for (point in polygon.points)
+                tempPoints.add(Point3D(point))
+            polygons.add(Polygon(tempPoints))
+            vertices.addAll(tempPoints)
+        }
+        return Polyhedron(vertices, polygons, centerPoint)
     }
 
     fun faces(viewVector: DirectionVector): Array<Boolean> {
@@ -76,11 +101,11 @@ class Polyhedron {
             if (polygon.points.size < 3)
                 throw Exception("Меньше трёх точек в полигоне")
 
-            if (normals.size == 0) {
-                val normal = toDirVect(findNormal(polygon[0], polygon[1], polygon[2]))
+//            if (normals.size == 0) {
+                val normal = findNormal(polygon[0], polygon[1], polygon[2])
                 result[i] = angleBetweenVectors(normal, viewVector) > PI / 2
-            } else
-                result[i] = angleBetweenVectors(normals[i], viewVector) > PI / 2
+//            } else
+//                result[i] = angleBetweenVectors(normals[i], viewVector) < PI / 2
         }
 
         return result
@@ -91,11 +116,6 @@ class Polyhedron {
                 / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
                 * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
     }
-}
-
-// надо договориться о том чтобы использовать в качестве вектора вектор, а не точку
-fun toDirVect(point: Point3D): DirectionVector {
-    return DirectionVector(point.x, point.y, point.z)
 }
 
 fun getLinePolyhedron(line: Line): Polyhedron {
