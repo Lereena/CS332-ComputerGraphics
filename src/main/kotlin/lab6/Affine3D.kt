@@ -19,6 +19,8 @@ import javafx.scene.input.KeyEvent
 import lab3.Point
 import lab4.Shape
 import lab4.checkIsIn
+import java.lang.Double.MAX_VALUE
+import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -376,19 +378,32 @@ fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Doub
 
 fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
     var zBuff = LinkedList<LinkedList<ZBuffCell>>()
-    for (i in 0 until canvas.height.toInt()) {
-        var zBuffRow = LinkedList<ZBuffCell>()
-        for (j in 0 until canvas.width.toInt()) {
-            zBuffRow.add(ZBuffCell())
+    for (i in 0 until canvas.width.toInt()) {
+        var zBuffCol = LinkedList<ZBuffCell>()
+        for (j in 0 until canvas.height.toInt()) {
+            zBuffCol.add(ZBuffCell())
         }
-        zBuff.add(zBuffRow)
+        zBuff.add(zBuffCol)
     }
-    var max_depth = java.lang.Double.MIN_VALUE
     var min_depth = java.lang.Double.MAX_VALUE
     for (i in model.polygons.indices) {
         var points = LinkedList<Point>()
+        var left_bound = model.polygons[0].points[0].x.toInt()
+        var right_bound = model.polygons[0].points[0].x.toInt()
+        var down_bound = model.polygons[0].points[0].y.toInt()
+        var up_bound = model.polygons[0].points[0].y.toInt()
         for (j in model.polygons[i].points.indices) {
-            points.add(Point(model.polygons[i].points[j].x.toInt(), model.polygons[i].points[j].y.toInt()))
+            val x = model.polygons[i].points[j].x.toInt()
+            val y = model.polygons[i].points[j].y.toInt()
+            points.add(Point(x, y))
+            if (x < left_bound)
+                left_bound = x
+            if (x > right_bound)
+                right_bound = x
+            if (y < down_bound)
+                down_bound = y
+            if (y > up_bound)
+                up_bound = y
         }
         var shape = Shape(points)
         // ищем коэфициенты уравнения плоскости с помощью вектора нормали
@@ -400,53 +415,62 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
         val B = normal.m
         val C = normal.n
         // высчитываем свободный член в уравнении плоскости
-        val F = - (model.polygons[i].points[0].x * A)
-        - (model.polygons[i].points[0].y * B)
-        - (model.polygons[i].points[0].z * C)
-        for (r in 0 until zBuff.size) {
-            for (c in 0 until zBuff[i].size) {
-                val p = Point(r, c)
+        val F = - (model.polygons[i].points[0].x * A) - (model.polygons[i].points[0].y * B) - (model.polygons[i].points[0].z * C)
+
+        for (c in left_bound until right_bound) {
+            for (r in down_bound until up_bound) {
+                val p = Point(c, r)
                 if (checkIsIn(shape, p)) {
-                    if (zBuff[r][c].is_obstructed) {
+                    if (zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].is_obstructed) {
                         val depth = findDepth(c, r, A, B, C, F)
-                        if (zBuff[r][c].depth > depth) {
-                            zBuff[r][c].depth = depth
-                            if (depth > max_depth)
-                                max_depth = depth
+                        if (zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth > depth && (depth < MAX_VALUE) && (depth > MIN_VALUE)) {
+                            zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth = depth/*
+                            print("!depth ")
+                            println(depth)*/
                             if (depth < min_depth)
                                 min_depth = depth
                         }
                     }
                     else {
-                        zBuff[r][c].is_obstructed = true
+                        zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].is_obstructed = true
                         val depth = findDepth(c, r, A, B, C, F)
-                        zBuff[r][c].depth = depth
-                        if (depth > max_depth)
-                            max_depth = depth
-                        if (depth < min_depth)
-                            min_depth = depth
+                        if ((depth < MAX_VALUE) && (depth > MIN_VALUE)) {
+                            zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth = depth
+                            /*print("*depth ")
+                            println(depth)*/
+                            if (depth < min_depth)
+                                min_depth = depth
+                        }
                     }
                 }
             }
         }
     }
-    println(min_depth)
-    println(max_depth)
-    val image = WritableImage(zBuff[0].size, zBuff.size)
-    val writer = image.pixelWriter
-    for (y in zBuff.indices) {
-        for (x in zBuff[y].indices) {
-            if (zBuff[y][x].is_obstructed) {
-                var value = zBuff[y][x].depth
-                print(value)
-                print(" ")
-                value = (value - min_depth) / (max_depth - min_depth)
-                print(value)
-                print(" ")
-                writer.setColor(x, y, Color(value, value, value, 1.0))
-            } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
+    var max_depth = MIN_VALUE
+    for(i in 0 until zBuff.size) {
+        for (j in 0 until zBuff[i].size) {
+            if (zBuff[i][j].is_obstructed && max_depth < zBuff[i][j].depth) {
+                max_depth = zBuff[i][j].depth
+            }
         }
-        println()
+    }
+    //println(min_depth)
+    //println(max_depth)
+    val image = WritableImage(zBuff.size, zBuff[0].size)
+    val writer = image.pixelWriter
+    for (x in zBuff.indices) {
+        for (y in zBuff[x].indices) {
+            if (zBuff[x][y].is_obstructed) {
+                var value = zBuff[x][y].depth
+                /*print(value)
+                print(" ")*/
+                value = (value - min_depth) / (max_depth - min_depth)
+                /*print(value)
+                print(" ")*/
+                writer.setColor(x, canvas.height.toInt() - y - 1, Color(value, value, value, 1.0))
+            } else writer.setColor(x, canvas.height.toInt() - y - 1, Color(1.0, 1.0, 1.0, 1.0))
+        }
+        //println()
     }
     gc.drawImage(image, 0.0, 0.0)
 }
