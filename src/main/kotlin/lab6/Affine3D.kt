@@ -14,12 +14,20 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import javafx.event.EventHandler
+import javafx.scene.image.WritableImage
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.PI
 import java.io.File as File
+import lab4.checkIsIn
+import lab4.Shape
+import lab3.Point
+import java.lang.Double.MAX_VALUE
+import java.lang.Double.MIN_VALUE
 
 enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
 
@@ -48,6 +56,7 @@ class Affine3D : Application() {
                         BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT
                 )
         )
+
 
         val shapePane = FlowPane(Orientation.HORIZONTAL, 10.0, 0.0)
         val transformationPane = FlowPane(Orientation.VERTICAL, 0.0, 30.0)
@@ -486,4 +495,77 @@ fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : Point3D {
     val B = (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z)
     val C = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x)
     return Point3D(A, B, C)
+}
+
+fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Double {
+    return ((A * x) + (B * y) + F) / C
+}
+
+fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
+    var zBuff = LinkedList<LinkedList<ZBuffCell>>()
+    for (i in 0 until canvas.height.toInt()) {
+        var zBuffRow = LinkedList<ZBuffCell>()
+        for (j in 0 until canvas.width.toInt()) {
+            zBuffRow.add(ZBuffCell())
+        }
+        zBuff.add(zBuffRow)
+    }
+    var max_depth = MIN_VALUE
+    var min_depth = MAX_VALUE
+    for (i in model.polygons.indices) {
+        var points = LinkedList<Point>()
+        for (j in model.polygons[i].points.indices) {
+            points.add(Point(model.polygons[i].points[j].x.toInt(), model.polygons[i].points[j].y.toInt()))
+        }
+        var shape = Shape(points)
+        // ищем коэфициенты уравнения плоскости с помощью вектора нормали
+        // (координаты вектора нормали совпадают с коофициентами A, B и C в уравнении плоскости)
+        val normal = findNormal(model.polygons[i].points[0],
+                                         model.polygons[i].points[1],
+                                         model.polygons[i].points[2])
+        val A = normal.x
+        val B = normal.y
+        val C = normal.z
+        // высчитываем свободный член в уравнении плоскости
+        val F = - (model.polygons[i].points[0].x * A)
+                        - (model.polygons[i].points[0].y * B)
+                        - (model.polygons[i].points[0].z * C)
+        for (r in 0 until zBuff.size) {
+            for (c in 0 until zBuff[i].size) {
+                val p = Point(r, c)
+                if (checkIsIn(shape, p)) {
+                    if (zBuff[r][c].is_obstructed) {
+                        val depth = findDepth(c, r, A, B, C, F)
+                        if (zBuff[r][c].depth > depth) {
+                            zBuff[r][c].depth = depth
+                            if (depth > max_depth)
+                                max_depth = depth
+                            if (depth < min_depth)
+                                min_depth = depth
+                        }
+                    }
+                    else {
+                        zBuff[r][c].is_obstructed = true
+                        val depth = findDepth(c, r, A, B, C, F)
+                        zBuff[r][c].depth = depth
+                        if (depth > max_depth)
+                            max_depth = depth
+                        if (depth < min_depth)
+                            min_depth = depth
+                    }
+                }
+            }
+        }
+    }
+
+    val image = WritableImage(zBuff[0].size, zBuff.size)
+    val writer = image.pixelWriter
+    for (y in zBuff.indices)
+        for (x in zBuff[y].indices) {
+            var value = zBuff[y][x].depth
+            value = (value - min_depth) / (max_depth - min_depth)
+            //print(value)
+            writer.setColor(x, y, Color(value, value, value, 1.0))
+        }
+    gc.drawImage(image, 0.0, 0.0)
 }

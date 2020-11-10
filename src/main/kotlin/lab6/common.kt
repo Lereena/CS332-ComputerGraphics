@@ -1,6 +1,7 @@
 package lab6
 
 import java.io.File
+import java.lang.Double.MAX_VALUE
 import kotlin.collections.ArrayList
 import kotlin.math.*
 
@@ -9,6 +10,8 @@ data class Point3D(var x: Double, var y: Double, var z: Double)
 enum class Axis { X, Y, Z }
 
 data class DirectionVector(val l: Double, val m: Double, val n: Double)
+
+data class ZBuffCell(var is_obstructed: Boolean = false, var depth: Double = MAX_VALUE)
 
 class Polygon {
     var points = ArrayList<Point3D>()
@@ -90,3 +93,4 @@ fun multiplyMatrices(left: Matrix, right: Matrix): Matrix {
 
     return result
 }
+
