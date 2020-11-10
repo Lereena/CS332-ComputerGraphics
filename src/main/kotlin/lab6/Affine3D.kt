@@ -14,6 +14,7 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import javafx.event.EventHandler
+import javafx.scene.input.KeyEvent
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.math.pow
@@ -21,7 +22,7 @@ import kotlin.math.sin
 import kotlin.math.PI
 import java.io.File as File
 
-enum class Projection { PERSPECTIVE, AXONOMETRIC }
+enum class Projection { PERSPECTIVE, ORTHOGRAPHIC }
 
 class Affine3D : Application() {
     private var axesModel = Polyhedron("assets/3dmodels/axes.obj")
@@ -31,10 +32,9 @@ class Affine3D : Application() {
     private val mainGc = mainCanvas.graphicsContext2D
 
     private val camera = Camera(
-            Point3D(0.0, 0.0, 300.0),
-            DirectionVector(0.0, 0.0, -100.0),
-            mainCanvas,
-            150.0 / Math.PI
+            Point3D(0.0, 0.0,300.0),
+            Math.PI / 2, Math.PI / 2,
+            mainCanvas
     )
 
     override fun start(primaryStage: Stage) {
@@ -74,20 +74,20 @@ class Affine3D : Application() {
         }
 
         val perModeButton = ToggleButton("Perspective")
-        val axModeButton = ToggleButton("Axonometric")
+        val ortModeButton = ToggleButton("Orthographic")
         perModeButton.isSelected = true
 
         shapePane.children.addAll(fileList,
                 perModeButton,
-                axModeButton
+                ortModeButton
         )
 
         val toggleButtons = arrayOf(
                 perModeButton,
-                axModeButton,
+                ortModeButton,
         )
         setModeButton(perModeButton, Projection.PERSPECTIVE,  toggleButtons)
-        setModeButton(axModeButton,  Projection.AXONOMETRIC, toggleButtons)
+        setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
 
         // TRANSFORMATION PANE
         // move pane
@@ -272,6 +272,20 @@ class Affine3D : Application() {
         primaryStage.title = "Affine transformations 3D"
 
         primaryStage.scene = Scene(mainGroup)
+
+        primaryStage.addEventHandler(KeyEvent.KEY_PRESSED) { e ->
+            when(e.text) {
+                "w" -> camera.changePosition(0.0, 2.0)
+                "a" -> camera.changePosition(-2.0, 0.0)
+                "s" -> camera.changePosition(0.0, -2.0)
+                "d" -> camera.changePosition(2.0, 0.0)
+                "i" -> camera.changeAngleX(0.1)
+                "k" -> camera.changeAngleX(-0.1)
+                "l" -> camera.changeAngleY(0.1)
+                "j" -> camera.changeAngleY(-0.1)
+            }
+            redraw()
+        }
         primaryStage.show()
     }
 
@@ -286,7 +300,7 @@ class Affine3D : Application() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
         camera.draw(currentModel)
-//        camera.draw(axesModel)
+        camera.draw(axesModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
@@ -295,7 +309,7 @@ class Affine3D : Application() {
             if (state) {
                 for (button in all_buttons)
                     button.isSelected = false
-                currentProjectionMode = mode
+                camera.projectionMode = mode
                 redraw()
             }
             button.isSelected = true

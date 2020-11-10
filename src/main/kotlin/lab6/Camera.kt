@@ -6,26 +6,30 @@ import lab5.Point
 import kotlin.math.PI
 import kotlin.math.tan
 
-class Camera(var position: Point3D, var viewVector: DirectionVector, val canvas: Canvas, val fovAngle: Double) {
+class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val canvas: Canvas) {
     val mainGc = canvas.graphicsContext2D
     val height = canvas.height
     val width = canvas.width
-    val aspectRatio = width / height
-    val projectionMode = Projection.PERSPECTIVE
-    var fovX = 1.0 / tan(fovAngle / 2)
-    var fovY = 1.0 / tan(fovAngle / (2 * aspectRatio))
-    var far = 5000.0
-    var near = 1.0
+    var projectionMode = Projection.PERSPECTIVE
+    var viewVector = DirectionVector(0.0, 0.0, 1.0)
+    var cosX = Math.cos(angleX)
+    var cosY = Math.cos(angleY)
+    var sinX = Math.sin(angleX)
+    var sinY = Math.sin(angleY)
+
+    init {
+        updateViewVector()
+    }
 
     fun draw(model: Polyhedron) {
-        val copy = model.copy()
-//        var projectionMatrix = axonometricMatrix(145.0 * PI / 180, 45.0 * PI / 180)
-//        if (projectionMode == Projection.PERSPECTIVE)
-//            projectionMatrix = multiplyMatrices(projectionMatrix, perspectiveMatrix(position))
-        val projectionMatrix = multiplyMatrices(perspectiveProjectionMatrix(), viewMatrix())
-        transform(copy, projectionMatrix)
-        val edges = removeNonFace(copy, viewVector)
-                for (edge in edges) {
+        val projectionMatrix = multiplyMatrices(viewMatrix(), when (projectionMode) {
+            Projection.PERSPECTIVE -> perspectiveProjectionMatrix()
+            Projection.ORTHOGRAPHIC -> orthographicProjectionMatrix()
+        })
+        val clone = model.copy()
+        transform(clone, projectionMatrix)
+        val edges = removeNonFace(clone, viewVector)
+        for (edge in edges) {
             val a = viewPortTransform(edge.point1)
             val b = viewPortTransform(edge.point2)
             mainGc.strokeLine(
@@ -33,53 +37,66 @@ class Camera(var position: Point3D, var viewVector: DirectionVector, val canvas:
                     b.x, b.y
             )
         }
-//        for (polygon in model.polygons) {
-//            val projPoints = polygon.points.map { point ->
-//                multiplePointAndMatrix(point, projectionMatrix)
-//            }
-//            var prevPoint = viewPortTransform(projPoints.last())
-//            for (point in projPoints) {
-//                val newPoint = viewPortTransform(point)
-//                mainGc.moveTo(newPoint.x, newPoint.y)
-//                mainGc.lineTo(prevPoint.x, prevPoint.y)
-//                prevPoint = newPoint
-//            }
-//        }
-//        mainGc.stroke()
+        mainGc.stroke()
+    }
+
+    fun changeAngleX(difAngleX: Double) {
+        angleX += difAngleX
+        cosX = Math.cos(angleX)
+        sinX = Math.sin(angleX)
+    }
+
+    fun changeAngleY(difAngleY: Double) {
+        angleY += difAngleY
+        cosY = Math.cos(angleY)
+        sinY = Math.sin(angleY)
+    }
+
+    fun changePosition(difX: Double, difY: Double) {
+        position.x += difX
+        position.y += difY
+    }
+
+    private fun updateViewVector() {
+        val v1 = DirectionVector(cosX, 0.0, sinX)
+        val v2 = DirectionVector(0.0, cosY, sinY)
+        viewVector = v1 + v2
     }
 
     private fun perspectiveProjectionMatrix(): Matrix {
         return arrayOf(
-                doubleArrayOf(fovX, 0.0, 0.0, 0.0),
-                doubleArrayOf(0.0, fovY, 0.0, 0.0),
-                doubleArrayOf(0.0, 0.0, (far+near)/(far-near), -1.0),
-                doubleArrayOf(0.0, 0.0, (2*near*far)/(near-far), 0.0)
+                doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+                doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+                doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+                doubleArrayOf(0.0, 0.0, -1.0 / 300.0, 1.0)
+        )
+    }
+
+    private fun orthographicProjectionMatrix(): Matrix {
+        return arrayOf(
+                doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+                doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+                doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+                doubleArrayOf(0.0, 0.0, 0.0, 1.0)
         )
     }
 
     private fun viewPortTransform(point: Point3D): Point {
         return Point(
-                (1.0 + point.x) * width / 2,
-                (1.0 - point.y) * height / 2,
+                point.x + width / 2,
+                -point.y + height / 2,
         )
     }
 
     private fun viewMatrix(): Matrix {
-        return translationMatrix(position.x, position.y, position.z)
+        val rotateY = rotationYMatrix(angleY - Math.PI / 2)
+        val rotateX = rotationXMatrix(angleX - Math.PI / 2)
+        val temp = multiplyMatrices(rotateY, rotateX)
+        val temp2 = multiplyMatrices(
+                translationMatrix(-position.x, -position.y, -position.z),
+                temp,
+        )
+        return temp2
+//        return translationMatrix(-position.x, -position.y, -position.z)
     }
-
-//    private fun axonometricProjection(model: Polyhedron) {
-//        for (polygon in model.polygons) {
-//            val projPoints = polygon.points.map { point ->
-//                multiplePointAndMatrix(point, axonometricMatrix(145.0 * PI / 180, 45.0 * PI / 180))
-//            }
-//            var prevPoint = projPoints.last()
-//            for (point in projPoints) {
-//                gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
-//                gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-//                prevPoint = point
-//            }
-//        }
-//        gc.stroke()
-//    }
 }

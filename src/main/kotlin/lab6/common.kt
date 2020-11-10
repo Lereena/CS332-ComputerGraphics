@@ -15,11 +15,32 @@ data class Point3D(var x: Double, var y: Double, var z: Double) {
                 this.z == other.z
         return false
     }
+
+    operator fun minus(other: Point3D): Point3D {
+        return Point3D(x - other.x, y - other.y, z - other.z)
+    }
+
+    operator fun plus(other: Point3D): Point3D {
+        return Point3D(x + other.x, y + other.y, z + other.z)
+    }
 }
 
 enum class Axis { X, Y, Z }
 
-data class DirectionVector(val l: Double, val m: Double, val n: Double)
+data class DirectionVector(var l: Double, var m: Double, var n: Double) {
+    constructor(p: Point3D): this(p.x, p.y, p.z)
+
+    init {
+        val len = Math.sqrt(l * l + m * m + n * n)
+        l /= len
+        m /= len
+        n /= len
+    }
+
+    operator fun plus(other: DirectionVector): DirectionVector {
+        return DirectionVector(l + other.l, m + other.m, n + other.n)
+    }
+}
 
 class Polygon {
     var points = ArrayList<Point3D>()
@@ -74,7 +95,8 @@ class Polyhedron {
         this.centerPoint = centerPoint
         for (polygon in polygons) {
             if (polygon.points.size < 3)
-                throw Exception("Меньше трёх точек в полигоне")
+                continue
+//                throw Exception("Меньше трёх точек в полигоне")
             normals.add(findNormal(polygon[0], polygon[1], polygon[2]))
         }
     }
@@ -98,21 +120,23 @@ class Polyhedron {
 
         for (i in result.indices) {
             val polygon = polygons[i]
-            if (polygon.points.size < 3)
-                throw Exception("Меньше трёх точек в полигоне")
+            if (polygon.points.size < 3) {
+                result[i] = true
+                continue
+            }
 
 //            if (normals.size == 0) {
                 val normal = findNormal(polygon[0], polygon[1], polygon[2])
-                result[i] = angleBetweenVectors(normal, viewVector) > PI / 2
+                result[i] = angleBetweenVectors(normal, viewVector) >= 0
 //            } else
-//                result[i] = angleBetweenVectors(normals[i], viewVector) < PI / 2
+//                result[i] = angleBetweenVectors(normals[i], viewVector) >= PI / 2
         }
 
         return result
     }
 
     private fun angleBetweenVectors(v1: DirectionVector, v2: DirectionVector): Double {
-        return acos((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
+        return ((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
                 / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
                 * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
     }

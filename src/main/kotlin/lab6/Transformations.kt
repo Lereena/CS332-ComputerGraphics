@@ -133,23 +133,14 @@ fun rotationZMatrix(angle: Double): Matrix {
     )
 }
 
-fun perspectiveMatrix(position: Point3D): Matrix {
-    return arrayOf(
-        doubleArrayOf(1.0, 0.0, 0.0, -1.0 / position.x),
-        doubleArrayOf(0.0, 1.0, 0.0, -1.0 / position.y),
-        doubleArrayOf(0.0, 0.0, 1.0, -1.0 / position.z),
-        doubleArrayOf(0.0, 0.0, 0.0, 1.0)
-    )
-}
-
-fun axonometricMatrix(fi: Double, psi: Double): Matrix {
-    return arrayOf(
-        doubleArrayOf(cos(psi), 0.0, sin(psi), 0.0),
-        doubleArrayOf(sin(fi) * sin(psi), cos(fi), -sin(fi) * cos(psi), 0.0),
-        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
-        doubleArrayOf(0.0, 0.0, 0.0, 1.0),
-    )
-}
+//fun axonometricMatrix(fi: Double, psi: Double): Matrix {
+//    return arrayOf(
+//        doubleArrayOf(cos(psi), 0.0, sin(psi), 0.0),
+//        doubleArrayOf(sin(fi) * sin(psi), cos(fi), -sin(fi) * cos(psi), 0.0),
+//        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+//        doubleArrayOf(0.0, 0.0, 0.0, 1.0),
+//    )
+//}
 
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
     val newCenterPoint = multiplyMatrices(
@@ -162,9 +153,9 @@ fun transform(polyhedron: Polyhedron, matrix: Matrix) {
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
         val transformed = multiplyMatrices(matrix, pointToMatrix(point))
-        polyhedron.vertices[i].x = transformed[0][0]
-        polyhedron.vertices[i].y = transformed[1][0]
-        polyhedron.vertices[i].z = transformed[2][0]
+        polyhedron.vertices[i].x = transformed[0][0] / transformed[3][0]
+        polyhedron.vertices[i].y = transformed[1][0] / transformed[3][0]
+        polyhedron.vertices[i].z = transformed[2][0] / transformed[3][0]
     }
 }
 
