@@ -52,10 +52,11 @@ fun reflect(polyhedron: Polyhedron, axis: Axis) {
 
 fun identityMatrix(): Matrix {
     return arrayOf(
-            doubleArrayOf(1.0, 0.0, 0.0, 0.0),
-            doubleArrayOf(0.0, 1.0, 0.0, 0.0),
-            doubleArrayOf(0.0, 0.0, 1.0, 0.0),
-            doubleArrayOf(0.0, 0.0, 0.0, 1.0))
+        doubleArrayOf(1.0, 0.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 1.0, 0.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 1.0, 0.0),
+        doubleArrayOf(0.0, 0.0, 0.0, 1.0)
+    )
 }
 
 fun translationMatrix(tX: Double, tY: Double, tZ: Double): Matrix {
@@ -132,54 +133,29 @@ fun rotationZMatrix(angle: Double): Matrix {
     )
 }
 
-fun perspectiveZMatrix(dist: Double): Matrix {
-    return arrayOf(
-            doubleArrayOf(1.0, 0.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 1.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 0.0, 0.0,     0.0),
-            doubleArrayOf(0.0, 0.0, -1/dist, 1.0),
-    )
-}
-
-fun perspectiveYMatrix(dist: Double): Matrix {
-    return arrayOf(
-            doubleArrayOf(1.0, 0.0,     0.0, 0.0),
-            doubleArrayOf(0.0, 0.0,     0.0, 0.0),
-            doubleArrayOf(0.0, 0.0,     1.0, 0.0),
-            doubleArrayOf(0.0, -1/dist, 0.0, 1.0),
-    )
-}
-
-fun perspectiveXMatrix(dist: Double): Matrix {
-    return arrayOf(
-            doubleArrayOf(0.0,     0.0, 0.0, 0.0),
-            doubleArrayOf(0.0,     1.0, 0.0, 0.0),
-            doubleArrayOf(0.0,     0.0, 1.0, 0.0),
-            doubleArrayOf(-1/dist, 0.0, 0.0, 1.0),
-    )
-}
-
-fun axonometricMatrix(fi: Double, psi: Double): Matrix {
-    return arrayOf(
-            doubleArrayOf(cos(psi),             0.0,      sin(psi),             0.0),
-            doubleArrayOf(sin(fi) * sin(psi),   cos(fi),  -sin(fi) * cos(psi),  0.0),
-            doubleArrayOf(0.0,                  0.0,      0.0,                  0.0),
-            doubleArrayOf(0.0,                  0.0,      0.0,                  1.0),
-    )
-}
+//fun axonometricMatrix(fi: Double, psi: Double): Matrix {
+//    return arrayOf(
+//        doubleArrayOf(cos(psi), 0.0, sin(psi), 0.0),
+//        doubleArrayOf(sin(fi) * sin(psi), cos(fi), -sin(fi) * cos(psi), 0.0),
+//        doubleArrayOf(0.0, 0.0, 0.0, 0.0),
+//        doubleArrayOf(0.0, 0.0, 0.0, 1.0),
+//    )
+//}
 
 fun transform(polyhedron: Polyhedron, matrix: Matrix) {
-    val newCenterPoint = multiplyMatrices(matrix,
-            pointToMatrix(polyhedron.centerPoint))
+    val newCenterPoint = multiplyMatrices(
+        matrix,
+        pointToMatrix(polyhedron.centerPoint)
+    )
     polyhedron.centerPoint.x = newCenterPoint[0][0]
     polyhedron.centerPoint.y = newCenterPoint[1][0]
     polyhedron.centerPoint.z = newCenterPoint[2][0]
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
         val transformed = multiplyMatrices(matrix, pointToMatrix(point))
-        polyhedron.vertices[i].x = transformed[0][0]
-        polyhedron.vertices[i].y = transformed[1][0]
-        polyhedron.vertices[i].z = transformed[2][0]
+        polyhedron.vertices[i].x = transformed[0][0] / transformed[3][0]
+        polyhedron.vertices[i].y = transformed[1][0] / transformed[3][0]
+        polyhedron.vertices[i].z = transformed[2][0] / transformed[3][0]
     }
 }
 

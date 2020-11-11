@@ -2,6 +2,7 @@
 
 package lab6
 
+import ind1bostan.DoublePoint
 import javafx.application.Application
 import javafx.collections.FXCollections
 import javafx.geometry.Orientation
@@ -14,23 +15,33 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import javafx.event.EventHandler
+import javafx.scene.image.WritableImage
+import javafx.scene.input.KeyEvent
+import lab4.Position
+import java.lang.Double.MAX_VALUE
+import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.PI
 import java.io.File as File
 
-enum class Projection { ORTHOGRAPHIC, PERSPECTIVE, AXONOMETRIC }
+enum class Projection { PERSPECTIVE, ORTHOGRAPHIC }
 
 class Affine3D : Application() {
+    private var axesModel = Polyhedron("assets/3dmodels/axes.obj")
     private var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
-    private var currentProjectionMode = Projection.ORTHOGRAPHIC
-    private var currentAxis = Axis.Z
     private val mainCanvas = Canvas(800.0, 600.0)
-    private val mainCanvasA = Canvas(800.0, 600.0)
     private val mainGc = mainCanvas.graphicsContext2D
-    private val mainGcA = mainCanvasA.graphicsContext2D
+
+    private val camera = Camera(
+            Point3D(0.0, 0.0,300.0),
+            -Math.PI / 2, -Math.PI / 2,
+            mainCanvas
+    )
 
     override fun start(primaryStage: Stage) {
         val mainGroup = GridPane()
@@ -38,10 +49,9 @@ class Affine3D : Application() {
         mainGroup.hgap = 10.0
         mainGroup.vgap = 10.0
 
-        mainGcA.stroke = Color.RED
         mainGc.stroke = Color.BLACK
 
-        val canvasGroup = StackPane(mainCanvas, mainCanvasA)
+        val canvasGroup = StackPane(mainCanvas)
         canvasGroup.border = Border(
                 BorderStroke(
                         Color.BLACK,
@@ -69,41 +79,21 @@ class Affine3D : Application() {
             redraw()
         }
 
-        val axesItems = FXCollections.observableArrayList("XY", "XZ", "YZ")
-        val axesList = ComboBox(axesItems)
-        axesList.setOnAction {
-            when (axesList.value) {
-                "XY" -> {
-                    currentAxis = Axis.Z; }
-                "XZ" -> {
-                    currentAxis = Axis.Y; }
-                "YZ" -> {
-                    currentAxis = Axis.X; }
-            }
-            redraw()
-        }
-        axesList.value = "XY"
-
-        val ortModeButton = ToggleButton("Orthographic")
         val perModeButton = ToggleButton("Perspective")
-        val axModeButton = ToggleButton("Axonometric")
-        ortModeButton.isSelected = true
+        val ortModeButton = ToggleButton("Orthographic")
+        perModeButton.isSelected = true
 
         shapePane.children.addAll(fileList,
-                axesList, 
-                ortModeButton,
                 perModeButton,
-                axModeButton
+                ortModeButton
         )
 
         val toggleButtons = arrayOf(
-                ortModeButton,
                 perModeButton,
-                axModeButton,
+                ortModeButton,
         )
-        setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
         setModeButton(perModeButton, Projection.PERSPECTIVE,  toggleButtons)
-        setModeButton(axModeButton,  Projection.AXONOMETRIC, toggleButtons)
+        setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
 
         // TRANSFORMATION PANE
         // move pane
@@ -122,6 +112,20 @@ class Affine3D : Application() {
                 redraw()
             })
         }
+
+        // z-buffer pane
+        val zBufferBox = CheckBox("Z-буффер")
+        zBufferBox.setOnAction() {
+            camera.zBufferMode = !camera.zBufferMode
+            redraw()
+        }
+
+//        val trZBuffSection = InterfaceSection("Z-Buffer")
+//        with(trZBuffSection) {
+//            addButton("Z-Buffer", EventHandler {
+//                camera.drawZBuffer(currentModel)
+//            })
+//        }
 
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
@@ -156,7 +160,7 @@ class Affine3D : Application() {
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
                 val tempLine = getLinePolyhedron(line)
-                draw(tempLine)
+                camera.draw(tempLine)
             })
 
             addLabel("Координаты точек прямой")
@@ -181,7 +185,7 @@ class Affine3D : Application() {
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
                 val tempLine = getLinePolyhedron(line)
-                draw(tempLine)
+                camera.draw(tempLine)
             })
         }
 
@@ -278,6 +282,7 @@ class Affine3D : Application() {
         transformationPane.children.addAll(
                 saveSection.sectionPane,
                 trMoveSection.sectionPane,
+                zBufferBox,
                 trScaleSection.sectionPane,
                 trReflectSection.sectionPane,
                 trRotateSection.sectionPane,
@@ -288,6 +293,20 @@ class Affine3D : Application() {
         primaryStage.title = "Affine transformations 3D"
 
         primaryStage.scene = Scene(mainGroup)
+
+        primaryStage.addEventHandler(KeyEvent.KEY_PRESSED) { e ->
+            when(e.text) {
+                "w" -> camera.changePosition(0.0, 2.0)
+                "a" -> camera.changePosition(-2.0, 0.0)
+                "s" -> camera.changePosition(0.0, -2.0)
+                "d" -> camera.changePosition(2.0, 0.0)
+                "i" -> camera.changeAngleX(0.1)
+                "k" -> camera.changeAngleX(-0.1)
+                "l" -> camera.changeAngleY(0.1)
+                "j" -> camera.changeAngleY(-0.1)
+            }
+            redraw()
+        }
         primaryStage.show()
     }
 
@@ -300,17 +319,9 @@ class Affine3D : Application() {
 
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
-        mainGcA.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        draw(currentModel)
-    }
-
-    private fun draw(model: Polyhedron) {
-        when (currentProjectionMode) {
-            Projection.ORTHOGRAPHIC -> orthographicProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-            Projection.PERSPECTIVE -> perspectiveProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-            Projection.AXONOMETRIC -> axonometricProjection(mainCanvas, mainGcA, mainGc, model, currentAxis)
-        }
+        camera.draw(currentModel)
+//        camera.draw(axesModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
@@ -319,7 +330,7 @@ class Affine3D : Application() {
             if (state) {
                 for (button in all_buttons)
                     button.isSelected = false
-                currentProjectionMode = mode
+                camera.projectionMode = mode
                 redraw()
             }
             button.isSelected = true
@@ -327,142 +338,137 @@ class Affine3D : Application() {
     }
 }
 
-fun orthographicProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    drawAxes(canvas, gcA, gc, ax)
-    for (polygon in model.polygons) {
-        for (i in polygon.points.indices) {
-            when (ax) {
-                Axis.Z -> {
-                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                }
-                Axis.Y -> {
-                    gc.moveTo(polygon[i].x + canvas.width / 2, polygon[i].z * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].x + canvas.width / 2, polygon[i + 1].z * (-1) + canvas.height / 2)
-                }
-                Axis.X -> {
-                    gc.moveTo(polygon[i].z + canvas.width / 2, polygon[i].y * (-1) + canvas.height / 2)
-                    gc.lineTo(polygon[i + 1].z + canvas.width / 2, polygon[i + 1].y * (-1) + canvas.height / 2)
-                }
-            }
-        }
-    }
-    gc.stroke()
-}
-
-fun perspectiveProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    drawAxes(canvas, gcA, gc, ax)
-    val matrix = when (ax) {
-        Axis.Z -> perspectiveZMatrix(300.0)
-        Axis.Y -> perspectiveYMatrix(300.0)
-        Axis.X -> perspectiveXMatrix(300.0)
-    }
-    for (polygon in model.polygons) {
-        val projPoints = polygon.points.map { point ->
-            multiplePointAndMatrix(point, matrix)
-        }
-        var prevPoint = projPoints.last()
-        for (point in projPoints) {
-            when (ax) {
-                Axis.Z -> {
-                    gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
-                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-                }
-                Axis.Y -> {
-                    gc.moveTo(point.x + canvas.width / 2, -point.z + canvas.height / 2)
-                    gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.z + canvas.height / 2)
-                }
-                Axis.X -> {
-                    gc.moveTo(point.z + canvas.width / 2, -point.y + canvas.height / 2)
-                    gc.lineTo(prevPoint.z + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-                }
-            }
-            prevPoint = point
-        }
-    }
-    gc.stroke()
-}
-
-
-fun axonometricProjection(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, model: Polyhedron, ax: Axis) {
-    gcA.clearRect(0.0, 0.0, 800.0, 600.0)
-    gcA.beginPath()
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height / 2)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(0.0, 530.0)
-    gcA.moveTo(canvas.width / 2, canvas.height / 2)
-    gcA.lineTo(canvas.width, 530.0)
-    gcA.stroke()
-    gc.strokeText("Y", 410.0, 30.0)
-    gc.strokeText("X", 23.0, 570.0)
-    gc.strokeText("Z", 770.0, 570.0)
-    for (polygon in model.polygons) {
-        val projPoints = polygon.points.map { point ->
-            multiplePointAndMatrix(point, axonometricMatrix(145.0 * PI / 180, 45.0 * PI / 180))
-        }
-        var prevPoint = projPoints.last()
-        for (point in projPoints) {
-            gc.moveTo(point.x + canvas.width / 2, -point.y + canvas.height / 2)
-            gc.lineTo(prevPoint.x + canvas.width / 2, -prevPoint.y + canvas.height / 2)
-            prevPoint = point
-        }
-    }
-    gc.stroke()
-}
-
-fun drawAxes(canvas: Canvas, gcA: GraphicsContext, gc: GraphicsContext, ax: Axis) {
-    gcA.beginPath()
-    gcA.moveTo(canvas.width / 2, 0.0)
-    gcA.lineTo(canvas.width / 2, canvas.height)
-    gcA.moveTo(0.0, canvas.height / 2)
-    gcA.lineTo(canvas.width, canvas.height / 2)
-    gcA.stroke()
-    when (ax) {
-        Axis.Z -> {
-            gc.strokeText("Y", 410.0, 30.0)
-            gc.strokeText("X", 770.0, 290.0)
-        }
-        Axis.Y -> {
-            gc.strokeText("Z", 410.0, 30.0)
-            gc.strokeText("X", 770.0, 290.0)
-        }
-        Axis.X -> {
-            gc.strokeText("Y", 410.0, 30.0)
-            gc.strokeText("Z", 770.0, 290.0)
-        }
-    }
-}
-
 fun saveModel(model: Polyhedron, fileName: String) {
     val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
-    writer.write("v ")
-    writer.write(model.vertices[0].x.toString())
-    writer.write(" ")
-    writer.write(model.vertices[0].y.toString())
-    writer.write(" ")
-    writer.write(model.vertices[0].z.toString())
-    for (i in 1 until model.vertices.size) {
-        writer.write("\nv ")
-        writer.write(model.vertices[i].x.toString())
-        writer.write(" ")
-        writer.write(model.vertices[i].y.toString())
-        writer.write(" ")
-        writer.write(model.vertices[i].z.toString())
+
+    // добавляем вершины
+    for (vertice in model.vertices) {
+        writer.write("v ${vertice.x} ${vertice.y} ${vertice.z}\n")
     }
-    model.polygons.forEach {
-        writer.write("\nf")
-        val polygon = it
-        polygon.points.forEach {
-            for (i in 0 until model.vertices.size) {
-                if (it.x == model.vertices[i].x &&
-                        it.y == model.vertices[i].y &&
-                        it.z == model.vertices[i].z) {
-                    writer.write(" " + (i + 1).toString())
-                    writer.write("//")
+
+    // добавляем нормали
+    for (polygon in model.polygons) {
+        val normal = findNormal(polygon.points[0], polygon.points[1], polygon.points[2])
+        writer.write("vn ${normal.l} ${normal.m} ${normal.n}\n")
+    }
+
+    // добавляем поверхности
+    var faceIndex = 1
+    for (polygon in model.polygons) {
+        writer.write ("f")
+        for (point in polygon.points) {
+            for (i in model.vertices.indices) {
+                if (point == model.vertices[i])
+                    writer.write(" ${i + 1}//${faceIndex}")
+            }
+        }
+        writer.write("\n")
+        faceIndex++
+    }
+    writer.close()
+}
+
+fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : DirectionVector {
+    val A = (p1.y - p0.y) * (p2.z - p0.z) - (p1.z - p0.z) * (p2.y - p0.y)
+    val B = (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z)
+    val C = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x)
+    return DirectionVector(A, B, C)
+}
+
+
+fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Double {
+    return ((A * x) + (B * y) + F) / C
+}
+
+fun classifyPoint(p: Point3D, line: Line): Position {
+    val p1 = line.point1
+    val p2 = line.point2
+    var a = DoublePoint(p2.x - p1.x, p2.y - p1.y)
+    var b = DoublePoint(p.x - p1.x, p.y - p1.y)
+    val sa =  a.x * b.y - b.x * a.y;
+
+    if (sa > 0.0)
+        return Position.Right
+    if (sa < 0.0)
+        return Position.Left
+    return Position.Belongs
+}
+
+fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
+    val result = classifyPoint(point, polygon.edges.first())
+    for (i in (1 until polygon.edges.size)) {
+        if (result != classifyPoint(point, polygon.edges[i]))
+            return false
+    }
+    return true
+}
+
+fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
+    val zBuff = Array(canvas.width.toInt()) {
+        Array(canvas.height.toInt()) { Double.MAX_VALUE }
+    }
+
+    var min_depth = Double.MAX_VALUE
+    for (polygon in polygons) {
+        var left_bound = canvas.width.toInt()
+        var right_bound = 0
+        var upper_bound = 0
+        var lower_bound = canvas.height.toInt()
+
+        for (point in polygon.points) {
+            if (point.x < left_bound)
+                left_bound = Math.ceil(point.x).toInt()
+            if (point.x > right_bound)
+                right_bound = Math.floor(point.x).toInt()
+            if (point.y < lower_bound)
+                lower_bound = Math.ceil(point.y).toInt()
+            if (point.y > upper_bound)
+                upper_bound = Math.floor(point.y).toInt()
+        }
+
+        val normal = findNormal(
+                polygon.points[0],
+                polygon.points[1],
+                polygon.points[2])
+        val A = normal.l
+        val B = normal.m
+        val C = normal.n
+        // высчитываем свободный член в уравнении плоскости
+        val F = - (polygon.points[0].x * A) - (polygon.points[0].y * B) - (polygon.points[0].z * C)
+
+        for (x in (left_bound..right_bound)) {
+            for (y in (lower_bound..upper_bound)) {
+                val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
+
+                if (checkIsInPolygon(point, polygon)) {
+                    val depth = findDepth(x, y, A, B, C, F)
+                    if (depth < zBuff[point.x.toInt()][point.y.toInt()]) {
+                        zBuff[point.x.toInt()][point.y.toInt()] = depth
+                        if (depth < min_depth)
+                            min_depth = depth
+                    }
                 }
             }
         }
     }
-    writer.close()
+
+    var max_depth = MIN_VALUE
+    for (x in zBuff.indices) {
+        for (y in zBuff[x].indices) {
+            if (zBuff[x][y] > max_depth && zBuff[x][y] < MAX_VALUE)
+                max_depth = zBuff[x][y]
+        }
+    }
+
+    val image = WritableImage(zBuff.size, zBuff[0].size)
+    val writer = image.pixelWriter
+    for (x in zBuff.indices) {
+        for (y in zBuff[x].indices) {
+            if (zBuff[x][y] < Double.MAX_VALUE) {
+                val value = 1 - (zBuff[x][y] - min_depth) / (max_depth - min_depth)
+                writer.setColor(x, y, Color(value, value, value, 1.0))
+            } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
+        }
+    }
+    gc.drawImage(image, 0.0, 0.0)
 }
