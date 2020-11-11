@@ -412,13 +412,13 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
 
         for (point in polygon.points) {
             if (point.x < left_bound)
-                left_bound = point.x.toInt() // Need to change to Math.Round
+                left_bound = Math.ceil(point.x).toInt()
             if (point.x > right_bound)
-                right_bound = point.x.toInt()
+                right_bound = Math.floor(point.x).toInt()
             if (point.y < lower_bound)
-                lower_bound = point.y.toInt()
+                lower_bound = Math.ceil(point.y).toInt()
             if (point.y > upper_bound)
-                upper_bound = point.y.toInt()
+                upper_bound = Math.floor(point.y).toInt()
         }
 
         val normal = findNormal(

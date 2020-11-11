@@ -49,9 +49,10 @@ class Polygon(var points: ArrayList<Point3D>) {
     var edges = ArrayList<Line>()
 
     init {
-        val prevPoint = points.last()
+        var prevPoint = points.last()
         for (point in points) {
             edges.add(Line(prevPoint, point))
+            prevPoint = point
         }
     }
 
