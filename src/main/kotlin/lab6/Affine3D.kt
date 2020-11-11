@@ -159,8 +159,8 @@ class Affine3D : Application() {
                 }
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
-                val tempLine = getLinePolyhedron(line)
-                camera.draw(tempLine)
+//                val tempLine = getLinePolyhedron(line)
+//                camera.draw(tempLine)
             })
 
             addLabel("Координаты точек прямой")
@@ -184,8 +184,8 @@ class Affine3D : Application() {
                 val line = Line(point1, point2)
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
-                val tempLine = getLinePolyhedron(line)
-                camera.draw(tempLine)
+//                val tempLine = getLinePolyhedron(line)
+//                camera.draw(tempLine)
             })
         }
 
@@ -320,8 +320,8 @@ class Affine3D : Application() {
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        camera.draw(currentModel)
         camera.draw(axesModel)
+        camera.draw(currentModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
