@@ -173,17 +173,3 @@ fun pointToMatrix(point: Point3D): Matrix {
         doubleArrayOf(1.0)
     )
 }
-
-fun removeNonFace(polyhedron: Polyhedron, viewVector: DirectionVector): Array<Line> {
-    val visiblePolygons = polyhedron.faces(viewVector)
-    val visibleEdges = HashSet<Line>()
-
-    for (i in polyhedron.polygons.indices)
-        if (visiblePolygons[i]) {
-            val polygon = polyhedron.polygons[i]
-            for (j in polygon.points.indices)
-                visibleEdges.add(Line(polygon[j], polygon[j + 1]))
-        }
-
-    return visibleEdges.toTypedArray()
-}

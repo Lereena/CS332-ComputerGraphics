@@ -39,7 +39,7 @@ class Affine3D : Application() {
 
     private val camera = Camera(
             Point3D(0.0, 0.0,300.0),
-            Math.PI / 2, Math.PI / 2,
+            -Math.PI / 2, -Math.PI / 2,
             mainCanvas
     )
 
@@ -403,13 +403,13 @@ fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
     return true
 }
 
-fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
-    var zBuff = Array(canvas.width.toInt()) {
+fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
+    val zBuff = Array(canvas.width.toInt()) {
         Array(canvas.height.toInt()) { Double.MAX_VALUE }
     }
 
     var min_depth = Double.MAX_VALUE
-    for (polygon in model.polygons) {
+    for (polygon in polygons) {
         var left_bound = canvas.width.toInt()
         var right_bound = 0
         var upper_bound = 0

@@ -121,21 +121,18 @@ class Polyhedron {
         return Polyhedron(vertices, polygons, centerPoint)
     }
 
-    fun faces(viewVector: DirectionVector): Array<Boolean> {
-        val result = Array(polygons.size) { false }
+    fun faces(viewVector: DirectionVector): ArrayList<Polygon> {
+        val result = ArrayList<Polygon>()
 
-        for (i in result.indices) {
-            val polygon = polygons[i]
+        for (polygon in polygons) {
             if (polygon.points.size < 3) {
-                result[i] = true
+                result.add(polygon)
                 continue
             }
 
-//            if (normals.size == 0) {
-                val normal = findNormal(polygon[0], polygon[1], polygon[2])
-                result[i] = angleBetweenVectors(normal, viewVector) >= 0
-//            } else
-//                result[i] = angleBetweenVectors(normals[i], viewVector) >= PI / 2
+            val normal = findNormal(polygon[0], polygon[1], polygon[2])
+            if (angleBetweenVectors(normal, viewVector) >= 0)
+                result.add(polygon)
         }
 
         return result

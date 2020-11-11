@@ -36,20 +36,21 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
 
         val clone = model.copy()
         transform(clone, projectionMatrix)
+        val polygons = clone.faces(viewVector)
 
         if (zBufferMode) {
-            zBuffer(canvas, mainGc, clone)
+            zBuffer(canvas, mainGc, polygons)
         }
         else {
-            val edges = removeNonFace(clone, viewVector)
-            for (edge in edges) {
-                val a = edge.point1
-                val b = edge.point2
-                mainGc.strokeLine(
-                        a.x, a.y,
-                        b.x, b.y
-                )
-            }
+            for (polygon in polygons)
+                for (edge in polygon.edges) {
+                    val a = edge.point1
+                    val b = edge.point2
+                    mainGc.strokeLine(
+                            a.x, a.y,
+                            b.x, b.y
+                    )
+                }
         }
     }
 
