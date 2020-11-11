@@ -400,10 +400,10 @@ fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
 
 fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
     var zBuff = Array(canvas.width.toInt()) {
-        Array(canvas.height.toInt()) { Double.MIN_VALUE }
+        Array(canvas.height.toInt()) { Double.MAX_VALUE }
     }
 
-    var max_depth = Double.MIN_VALUE
+    var min_depth = Double.MAX_VALUE
     for (polygon in model.polygons) {
         var left_bound = canvas.width.toInt()
         var right_bound = 0
@@ -437,28 +437,28 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
 
                 if (checkIsInPolygon(point, polygon)) {
                     val depth = findDepth(x, y, A, B, C, F)
-                    if (depth > zBuff[point.x.toInt()][point.y.toInt()]) {
+                    if (depth < zBuff[point.x.toInt()][point.y.toInt()]) {
                         zBuff[point.x.toInt()][point.y.toInt()] = depth
-                        if (depth > max_depth)
-                            max_depth = depth
+                        if (depth < min_depth)
+                            min_depth = depth
                     }
                 }
             }
         }
     }
 
-    var min_depth = MAX_VALUE
+    var max_depth = MIN_VALUE
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
-            if (zBuff[x][y] < min_depth)
-                min_depth = zBuff[x][y]
+            if (zBuff[x][y] > max_depth)
+                max_depth = zBuff[x][y]
         }
     }
     val image = WritableImage(zBuff.size, zBuff[0].size)
     val writer = image.pixelWriter
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
-            if (zBuff[x][y] > Double.MIN_VALUE) {
+            if (zBuff[x][y] < Double.MAX_VALUE) {
                 val value = (zBuff[x][y] - min_depth) / (max_depth - min_depth)
                 writer.setColor(x, canvas.height.toInt() - y - 1, Color(value, value, value, 1.0))
             } else writer.setColor(x, canvas.height.toInt() - y - 1, Color(1.0, 1.0, 1.0, 1.0))
