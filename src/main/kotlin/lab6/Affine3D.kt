@@ -450,18 +450,19 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
     var max_depth = MIN_VALUE
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
-            if (zBuff[x][y] > max_depth)
+            if (zBuff[x][y] > max_depth && zBuff[x][y] < MAX_VALUE)
                 max_depth = zBuff[x][y]
         }
     }
+
     val image = WritableImage(zBuff.size, zBuff[0].size)
     val writer = image.pixelWriter
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
             if (zBuff[x][y] < Double.MAX_VALUE) {
-                val value = (zBuff[x][y] - min_depth) / (max_depth - min_depth)
-                writer.setColor(x, canvas.height.toInt() - y - 1, Color(value, value, value, 1.0))
-            } else writer.setColor(x, canvas.height.toInt() - y - 1, Color(1.0, 1.0, 1.0, 1.0))
+                val value = 1 - (zBuff[x][y] - min_depth) / (max_depth - min_depth)
+                writer.setColor(x, y, Color(value, value, value, 1.0))
+            } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
         }
     }
     gc.drawImage(image, 0.0, 0.0)
