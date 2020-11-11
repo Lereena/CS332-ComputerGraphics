@@ -40,6 +40,21 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         mainGc.stroke()
     }
 
+    fun drawZBuffer(model: Polyhedron) {
+        val projectionMatrix = multiplyMatrices(viewMatrix(), when (projectionMode) {
+            Projection.PERSPECTIVE -> perspectiveProjectionMatrix()
+            Projection.ORTHOGRAPHIC -> orthographicProjectionMatrix()
+        })
+        val clone = model.copy()
+        transform(clone, projectionMatrix)
+        for (point in clone.vertices) {
+            val temp = viewPortTransform(point)
+            point.x = temp.x
+            point.y = temp.y
+        }
+        zBuffer(canvas, mainGc, clone)
+    }
+
     fun changeAngleX(difAngleX: Double) {
         angleX += difAngleX
         cosX = Math.cos(angleX)
@@ -81,10 +96,11 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         )
     }
 
-    private fun viewPortTransform(point: Point3D): Point {
-        return Point(
+    private fun viewPortTransform(point: Point3D): Point3D {
+        return Point3D(
                 point.x + width / 2,
                 -point.y + height / 2,
+                point.z
         )
     }
 

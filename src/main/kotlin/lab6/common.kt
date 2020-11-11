@@ -45,14 +45,16 @@ data class DirectionVector(var l: Double, var m: Double, var n: Double) {
     }
 }
 
-class Polygon {
-    var points = ArrayList<Point3D>()
+class Polygon(var points: ArrayList<Point3D>) {
+    var edges = ArrayList<Line>()
 
-    constructor() {}
-
-    constructor(points: ArrayList<Point3D>) {
-        this.points = points
+    init {
+        val prevPoint = points.last()
+        for (point in points) {
+            edges.add(Line(prevPoint, point))
+        }
     }
+
     val indices = points.indices
 
     operator fun get(i: Int) = points[(i % points.size)]
@@ -77,12 +79,12 @@ class Polyhedron {
                         normals.add(DirectionVector(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
                     }
                     "f" -> {
-                        val polygon = Polygon()
+                        val points = ArrayList<Point3D>()
                         for (i in 1 until sLine.size) {
                             val number = sLine[i].substringBefore('/').toInt() - 1
-                            polygon.add(vertices[number])
+                            points.add(vertices[number])
                         }
-                        polygons.add(polygon)
+                        polygons.add(Polygon(points))
                     }
                 }
             }
@@ -147,9 +149,7 @@ class Polyhedron {
 
 fun getLinePolyhedron(line: Line): Polyhedron {
     val vertices = arrayListOf(line.point1, line.point2)
-    val polygon = Polygon()
-    polygon.add(line.point1)
-    polygon.add(line.point2)
+    val polygon = Polygon(vertices)
     val polygons = arrayListOf(polygon)
     return Polyhedron(vertices, polygons)
 }

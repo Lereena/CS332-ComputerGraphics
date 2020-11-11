@@ -54,7 +54,7 @@ fun processPoints(
     currentPoints: ArrayList<Point3D>, plot: Polyhedron, relationships: HashMap<Int, ArrayList<Int>>,
     builtPoints: ArrayList<Point3D>, pointNums: HashMap<Point3D, Int>, curEst: Int, i: Int
 ): Int {
-    val polygon = Polygon()
+    val polygonPoints = ArrayList<Point3D>()
     var currentEst = curEst
     for (point in currentPoints) {
         if (!pointNums.containsKey(point)) {
@@ -63,9 +63,9 @@ fun processPoints(
             pointNums[point] = currentEst
             currentEst++
         } else {
-            polygon.add(builtPoints[pointNums[point]!!])
+            polygonPoints.add(builtPoints[pointNums[point]!!])
         }
     }
-    if (polygon.points.size >= 3) plot.polygons.add(polygon)
+    if (polygonPoints.size >= 3) plot.polygons.add(Polygon(polygonPoints))
     return currentEst
 }

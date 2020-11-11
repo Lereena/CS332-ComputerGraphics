@@ -2,6 +2,7 @@
 
 package lab6
 
+import ind1bostan.DoublePoint
 import javafx.application.Application
 import javafx.collections.FXCollections
 import javafx.geometry.Orientation
@@ -16,9 +17,7 @@ import javafx.stage.Stage
 import javafx.event.EventHandler
 import javafx.scene.image.WritableImage
 import javafx.scene.input.KeyEvent
-import lab3.Point
-import lab4.Shape
-import lab4.checkIsIn
+import lab4.Position
 import java.lang.Double.MAX_VALUE
 import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
@@ -119,7 +118,7 @@ class Affine3D : Application() {
         val trZBuffSection = InterfaceSection("Z-Buffer")
         with(trZBuffSection) {
             addButton("Z-Buffer", EventHandler {
-                zBuffer(mainCanvas, mainGc, currentModel)
+                camera.drawZBuffer(currentModel)
             })
         }
 
@@ -376,109 +375,94 @@ fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Doub
     return ((A * x) + (B * y) + F) / C
 }
 
+fun classifyPoint(p: Point3D, line: Line): Position {
+    val p1 = line.point1
+    val p2 = line.point2
+    var a = DoublePoint(p2.x - p1.x, p2.y - p1.y)
+    var b = DoublePoint(p.x - p1.x, p.y - p1.y)
+    val sa =  a.x * b.y - b.x * a.y;
+
+    if (sa > 0.0)
+        return Position.Right
+    if (sa < 0.0)
+        return Position.Left
+    return Position.Belongs
+}
+
 fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
-    val edges = LinkedList<Line>()
-
-    for (point in polygon.points) {
-
+    val result = classifyPoint(point, polygon.edges.first())
+    for (i in (1 until polygon.edges.size)) {
+        if (result != classifyPoint(point, polygon.edges[i]))
+            return false
     }
+    return true
 }
 
 fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
-    var zBuff = LinkedList<LinkedList<ZBuffCell>>()
-    for (i in 0 until canvas.width.toInt()) {
-        var zBuffCol = LinkedList<ZBuffCell>()
-        for (j in 0 until canvas.height.toInt()) {
-            zBuffCol.add(ZBuffCell())
-        }
-        zBuff.add(zBuffCol)
+    var zBuff = Array(canvas.width.toInt()) {
+        Array(canvas.height.toInt()) { Double.MIN_VALUE }
     }
-    var min_depth = java.lang.Double.MAX_VALUE
-    for (i in model.polygons.indices) {
-        var points = LinkedList<Point>()
-        var left_bound = model.polygons[0].points[0].x.toInt()
-        var right_bound = model.polygons[0].points[0].x.toInt()
-        var down_bound = model.polygons[0].points[0].y.toInt()
-        var up_bound = model.polygons[0].points[0].y.toInt()
-        for (j in model.polygons[i].points.indices) {
-            val x = model.polygons[i].points[j].x.toInt()
-            val y = model.polygons[i].points[j].y.toInt()
-            points.add(Point(x, y))
-            if (x < left_bound)
-                left_bound = x
-            if (x > right_bound)
-                right_bound = x
-            if (y < down_bound)
-                down_bound = y
-            if (y > up_bound)
-                up_bound = y
+
+    var max_depth = Double.MIN_VALUE
+    for (polygon in model.polygons) {
+        var left_bound = canvas.width.toInt()
+        var right_bound = 0
+        var upper_bound = 0
+        var lower_bound = canvas.height.toInt()
+
+        for (point in polygon.points) {
+            if (point.x < left_bound)
+                left_bound = point.x.toInt() // Need to change to Math.Round
+            if (point.x > right_bound)
+                right_bound = point.x.toInt()
+            if (point.y < lower_bound)
+                lower_bound = point.y.toInt()
+            if (point.y > upper_bound)
+                upper_bound = point.y.toInt()
         }
-        var shape = Shape(points)
-        // ищем коэфициенты уравнения плоскости с помощью вектора нормали
-        // (координаты вектора нормали совпадают с коофициентами A, B и C в уравнении плоскости)
-        val normal = findNormal(model.polygons[i].points[0],
-                model.polygons[i].points[1],
-                model.polygons[i].points[2])
+
+        val normal = findNormal(
+                polygon.points[0],
+                polygon.points[1],
+                polygon.points[2])
         val A = normal.l
         val B = normal.m
         val C = normal.n
         // высчитываем свободный член в уравнении плоскости
-        val F = - (model.polygons[i].points[0].x * A) - (model.polygons[i].points[0].y * B) - (model.polygons[i].points[0].z * C)
+        val F = - (polygon.points[0].x * A) - (polygon.points[0].y * B) - (polygon.points[0].z * C)
 
-        for (c in left_bound until right_bound) {
-            for (r in down_bound until up_bound) {
-                val p = Point(c, r)
-                if (checkIsIn(shape, p)) {
-                    if (zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].is_obstructed) {
-                        val depth = findDepth(c, r, A, B, C, F)
-                        if (zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth > depth && (depth < MAX_VALUE) && (depth > MIN_VALUE)) {
-                            zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth = depth/*
-                            print("!depth ")
-                            println(depth)*/
-                            if (depth < min_depth)
-                                min_depth = depth
-                        }
-                    }
-                    else {
-                        zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].is_obstructed = true
-                        val depth = findDepth(c, r, A, B, C, F)
-                        if ((depth < MAX_VALUE) && (depth > MIN_VALUE)) {
-                            zBuff[c + (canvas.width / 2).toInt()][r + (canvas.height / 2).toInt()].depth = depth
-                            /*print("*depth ")
-                            println(depth)*/
-                            if (depth < min_depth)
-                                min_depth = depth
-                        }
+        for (x in (left_bound..right_bound)) {
+            for (y in (lower_bound..upper_bound)) {
+                val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
+
+                if (checkIsInPolygon(point, polygon)) {
+                    val depth = findDepth(x, y, A, B, C, F)
+                    if (depth > zBuff[point.x.toInt()][point.y.toInt()]) {
+                        zBuff[point.x.toInt()][point.y.toInt()] = depth
+                        if (depth > max_depth)
+                            max_depth = depth
                     }
                 }
             }
         }
     }
-    var max_depth = MIN_VALUE
-    for(i in 0 until zBuff.size) {
-        for (j in 0 until zBuff[i].size) {
-            if (zBuff[i][j].is_obstructed && max_depth < zBuff[i][j].depth) {
-                max_depth = zBuff[i][j].depth
-            }
+
+    var min_depth = MAX_VALUE
+    for (x in zBuff.indices) {
+        for (y in zBuff[x].indices) {
+            if (zBuff[x][y] < min_depth)
+                min_depth = zBuff[x][y]
         }
     }
-    //println(min_depth)
-    //println(max_depth)
     val image = WritableImage(zBuff.size, zBuff[0].size)
     val writer = image.pixelWriter
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
-            if (zBuff[x][y].is_obstructed) {
-                var value = zBuff[x][y].depth
-                /*print(value)
-                print(" ")*/
-                value = (value - min_depth) / (max_depth - min_depth)
-                /*print(value)
-                print(" ")*/
+            if (zBuff[x][y] > Double.MIN_VALUE) {
+                val value = (zBuff[x][y] - min_depth) / (max_depth - min_depth)
                 writer.setColor(x, canvas.height.toInt() - y - 1, Color(value, value, value, 1.0))
             } else writer.setColor(x, canvas.height.toInt() - y - 1, Color(1.0, 1.0, 1.0, 1.0))
         }
-        //println()
     }
     gc.drawImage(image, 0.0, 0.0)
 }
