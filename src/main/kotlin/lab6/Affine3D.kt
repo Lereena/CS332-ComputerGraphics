@@ -376,6 +376,14 @@ fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Doub
     return ((A * x) + (B * y) + F) / C
 }
 
+fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
+    val edges = LinkedList<Line>()
+
+    for (point in polygon.points) {
+
+    }
+}
+
 fun zBuffer(canvas: Canvas, gc: GraphicsContext, model: Polyhedron) {
     var zBuff = LinkedList<LinkedList<ZBuffCell>>()
     for (i in 0 until canvas.width.toInt()) {
