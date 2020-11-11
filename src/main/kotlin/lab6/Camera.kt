@@ -11,6 +11,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     val height = canvas.height
     val width = canvas.width
     var projectionMode = Projection.PERSPECTIVE
+    var zBufferMode = false
     var viewVector = DirectionVector(0.0, 0.0, 1.0)
     var cosX = Math.cos(angleX)
     var cosY = Math.cos(angleY)
@@ -22,37 +23,34 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     }
 
     fun draw(model: Polyhedron) {
-        val projectionMatrix = multiplyMatrices(viewMatrix(), when (projectionMode) {
-            Projection.PERSPECTIVE -> perspectiveProjectionMatrix()
-            Projection.ORTHOGRAPHIC -> orthographicProjectionMatrix()
-        })
-        val clone = model.copy()
-        transform(clone, projectionMatrix)
-        val edges = removeNonFace(clone, viewVector)
-        for (edge in edges) {
-            val a = viewPortTransform(edge.point1)
-            val b = viewPortTransform(edge.point2)
-            mainGc.strokeLine(
-                    a.x, a.y,
-                    b.x, b.y
-            )
-        }
-        mainGc.stroke()
-    }
+        val projectionMatrix = multiplyMatrices(
+                viewPortMatrix(),
+                multiplyMatrices(
+                        when (projectionMode) {
+                            Projection.PERSPECTIVE -> perspectiveProjectionMatrix()
+                            Projection.ORTHOGRAPHIC -> orthographicProjectionMatrix()
+                        },
+                        viewMatrix()
+                )
+        )
 
-    fun drawZBuffer(model: Polyhedron) {
-        val projectionMatrix = multiplyMatrices(viewMatrix(), when (projectionMode) {
-            Projection.PERSPECTIVE -> perspectiveProjectionMatrix()
-            Projection.ORTHOGRAPHIC -> orthographicProjectionMatrix()
-        })
         val clone = model.copy()
         transform(clone, projectionMatrix)
-        for (point in clone.vertices) {
-            val temp = viewPortTransform(point)
-            point.x = temp.x
-            point.y = temp.y
+
+        if (zBufferMode) {
+            zBuffer(canvas, mainGc, clone)
         }
-        zBuffer(canvas, mainGc, clone)
+        else {
+            val edges = removeNonFace(clone, viewVector)
+            for (edge in edges) {
+                val a = edge.point1
+                val b = edge.point2
+                mainGc.strokeLine(
+                        a.x, a.y,
+                        b.x, b.y
+                )
+            }
+        }
     }
 
     fun changeAngleX(difAngleX: Double) {
@@ -96,11 +94,12 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         )
     }
 
-    private fun viewPortTransform(point: Point3D): Point3D {
-        return Point3D(
-                point.x + width / 2,
-                -point.y + height / 2,
-                point.z
+    private fun viewPortMatrix(): Matrix {
+        return arrayOf(
+                doubleArrayOf(1.0,  0.0, 0.0, width/2),
+                doubleArrayOf(0.0, -1.0, 0.0, height/2),
+                doubleArrayOf(0.0,  0.0, 1.0, 0.0),
+                doubleArrayOf(0.0,  0.0, 0.0, 1.0)
         )
     }
 
@@ -110,7 +109,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         val temp = multiplyMatrices(rotateY, rotateX)
         val temp2 = multiplyMatrices(
                 translationMatrix(-position.x, -position.y, -position.z),
-                temp,
+                temp
         )
         return temp2
 //        return translationMatrix(-position.x, -position.y, -position.z)

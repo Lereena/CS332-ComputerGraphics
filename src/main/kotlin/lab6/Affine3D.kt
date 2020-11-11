@@ -34,7 +34,6 @@ enum class Projection { PERSPECTIVE, ORTHOGRAPHIC }
 class Affine3D : Application() {
     private var axesModel = Polyhedron("assets/3dmodels/axes.obj")
     private var currentModel = Polyhedron("assets/3dmodels/hexahedron.obj")
-    private var currentProjectionMode = Projection.PERSPECTIVE
     private val mainCanvas = Canvas(800.0, 600.0)
     private val mainGc = mainCanvas.graphicsContext2D
 
@@ -115,12 +114,18 @@ class Affine3D : Application() {
         }
 
         // z-buffer pane
-        val trZBuffSection = InterfaceSection("Z-Buffer")
-        with(trZBuffSection) {
-            addButton("Z-Buffer", EventHandler {
-                camera.drawZBuffer(currentModel)
-            })
+        val zBufferBox = CheckBox("Z-буффер")
+        zBufferBox.setOnAction() {
+            camera.zBufferMode = !camera.zBufferMode
+            redraw()
         }
+
+//        val trZBuffSection = InterfaceSection("Z-Buffer")
+//        with(trZBuffSection) {
+//            addButton("Z-Buffer", EventHandler {
+//                camera.drawZBuffer(currentModel)
+//            })
+//        }
 
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
@@ -276,7 +281,7 @@ class Affine3D : Application() {
 
         transformationPane.children.addAll(
                 trMoveSection.sectionPane,
-                trZBuffSection.sectionPane,
+                zBufferBox,
                 trScaleSection.sectionPane,
                 trReflectSection.sectionPane,
                 trRotateSection.sectionPane,
@@ -316,7 +321,7 @@ class Affine3D : Application() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
         camera.draw(currentModel)
-        camera.draw(axesModel)
+//        camera.draw(axesModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
