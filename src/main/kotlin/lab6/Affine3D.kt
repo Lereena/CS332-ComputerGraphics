@@ -321,7 +321,7 @@ class Affine3D : Application() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
         camera.draw(currentModel)
-//        camera.draw(axesModel)
+        camera.draw(axesModel)
     }
 
     private fun setModeButton(button: ToggleButton, mode: Projection, all_buttons: Array<ToggleButton>) {
@@ -404,25 +404,27 @@ fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
 }
 
 fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
-    val zBuff = Array(canvas.width.toInt()) {
-        Array(canvas.height.toInt()) { Double.MAX_VALUE }
+    val cWidth = canvas.width.toInt()
+    val cHeight = canvas.height.toInt()
+    val zBuff = Array(cWidth) {
+        Array(cHeight) { Double.MAX_VALUE }
     }
 
     var min_depth = Double.MAX_VALUE
     for (polygon in polygons) {
-        var left_bound = canvas.width.toInt()
+        var left_bound = cWidth
         var right_bound = 0
         var upper_bound = 0
-        var lower_bound = canvas.height.toInt()
+        var lower_bound = cHeight
 
         for (point in polygon.points) {
-            if (point.x < left_bound)
+            if (point.x < left_bound && point.x >= 0)
                 left_bound = Math.ceil(point.x).toInt()
-            if (point.x > right_bound)
+            if (point.x > right_bound && point.x < cWidth)
                 right_bound = Math.floor(point.x).toInt()
-            if (point.y < lower_bound)
+            if (point.y < lower_bound && point.y >= 0)
                 lower_bound = Math.ceil(point.y).toInt()
-            if (point.y > upper_bound)
+            if (point.y > upper_bound && point.y < cHeight)
                 upper_bound = Math.floor(point.y).toInt()
         }
 
