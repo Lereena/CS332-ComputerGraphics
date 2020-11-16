@@ -482,6 +482,16 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
     gc.drawImage(image, 0.0, 0.0)
 }
 
+fun zOfPolygon(polygon: Polygon) : Double {
+    var zSum = 0.0
+    var zCnt = 0.0
+    for (point in polygon.points) {
+        zSum += point.z
+        zCnt += 1.0
+    }
+    return zSum / zCnt
+}
+
 fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, dv: DirectionVector,
             color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8) {
     val cWidth = canvas.width.toInt()
@@ -489,7 +499,9 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, dv
     val zBuff = Array(cWidth) {
         Array(cHeight) { 2.0 }
     }
-    val background_lightning = 0.3
+    val background_lightning = 0.2
+
+    polygons.sortBy { polygon -> zOfPolygon(polygon) }
 
     for (polygon in polygons) {
         var left_bound = cWidth
