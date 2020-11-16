@@ -64,6 +64,8 @@ class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
     var textureCoordinates = ArrayList<TextureCoordinate>()
+    var vertexToTexture = HashMap<Point3D, TextureCoordinate>()
+    var vertexToNormal = HashMap<Point3D, DirectionVector>()
     var normals = ArrayList<DirectionVector>()
     var centerPoint = Point3D(0.0, 0.0, 0.0)
 
@@ -86,10 +88,18 @@ class Polyhedron {
                     }
                     "f" -> {
                         val points = ArrayList<Point3D>()
+
                         for (i in 1 until sLine.size) {
-                            val number = sLine[i].substringBefore('/').toInt() - 1
-                            points.add(vertices[number])
+                            val split = sLine[i].split('/')
+                            val vertexNumber = split[0].toInt() - 1
+                            val vertex = vertices[vertexNumber]
+                            points.add(vertex)
+                            if (split.size > 1 && split[1] != "")
+                                vertexToTexture[vertex] = textureCoordinates[split[1].toInt() - 1]
+                            if (split.size == 3 && split[2] != "" && normals.size > 0)
+                                vertexToNormal[vertex] = normals[split[2].toInt() - 1]
                         }
+
                         polygons.add(Polygon(points))
                     }
                 }
