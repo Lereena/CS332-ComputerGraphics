@@ -1,8 +1,6 @@
 package lab6
 
-import java.awt.Point
 import java.io.File
-import java.lang.Double.MAX_VALUE
 import kotlin.collections.ArrayList
 import kotlin.math.*
 
@@ -26,9 +24,9 @@ data class Point3D(var x: Double, var y: Double, var z: Double) {
     }
 }
 
-enum class Axis { X, Y, Z }
+data class TextureCoordinate(var u: Double, var v: Double, var w: Double?)
 
-data class ZBuffCell(var is_obstructed: Boolean = false, var depth: Double = MAX_VALUE)
+enum class Axis { X, Y, Z }
 
 data class DirectionVector(var l: Double, var m: Double, var n: Double) {
     constructor(p: Point3D): this(p.x, p.y, p.z)
@@ -65,6 +63,7 @@ class Polygon(var points: ArrayList<Point3D>) {
 class Polyhedron {
     var vertices = ArrayList<Point3D>()
     var polygons = ArrayList<Polygon>()
+    var textureCoordinates = ArrayList<TextureCoordinate>()
     var normals = ArrayList<DirectionVector>()
     var centerPoint = Point3D(0.0, 0.0, 0.0)
 
@@ -75,6 +74,12 @@ class Polyhedron {
                 when (sLine[0]) {
                     "v" -> {
                         vertices.add(Point3D(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
+                    }
+                    "vt" -> {
+                        val u = sLine[1].toDouble()
+                        val v = sLine[2].toDouble()
+                        val w = if (sLine.size == 3) null else sLine[3].toDouble()
+                        textureCoordinates.add(TextureCoordinate(u, v, w))
                     }
                     "vn" -> {
                         normals.add(DirectionVector(sLine[1].toDouble(), sLine[2].toDouble(), sLine[3].toDouble()))
@@ -102,7 +107,6 @@ class Polyhedron {
         for (polygon in polygons) {
             if (polygon.points.size < 3)
                 continue
-//                throw Exception("Меньше трёх точек в полигоне")
             normals.add(findNormal(polygon[0], polygon[1], polygon[2]))
         }
     }
