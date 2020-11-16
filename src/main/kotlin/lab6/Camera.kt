@@ -12,6 +12,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     val width = canvas.width
     var projectionMode = Projection.PERSPECTIVE
     var zBufferMode = false
+    var shaderMode = false
     var viewVector = DirectionVector(0.0, 0.0, 1.0)
     var cosX = Math.cos(angleX)
     var cosY = Math.cos(angleY)
@@ -35,10 +36,26 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         )
         val clone = model.copy()
         transform(clone, projectionMatrix)
-        val polygons = clone.faces(viewVector)
+        var polygons = clone.faces(viewVector)
 
         if (zBufferMode) {
             zBuffer(canvas, mainGc, polygons)
+        }
+        else {
+            for (polygon in polygons)
+                for (edge in polygon.edges) {
+                    val a = edge.point1
+                    val b = edge.point2
+                    mainGc.strokeLine(
+                            a.x, a.y,
+                            b.x, b.y
+                    )
+                }
+        }
+
+        polygons = clone.faces(DirectionVector(0.0, 0.0, -1.0))
+        if (shaderMode) {
+            shader(canvas, mainGc, polygons, DirectionVector(0.0, -1.0, 0.0))
         }
         else {
             for (polygon in polygons)

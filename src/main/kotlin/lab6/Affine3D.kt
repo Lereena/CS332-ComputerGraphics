@@ -22,11 +22,10 @@ import java.lang.Double.MAX_VALUE
 import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
-import kotlin.math.PI
 import java.io.File as File
 
 enum class Projection { PERSPECTIVE, ORTHOGRAPHIC }
@@ -120,6 +119,13 @@ class Affine3D : Application() {
             redraw()
         }
 
+        // shader pane
+        val shaderBox = CheckBox("Осветить")
+        shaderBox.setOnAction() {
+            camera.shaderMode = !camera.shaderMode
+            redraw()
+        }
+
 //        val trZBuffSection = InterfaceSection("Z-Buffer")
 //        with(trZBuffSection) {
 //            addButton("Z-Buffer", EventHandler {
@@ -130,9 +136,9 @@ class Affine3D : Application() {
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
         with(trScaleSection) {
-            val kXInput = addInput("kX", "1.0")
-            val kYInput = addInput("kY", "1.0")
-            val kZInput = addInput("kZ", "1.0")
+            val kXInput = addInput("kX", "2.0")
+            val kYInput = addInput("kY", "2.0")
+            val kZInput = addInput("kZ", "2.0")
             addButton("Масштабировать", EventHandler {
                 scale(
                         currentModel,
@@ -283,6 +289,7 @@ class Affine3D : Application() {
                 saveSection.sectionPane,
                 trMoveSection.sectionPane,
                 zBufferBox,
+                shaderBox,
                 trScaleSection.sectionPane,
                 trReflectSection.sectionPane,
                 trRotateSection.sectionPane,
@@ -469,6 +476,67 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
             if (zBuff[x][y] < Double.MAX_VALUE) {
                 val value = 1 - (zBuff[x][y] - min_depth) / (max_depth - min_depth)
                 writer.setColor(x, y, Color(value, value, value, 1.0))
+            } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
+        }
+    }
+    gc.drawImage(image, 0.0, 0.0)
+}
+
+fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, dv: DirectionVector,
+            color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8) {
+    val cWidth = canvas.width.toInt()
+    val cHeight = canvas.height.toInt()
+    val zBuff = Array(cWidth) {
+        Array(cHeight) { 2.0 }
+    }
+    val background_lightning = 0.3
+
+    for (polygon in polygons) {
+        var left_bound = cWidth
+        var right_bound = 0
+        var upper_bound = 0
+        var lower_bound = cHeight
+
+        for (point in polygon.points) {
+            if (point.x < left_bound && point.x >= 0)
+                left_bound = Math.ceil(point.x).toInt()
+            if (point.x > right_bound && point.x < cWidth)
+                right_bound = Math.floor(point.x).toInt()
+            if (point.y < lower_bound && point.y >= 0)
+                lower_bound = Math.ceil(point.y).toInt()
+            if (point.y > upper_bound && point.y < cHeight)
+                upper_bound = Math.floor(point.y).toInt()
+        }
+
+        val normal = findNormal(
+                polygon.points[0],
+                polygon.points[1],
+                polygon.points[2])
+
+        for (x in (left_bound..right_bound)) {
+            for (y in (lower_bound..upper_bound)) {
+                val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
+                if (checkIsInPolygon(point, polygon)) {
+                    val cos = angleBetweenVectors(normal, dv)
+                    if (cos > 0) {
+                        var L0 = Li * kd * cos + background_lightning
+                        if (L0 > 1) L0 = 1.0
+                        zBuff[point.x.toInt()][point.y.toInt()] = L0
+                    }
+                    else
+                        zBuff[point.x.toInt()][point.y.toInt()] = background_lightning
+                }
+            }
+        }
+    }
+
+    val image = WritableImage(zBuff.size, zBuff[0].size)
+    val writer = image.pixelWriter
+    for (x in zBuff.indices) {
+        for (y in zBuff[x].indices) {
+            if (zBuff[x][y] <= 1) {
+                val value = zBuff[x][y]
+                writer.setColor(x, y, Color(color.red * value, color.green * value, color.blue * value, 1.0))
             } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
         }
     }

@@ -151,12 +151,12 @@ class Polyhedron {
 
         return result
     }
+}
 
-    private fun angleBetweenVectors(v1: DirectionVector, v2: DirectionVector): Double {
-        return ((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
-                / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
-                * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
-    }
+fun angleBetweenVectors(v1: DirectionVector, v2: DirectionVector): Double {
+    return ((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
+            / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
+            * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
 }
 
 fun getLinePolyhedron(line: Line): Polyhedron {
