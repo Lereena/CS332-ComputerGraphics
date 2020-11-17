@@ -34,7 +34,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
                         viewMatrix()
                 )
         )
-        val clone = model.copy()
+        val clone = model.clone()
         transform(clone, projectionMatrix)
         var polygons = clone.faces(viewVector)
 

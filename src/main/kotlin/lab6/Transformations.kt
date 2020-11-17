@@ -152,10 +152,10 @@ fun transform(polyhedron: Polyhedron, matrix: Matrix) {
     polyhedron.centerPoint.z = newCenterPoint[2][0]
     for (i in polyhedron.vertices.indices) {
         val point = polyhedron.vertices[i]
-        val transformed = multiplyMatrices(matrix, pointToMatrix(point))
-        polyhedron.vertices[i].x = transformed[0][0] / transformed[3][0]
-        polyhedron.vertices[i].y = transformed[1][0] / transformed[3][0]
-        polyhedron.vertices[i].z = transformed[2][0] / transformed[3][0]
+        val transformed = multiplyMatrices(matrix, pointToMatrix(point.point))
+        polyhedron.vertices[i].point.x = transformed[0][0] / transformed[3][0]
+        polyhedron.vertices[i].point.y = transformed[1][0] / transformed[3][0]
+        polyhedron.vertices[i].point.z = transformed[2][0] / transformed[3][0]
     }
 }
 
