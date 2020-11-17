@@ -4,8 +4,12 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
+import lab3.getLine
 import lab5.Point
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.tan
 
 enum class RasterModes { BY_EDGES, Z_BUFFER, SHADER, FLOAT_HOR }
@@ -50,32 +54,24 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         val image = WritableImage(canvas.width.toInt(), canvas.height.toInt())
         val writer = image.pixelWriter
 
-        val planes = if (true) plot.polygons else plot.polygons.reversed()
+        val flag = plot.polygons.first().points.first().z >
+                plot.polygons.last().points.first().z
+        val planes = if (flag) plot.polygons else plot.polygons.reversed()
         for (plane in planes) {
             var prevPoint = plane.points.first()
             for (point in plane.points.drop(1)) {
-                val dX = Math.abs(point.x.toInt() - prevPoint.x.toInt())
-                val dY = Math.abs(point.y.toInt() - prevPoint.y.toInt())
-                var error = 0
-                val dError = dY + 1
-                var y = prevPoint.y.toInt()
-                val dirY = if (point.y > prevPoint.y) 1 else -1
-                for (x in (prevPoint.x.toInt()..point.x.toInt())) {
-                    if (x >= canvas.width || x < 0 ||
-                            y >= canvas.height || y < 0)
+                val rasterPoints = getLine(prevPoint, point)
+                for (pixel in rasterPoints) {
+                    if (pixel.x >= canvas.width || pixel.x < 0 ||
+                            pixel.y >= canvas.height || pixel.y < 0)
                         continue
-                    if (y > maxHorizon[x]) {
-                        maxHorizon[x] = y
-                        writer.setColor(x, y, Color.BLACK)
+                    if (pixel.y >= maxHorizon[pixel.x]) {
+                        maxHorizon[pixel.x] = pixel.y
+                        writer.setColor(pixel.x, pixel.y, Color.BLACK)
                     }
-                    if (y < minHorizon[x]) {
-                        maxHorizon[x] = y
-                        writer.setColor(x, y, Color.BLACK)
-                    }
-                    error += dError
-                    if (error >= dX + 1) {
-                        y += dY
-                        error -= dX + 1
+                    if (pixel.y <= minHorizon[pixel.x]) {
+                        minHorizon[pixel.x] = pixel.y
+                        writer.setColor(pixel.x, pixel.y, Color.BLACK)
                     }
                 }
                 prevPoint = point
@@ -145,4 +141,46 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
                 temp
         )
     }
+}
+
+fun getLine(start: Point3D, end: Point3D): LinkedList<Pixel> {
+    val result = LinkedList<Pixel>()
+    val pStart = Pixel(start)
+    val pEnd = Pixel(end)
+    result.add(pStart)
+
+    val a = pEnd.y - pStart.y
+    val b = pStart.x - pEnd.x
+    if (a == 0 && b == 0)
+        return result
+    val sign = if (abs(a) > abs(b)) 1 else -1
+    val signA = if (a > 0) 1 else -1
+    val signB = if (b > 0) 1 else -1
+
+    var f = 0
+    var x = pStart.x
+    var y = pStart.y
+
+    if (sign == -1)
+        do {
+            f += a * signA
+            if (f > 0) {
+                f -= b * signB
+                y += signA
+            }
+            x -= signB
+            result.add(Pixel(x, y))
+        } while (x != pEnd.x || y != pEnd.y)
+    else
+        do {
+            f += b * signB
+            if (f > 0) {
+                f -= a * signA
+                x -= signB
+            }
+            y += signA
+            result.add(Pixel(x, y))
+        } while (x != pEnd.x || y != pEnd.y)
+
+    return result
 }

@@ -24,6 +24,10 @@ data class Point3D(var x: Double, var y: Double, var z: Double) {
     }
 }
 
+data class Pixel(var x: Int, val y: Int) {
+    constructor(point: Point3D): this(point.x.toInt(), point.y.toInt())
+}
+
 data class TextureCoordinate(var u: Double, var v: Double, var w: Double?)
 
 enum class Axis { X, Y, Z }

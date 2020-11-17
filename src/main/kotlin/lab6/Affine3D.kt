@@ -229,15 +229,17 @@ class Affine3D : Application() {
         // plot pane
         val funcPlotSection = InterfaceSection("Построение графика")
         with (funcPlotSection) {
-            val x0Field = addInput("X0", "-10.0")
-            val y0Field = addInput("Y0", "-10.0")
-            val x1Field = addInput("X1", "10.0")
-            val y1Field = addInput("Y1", "10.0")
-            val stepField = addInput("Шаг", "0.1")
+            val x0Field = addInput("X0", "-1.0")
+            val y0Field = addInput("Y0", "-1.0")
+            val x1Field = addInput("X1", "1.0")
+            val y1Field = addInput("Y1", "1.0")
+            val stepField = addInput("Шаг", "0.01")
             val funcItems = FXCollections.observableArrayList(
                     "sin(x + y)",
                     "sin(x + y) / (x + y)",
                     "x + y^2",
+                    "sin(5x) * cos(5y) / 5",
+                    "sin(10(x^2 + y^2)) / 10"
             )
             val funcList = ComboBox(funcItems)
             addComboBox(funcList)
@@ -245,6 +247,8 @@ class Affine3D : Application() {
                     { x, y -> sin(x + y) },
                     { x, y -> sin(x + y) / (x + y) },
                     { x, y -> x + y.pow(2) },
+                    { x, y -> sin(5 * x) * cos(5 * y) / 5.0 },
+                    { x, y -> sin(10 * (x.pow(2) + y.pow(2))) / 10 }
             )
             addButton("Построить график", EventHandler {
                 val x0 = x0Field.text.toDouble()
@@ -338,7 +342,7 @@ class Affine3D : Application() {
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        camera.draw(axesModel)
+//        camera.draw(axesModel)
         camera.draw(currentModel)
     }
 
