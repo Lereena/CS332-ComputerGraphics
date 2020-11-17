@@ -63,7 +63,7 @@ fun processPoints(
             pointNums[point] = currentEst
             currentEst++
         } else {
-            polygonPoints.add(builtPoints[pointNums[point]!!])
+                polygonPoints.add(builtPoints[pointNums[point]!!])
         }
     }
     if (polygonPoints.size >= 3) plot.polygons.add(Polygon(polygonPoints))

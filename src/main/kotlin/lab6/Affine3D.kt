@@ -112,26 +112,38 @@ class Affine3D : Application() {
             })
         }
 
-        // z-buffer pane
-        val zBufferBox = CheckBox("Z-буффер")
-        zBufferBox.setOnAction() {
-            camera.zBufferMode = !camera.zBufferMode
+        // Camera pane
+        val cameraModeSection = FlowPane(Orientation.VERTICAL, 0.0, 30.0)
+        val cameraModeGroup = ToggleGroup()
+        val byEdgesButton = RadioButton("По ребрам")
+        byEdgesButton.toggleGroup = cameraModeGroup;
+        byEdgesButton.isSelected = true
+        byEdgesButton.setOnAction {
+            camera.rasterMode = RasterModes.BY_EDGES
             redraw()
         }
-
-        // shader pane
-        val shaderBox = CheckBox("Осветить")
-        shaderBox.setOnAction() {
-            camera.shaderMode = !camera.shaderMode
+        val zBufferButton = RadioButton("Z-буффер")
+        zBufferButton.toggleGroup = cameraModeGroup;
+        zBufferButton.setOnAction {
+            camera.rasterMode = RasterModes.Z_BUFFER
             redraw()
         }
-
-//        val trZBuffSection = InterfaceSection("Z-Buffer")
-//        with(trZBuffSection) {
-//            addButton("Z-Buffer", EventHandler {
-//                camera.drawZBuffer(currentModel)
-//            })
-//        }
+        val shaderButton = RadioButton("Тени")
+        shaderButton.toggleGroup = cameraModeGroup;
+        shaderButton.setOnAction {
+            camera.rasterMode = RasterModes.SHADER
+            redraw()
+        }
+        val floatHorButton = RadioButton("Плав. гор-т")
+        floatHorButton.toggleGroup = cameraModeGroup;
+        floatHorButton.setOnAction {
+            camera.rasterMode = RasterModes.FLOAT_HOR
+            redraw()
+        }
+        cameraModeSection.children.addAll(
+                byEdgesButton, zBufferButton,
+                shaderButton, floatHorButton
+        )
 
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
@@ -241,7 +253,7 @@ class Affine3D : Application() {
                 val y1 = y1Field.text.toDouble()
                 val step = stepField.text.toDouble()
                 val func = funcItems.indexOf(funcList.value)
-                currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
+                currentModel = floatingPlot(x0, y0, x1, y1, step, functions[func])
                 redraw()
             })
         }
@@ -288,8 +300,7 @@ class Affine3D : Application() {
         transformationPane.children.addAll(
                 saveSection.sectionPane,
                 trMoveSection.sectionPane,
-                zBufferBox,
-                shaderBox,
+                cameraModeSection,
                 trScaleSection.sectionPane,
                 trReflectSection.sectionPane,
                 trRotateSection.sectionPane,
