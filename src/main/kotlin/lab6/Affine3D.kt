@@ -127,13 +127,6 @@ class Affine3D : Application() {
             redraw()
         }
 
-//        val trZBuffSection = InterfaceSection("Z-Buffer")
-//        with(trZBuffSection) {
-//            addButton("Z-Buffer", EventHandler {
-//                camera.drawZBuffer(currentModel)
-//            })
-//        }
-
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
         with(trScaleSection) {
@@ -166,8 +159,6 @@ class Affine3D : Application() {
                 }
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
-//                val tempLine = getLinePolyhedron(line)
-//                camera.draw(tempLine)
             })
 
             addLabel("Координаты точек прямой")
@@ -191,8 +182,6 @@ class Affine3D : Application() {
                 val line = Line(point1, point2)
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
-//                val tempLine = getLinePolyhedron(line)
-//                camera.draw(tempLine)
             })
         }
 
@@ -391,8 +380,8 @@ fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Doub
 fun classifyPoint(p: Point3D, line: Line): Position {
     val p1 = line.point1
     val p2 = line.point2
-    var a = DoublePoint(p2.x - p1.x, p2.y - p1.y)
-    var b = DoublePoint(p.x - p1.x, p.y - p1.y)
+    val a = DoublePoint(p2.x - p1.x, p2.y - p1.y)
+    val b = DoublePoint(p.x - p1.x, p.y - p1.y)
     val sa =  a.x * b.y - b.x * a.y;
 
     if (sa > 0.0)
@@ -511,7 +500,6 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         var lower_bound = Point3D(0.0, canvas.height, 0.0)
 
         for (point in polygon.points) {
-            println(point)
             if (point.x < left_bound.x && point.x >= 0)
                 left_bound = point
             if (point.x > right_bound.x && point.x < cWidth)
@@ -519,28 +507,20 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
             if (point.y < lower_bound.y && point.y >= 0)
                 lower_bound = point
             if (point.y > upper_bound.y && point.y < cHeight)
-                upper_bound = point/*
-            println("left bound: " + left_bound.x.toString() + " " + left_bound.y.toString() + " " + left_bound.z.toString())
-            println("right bound: " + right_bound.x.toString() + " " + right_bound.y.toString() + " " + right_bound.z.toString())
-            println("upper bound: " + upper_bound.x.toString() + " " + upper_bound.y.toString() + " " + upper_bound.z.toString())
-            println("lower bound: " + lower_bound.x.toString() + " " + lower_bound.y.toString() + " " + lower_bound.z.toString())
-            println()*/
+                upper_bound = point
         }
-        println()
-        println()
-        var left_bound_normals = LinkedList<DirectionVector>()
-        var right_bound_normals = LinkedList<DirectionVector>()
-        var upper_bound_normals = LinkedList<DirectionVector>()
-        var lower_bound_normals = LinkedList<DirectionVector>()
+
+        val left_bound_normals = LinkedList<DirectionVector>()
+        val right_bound_normals = LinkedList<DirectionVector>()
+        val upper_bound_normals = LinkedList<DirectionVector>()
+        val lower_bound_normals = LinkedList<DirectionVector>()
         for (p in model.polygons) {
             for (point in p.points) {
-                println(point)
                 if (point.x == left_bound.x && point.y == left_bound.y && point.z == left_bound.z) {
                     val normal = findNormal(
                             p.points[0],
                             p.points[1],
                             p.points[2])
-                    println("left normals added")
                     left_bound_normals.add(normal)
                 }
                 if (point.x == right_bound.x && point.y == right_bound.y && point.z == right_bound.z) {
@@ -548,7 +528,6 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
                             p.points[0],
                             p.points[1],
                             p.points[2])
-                    println("rigth normals added")
                     right_bound_normals.add(normal)
                 }
                 if (point.x == upper_bound.x && point.y == upper_bound.y && point.z == upper_bound.z) {
@@ -556,7 +535,6 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
                             p.points[0],
                             p.points[1],
                             p.points[2])
-                    println("upper normals added")
                     upper_bound_normals.add(normal)
                 }
                 if (point.x == lower_bound.x && point.y == lower_bound.y && point.z == lower_bound.z) {
@@ -564,7 +542,6 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
                             p.points[0],
                             p.points[1],
                             p.points[2])
-                    println("lower normals added")
                     lower_bound_normals.add(normal)
                 }
             }
@@ -573,15 +550,13 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         var l = 0.0
         var m = 0.0
         var n = 0.0
-        println("left")
         for (dv in left_bound_normals) {
             l += dv.l
             m += dv.m
             n += dv.n
-            println(l.toString() + " " + m.toString() + " " + n.toString())
         }
         var size = left_bound_normals.size.toDouble()
-        var left_normal = DirectionVector(l / size, m / size, n / size)
+        val left_normal = DirectionVector(l / size, m / size, n / size)
         var left_lightning = 0.0
         var cos = angleBetweenVectors(left_normal, dv)
         if (cos > 0) {
@@ -596,15 +571,13 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         l = 0.0
         m = 0.0
         n = 0.0
-        println("right")
         for (dv in right_bound_normals) {
             l += dv.l
             m += dv.m
             n += dv.n
-            println(l.toString() + " " + m.toString() + " " + n.toString())
         }
         size = right_bound_normals.size.toDouble()
-        var right_normal = DirectionVector(l / size, m / size, n / size)
+        val right_normal = DirectionVector(l / size, m / size, n / size)
         var right_lightning = 0.0
         cos = angleBetweenVectors(right_normal, dv)
         if (cos > 0) {
@@ -618,15 +591,13 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         l = 0.0
         m = 0.0
         n = 0.0
-        println("upper")
         for (dv in upper_bound_normals) {
             l += dv.l
             m += dv.m
             n += dv.n
-            println(l.toString() + " " + m.toString() + " " + n.toString())
         }
         size = upper_bound_normals.size.toDouble()
-        var upper_normal = DirectionVector(l / size, m / size, n / size)
+        val upper_normal = DirectionVector(l / size, m / size, n / size)
         var upper_lightning = 0.0
         cos = angleBetweenVectors(upper_normal, dv)
         if (cos > 0) {
@@ -640,15 +611,13 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         l = 0.0
         m = 0.0
         n = 0.0
-        println("lower")
         for (dv in lower_bound_normals) {
             l += dv.l
             m += dv.m
             n += dv.n
-            println(l.toString() + " " + m.toString() + " " + n.toString())
         }
         size = lower_bound_normals.size.toDouble()
-        var lower_normal = DirectionVector(l / size, m / size, n / size)
+        val lower_normal = DirectionVector(l / size, m / size, n / size)
         var lower_lightning = 0.0
         cos = angleBetweenVectors(lower_normal, dv)
         if (cos > 0) {
@@ -658,25 +627,6 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         }
         else
             lower_lightning = background_lightning
-
-        print("left lightning: ")
-        println(left_lightning)
-        print("right lightning: ")
-        println(right_lightning)
-        print("upper lightning: ")
-        println(upper_lightning)
-        print("lower lightning: ")
-        println(lower_lightning)
-/*
-        var t = upper_lightning
-        upper_lightning = lower_lightning
-        lower_lightning = t
-
-
-        var t = left_lightning
-        left_lightning = right_lightning
-        right_lightning = t
- */
 
         val delta_horizontal_lightning = right_lightning - left_lightning
         val delta_width = right_bound.x - left_bound.x
