@@ -22,6 +22,7 @@ import java.lang.Double.MAX_VALUE
 import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
 import kotlin.math.pow
@@ -153,7 +154,7 @@ class Affine3D : Application() {
         // rotate pane
         val trRotateSection = InterfaceSection("Поворот")
         with(trRotateSection) {
-            val angleInput = addInput("Угол", "0.0")
+            val angleInput = addInput("Угол", "0.2")
             val axesList = addComboBox(arrayOf(Axis.X, Axis.Y, Axis.Z), Axis.X)
 
             addButton("Параллельно оси", EventHandler {
@@ -327,7 +328,7 @@ class Affine3D : Application() {
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        camera.draw(axesModel)
+        //camera.draw(axesModel)
         camera.draw(currentModel)
     }
 
@@ -492,8 +493,8 @@ fun zOfPolygon(polygon: Polygon) : Double {
     return zSum / zCnt
 }
 
-fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, dv: DirectionVector,
-            color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8) {
+fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, model: Polyhedron,
+           dv: DirectionVector, color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8) {
     val cWidth = canvas.width.toInt()
     val cHeight = canvas.height.toInt()
     val zBuff = Array(cWidth) {
@@ -504,39 +505,195 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, dv
     polygons.sortBy { polygon -> zOfPolygon(polygon) }
 
     for (polygon in polygons) {
-        var left_bound = cWidth
-        var right_bound = 0
-        var upper_bound = 0
-        var lower_bound = cHeight
+        var left_bound = Point3D(canvas.width, 0.0, 0.0)
+        var right_bound = Point3D(0.0, 0.0, 0.0)
+        var upper_bound = Point3D(0.0, 0.0, 0.0)
+        var lower_bound = Point3D(0.0, canvas.height, 0.0)
 
         for (point in polygon.points) {
-            if (point.x < left_bound && point.x >= 0)
-                left_bound = Math.ceil(point.x).toInt()
-            if (point.x > right_bound && point.x < cWidth)
-                right_bound = Math.floor(point.x).toInt()
-            if (point.y < lower_bound && point.y >= 0)
-                lower_bound = Math.ceil(point.y).toInt()
-            if (point.y > upper_bound && point.y < cHeight)
-                upper_bound = Math.floor(point.y).toInt()
+            println(point)
+            if (point.x < left_bound.x && point.x >= 0)
+                left_bound = point
+            if (point.x > right_bound.x && point.x < cWidth)
+                right_bound = point
+            if (point.y < lower_bound.y && point.y >= 0)
+                lower_bound = point
+            if (point.y > upper_bound.y && point.y < cHeight)
+                upper_bound = point/*
+            println("left bound: " + left_bound.x.toString() + " " + left_bound.y.toString() + " " + left_bound.z.toString())
+            println("right bound: " + right_bound.x.toString() + " " + right_bound.y.toString() + " " + right_bound.z.toString())
+            println("upper bound: " + upper_bound.x.toString() + " " + upper_bound.y.toString() + " " + upper_bound.z.toString())
+            println("lower bound: " + lower_bound.x.toString() + " " + lower_bound.y.toString() + " " + lower_bound.z.toString())
+            println()*/
+        }
+        println()
+        println()
+        var left_bound_normals = LinkedList<DirectionVector>()
+        var right_bound_normals = LinkedList<DirectionVector>()
+        var upper_bound_normals = LinkedList<DirectionVector>()
+        var lower_bound_normals = LinkedList<DirectionVector>()
+        for (p in model.polygons) {
+            for (point in p.points) {
+                println(point)
+                if (point.x == left_bound.x && point.y == left_bound.y && point.z == left_bound.z) {
+                    val normal = findNormal(
+                            p.points[0],
+                            p.points[1],
+                            p.points[2])
+                    println("left normals added")
+                    left_bound_normals.add(normal)
+                }
+                if (point.x == right_bound.x && point.y == right_bound.y && point.z == right_bound.z) {
+                    val normal = findNormal(
+                            p.points[0],
+                            p.points[1],
+                            p.points[2])
+                    println("rigth normals added")
+                    right_bound_normals.add(normal)
+                }
+                if (point.x == upper_bound.x && point.y == upper_bound.y && point.z == upper_bound.z) {
+                    val normal = findNormal(
+                            p.points[0],
+                            p.points[1],
+                            p.points[2])
+                    println("upper normals added")
+                    upper_bound_normals.add(normal)
+                }
+                if (point.x == lower_bound.x && point.y == lower_bound.y && point.z == lower_bound.z) {
+                    val normal = findNormal(
+                            p.points[0],
+                            p.points[1],
+                            p.points[2])
+                    println("lower normals added")
+                    lower_bound_normals.add(normal)
+                }
+            }
         }
 
-        val normal = findNormal(
-                polygon.points[0],
-                polygon.points[1],
-                polygon.points[2])
+        var l = 0.0
+        var m = 0.0
+        var n = 0.0
+        println("left")
+        for (dv in left_bound_normals) {
+            l += dv.l
+            m += dv.m
+            n += dv.n
+            println(l.toString() + " " + m.toString() + " " + n.toString())
+        }
+        var size = left_bound_normals.size.toDouble()
+        var left_normal = DirectionVector(l / size, m / size, n / size)
+        var left_lightning = 0.0
+        var cos = angleBetweenVectors(left_normal, dv)
+        if (cos > 0) {
+            var L0 = Li * kd * cos + background_lightning
+            if (L0 > 1) L0 = 1.0
+            left_lightning = L0
+        }
+        else
+            left_lightning = background_lightning
 
-        for (x in (left_bound..right_bound)) {
-            for (y in (lower_bound..upper_bound)) {
+
+        l = 0.0
+        m = 0.0
+        n = 0.0
+        println("right")
+        for (dv in right_bound_normals) {
+            l += dv.l
+            m += dv.m
+            n += dv.n
+            println(l.toString() + " " + m.toString() + " " + n.toString())
+        }
+        size = right_bound_normals.size.toDouble()
+        var right_normal = DirectionVector(l / size, m / size, n / size)
+        var right_lightning = 0.0
+        cos = angleBetweenVectors(right_normal, dv)
+        if (cos > 0) {
+            var L0 = Li * kd * cos + background_lightning
+            if (L0 > 1) L0 = 1.0
+            right_lightning = L0
+        }
+        else
+            right_lightning = background_lightning
+
+        l = 0.0
+        m = 0.0
+        n = 0.0
+        println("upper")
+        for (dv in upper_bound_normals) {
+            l += dv.l
+            m += dv.m
+            n += dv.n
+            println(l.toString() + " " + m.toString() + " " + n.toString())
+        }
+        size = upper_bound_normals.size.toDouble()
+        var upper_normal = DirectionVector(l / size, m / size, n / size)
+        var upper_lightning = 0.0
+        cos = angleBetweenVectors(upper_normal, dv)
+        if (cos > 0) {
+            var L0 = Li * kd * cos + background_lightning
+            if (L0 > 1) L0 = 1.0
+            upper_lightning = L0
+        }
+        else
+            upper_lightning = background_lightning
+
+        l = 0.0
+        m = 0.0
+        n = 0.0
+        println("lower")
+        for (dv in lower_bound_normals) {
+            l += dv.l
+            m += dv.m
+            n += dv.n
+            println(l.toString() + " " + m.toString() + " " + n.toString())
+        }
+        size = lower_bound_normals.size.toDouble()
+        var lower_normal = DirectionVector(l / size, m / size, n / size)
+        var lower_lightning = 0.0
+        cos = angleBetweenVectors(lower_normal, dv)
+        if (cos > 0) {
+            var L0 = Li * kd * cos + background_lightning
+            if (L0 > 1) L0 = 1.0
+            lower_lightning = L0
+        }
+        else
+            lower_lightning = background_lightning
+
+        print("left lightning: ")
+        println(left_lightning)
+        print("right lightning: ")
+        println(right_lightning)
+        print("upper lightning: ")
+        println(upper_lightning)
+        print("lower lightning: ")
+        println(lower_lightning)
+/*
+        var t = upper_lightning
+        upper_lightning = lower_lightning
+        lower_lightning = t
+
+
+        var t = left_lightning
+        left_lightning = right_lightning
+        right_lightning = t
+ */
+
+        val delta_horizontal_lightning = right_lightning - left_lightning
+        val delta_width = right_bound.x - left_bound.x
+        val delta_horizontal = delta_horizontal_lightning / delta_width
+        for (x in left_bound.x.toInt()..right_bound.x.toInt()) {
+            val horizontal_lightning = left_lightning +
+                    delta_horizontal * (x - left_bound.x)
+            val delta_vertical_lightning = upper_lightning - lower_lightning
+            val delta_height = upper_bound.y - lower_bound.y
+            val delta_vertical = delta_vertical_lightning / delta_height
+            for (y in (lower_bound.y.toInt()..upper_bound.y.toInt())) {
+                val vertical_lightning = lower_lightning + delta_vertical * (y - lower_bound.y)
                 val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
                 if (checkIsInPolygon(point, polygon)) {
-                    val cos = angleBetweenVectors(normal, dv)
-                    if (cos > 0) {
-                        var L0 = Li * kd * cos + background_lightning
-                        if (L0 > 1) L0 = 1.0
-                        zBuff[point.x.toInt()][point.y.toInt()] = L0
-                    }
-                    else
-                        zBuff[point.x.toInt()][point.y.toInt()] = background_lightning
+                    var L0 = (horizontal_lightning + vertical_lightning) / 2
+                    if (L0 > 1) L0 = 1.0
+                    zBuff[point.x.toInt()][point.y.toInt()] = L0
                 }
             }
         }

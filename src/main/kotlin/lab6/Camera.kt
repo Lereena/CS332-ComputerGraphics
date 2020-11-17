@@ -55,7 +55,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
 
         polygons = clone.faces(DirectionVector(0.0, 0.0, -1.0))
         if (shaderMode) {
-            shader(canvas, mainGc, polygons, DirectionVector(0.0, -1.0, 0.0))
+            shader(canvas, mainGc, polygons, clone, DirectionVector(0.0, 0.0, -1.0))
         }
         else {
             for (polygon in polygons)
