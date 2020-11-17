@@ -12,7 +12,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     val width = canvas.width
     var projectionMode = Projection.PERSPECTIVE
     var zBufferMode = false
-    var viewVector = DirectionVector(0.0, 0.0, 1.0)
+    var viewVector = DirectionVector(0.0, 0.0, -1.0)
     var cosX = Math.cos(angleX)
     var cosY = Math.cos(angleY)
     var sinX = Math.sin(angleX)
@@ -71,9 +71,9 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     }
 
     private fun updateViewVector() {
-        val v1 = DirectionVector(cosX, 0.0, sinX)
-        val v2 = DirectionVector(0.0, cosY, sinY)
-        viewVector = v1 + v2
+//        val v1 = DirectionVector(cosX, 0.0, sinX)
+//        val v2 = DirectionVector(0.0, cosY, sinY)
+//        viewVector = v1 + v2
     }
 
     private fun perspectiveProjectionMatrix(): Matrix {
@@ -104,8 +104,8 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     }
 
     private fun viewMatrix(): Matrix {
-        val rotateY = rotationYMatrix(angleY - Math.PI / 2)
-        val rotateX = rotationXMatrix(angleX - Math.PI / 2)
+        val rotateY = rotationYMatrix(angleY)
+        val rotateX = rotationXMatrix(angleX)
         val temp = multiplyMatrices(rotateY, rotateX)
         val temp2 = multiplyMatrices(
                 translationMatrix(-position.x, -position.y, -position.z),

@@ -39,7 +39,7 @@ class Affine3D : Application() {
 
     private val camera = Camera(
             Point3D(0.0, 0.0,300.0),
-            -Math.PI / 2, -Math.PI / 2,
+            0.0, 0.0,
             mainCanvas
     )
 
