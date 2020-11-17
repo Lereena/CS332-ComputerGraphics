@@ -22,9 +22,9 @@ import java.lang.Double.MAX_VALUE
 import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.cos
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.pow
 import kotlin.math.sin
 import java.io.File as File
@@ -38,9 +38,9 @@ class Affine3D : Application() {
     private val mainGc = mainCanvas.graphicsContext2D
 
     private val camera = Camera(
-            Point3D(0.0, 0.0,300.0),
-            -Math.PI / 2, -Math.PI / 2,
-            mainCanvas
+        Point3D(0.0, 0.0, 300.0),
+        -Math.PI / 2, -Math.PI / 2,
+        mainCanvas
     )
 
     override fun start(primaryStage: Stage) {
@@ -53,10 +53,10 @@ class Affine3D : Application() {
 
         val canvasGroup = StackPane(mainCanvas)
         canvasGroup.border = Border(
-                BorderStroke(
-                        Color.BLACK,
-                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT
-                )
+            BorderStroke(
+                Color.BLACK,
+                BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT
+            )
         )
 
         val shapePane = FlowPane(Orientation.HORIZONTAL, 10.0, 0.0)
@@ -83,16 +83,17 @@ class Affine3D : Application() {
         val ortModeButton = ToggleButton("Orthographic")
         perModeButton.isSelected = true
 
-        shapePane.children.addAll(fileList,
-                perModeButton,
-                ortModeButton
+        shapePane.children.addAll(
+            fileList,
+            perModeButton,
+            ortModeButton
         )
 
         val toggleButtons = arrayOf(
-                perModeButton,
-                ortModeButton,
+            perModeButton,
+            ortModeButton,
         )
-        setModeButton(perModeButton, Projection.PERSPECTIVE,  toggleButtons)
+        setModeButton(perModeButton, Projection.PERSPECTIVE, toggleButtons)
         setModeButton(ortModeButton, Projection.ORTHOGRAPHIC, toggleButtons)
 
         // TRANSFORMATION PANE
@@ -104,10 +105,10 @@ class Affine3D : Application() {
             val dZInput = addInput("dZ", "0.0")
             addButton("Сдвинуть", EventHandler {
                 move(
-                        currentModel,
-                        dXInput.text.toDouble(),
-                        dYInput.text.toDouble(),
-                        dZInput.text.toDouble(),
+                    currentModel,
+                    dXInput.text.toDouble(),
+                    dYInput.text.toDouble(),
+                    dZInput.text.toDouble(),
                 )
                 redraw()
             })
@@ -135,10 +136,10 @@ class Affine3D : Application() {
             val kZInput = addInput("kZ", "2.0")
             addButton("Масштабировать", EventHandler {
                 scale(
-                        currentModel,
-                        kXInput.text.toDouble(),
-                        kYInput.text.toDouble(),
-                        kZInput.text.toDouble()
+                    currentModel,
+                    kXInput.text.toDouble(),
+                    kYInput.text.toDouble(),
+                    kZInput.text.toDouble()
                 )
                 redraw()
             })
@@ -152,10 +153,10 @@ class Affine3D : Application() {
 
             addButton("Параллельно оси", EventHandler {
                 val cP = currentModel.centerPoint
-                val line = when(axesList.value) {
-                    Axis.X -> Line(Point3D(cP.x-50.0, cP.y, cP.z), Point3D(cP.x+50.0, cP.y, cP.z))
-                    Axis.Y -> Line(Point3D(cP.x, cP.y-50.0, cP.z), Point3D(cP.x, cP.y+50.0, cP.z))
-                    Axis.Z -> Line(Point3D(cP.x, cP.y, cP.z-50.0), Point3D(cP.x, cP.y, cP.z+50.0))
+                val line = when (axesList.value) {
+                    Axis.X -> Line(Point3D(cP.x - 50.0, cP.y, cP.z), Point3D(cP.x + 50.0, cP.y, cP.z))
+                    Axis.Y -> Line(Point3D(cP.x, cP.y - 50.0, cP.z), Point3D(cP.x, cP.y + 50.0, cP.z))
+                    Axis.Z -> Line(Point3D(cP.x, cP.y, cP.z - 50.0), Point3D(cP.x, cP.y, cP.z + 50.0))
                 }
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
                 redraw()
@@ -170,14 +171,14 @@ class Affine3D : Application() {
             val p2ZInput = addInput("aZ", "0.0")
             addButton("Вокруг прямой", EventHandler {
                 val point1 = Point3D(
-                        p1XInput.text.toDouble(),
-                        p1YInput.text.toDouble(),
-                        p1ZInput.text.toDouble()
+                    p1XInput.text.toDouble(),
+                    p1YInput.text.toDouble(),
+                    p1ZInput.text.toDouble()
                 )
                 val point2 = Point3D(
-                        p2XInput.text.toDouble(),
-                        p2YInput.text.toDouble(),
-                        p2ZInput.text.toDouble()
+                    p2XInput.text.toDouble(),
+                    p2YInput.text.toDouble(),
+                    p2ZInput.text.toDouble()
                 )
                 val line = Line(point1, point2)
                 rotateAroundLine(currentModel, line, angleInput.text.toDouble())
@@ -206,23 +207,23 @@ class Affine3D : Application() {
 
         // plot pane
         val funcPlotSection = InterfaceSection("Построение графика")
-        with (funcPlotSection) {
+        with(funcPlotSection) {
             val x0Field = addInput("X0", "-10.0")
             val y0Field = addInput("Y0", "-10.0")
             val x1Field = addInput("X1", "10.0")
             val y1Field = addInput("Y1", "10.0")
             val stepField = addInput("Шаг", "0.1")
             val funcItems = FXCollections.observableArrayList(
-                    "sin(x + y)",
-                    "sin(x + y) / (x + y)",
-                    "x + y^2",
+                "sin(x + y)",
+                "sin(x + y) / (x + y)",
+                "x + y^2",
             )
             val funcList = ComboBox(funcItems)
             addComboBox(funcList)
             val functions = arrayListOf<(Double, Double) -> Double>(
-                    { x, y -> sin(x + y) },
-                    { x, y -> sin(x + y) / (x + y) },
-                    { x, y -> x + y.pow(2) },
+                { x, y -> sin(x + y) },
+                { x, y -> sin(x + y) / (x + y) },
+                { x, y -> x + y.pow(2) },
             )
             addButton("Построить график", EventHandler {
                 val x0 = x0Field.text.toDouble()
@@ -238,7 +239,7 @@ class Affine3D : Application() {
 
         // Rotation shape
         val crRotationShapeSection = InterfaceSection("Фигура вращения")
-        with (crRotationShapeSection) {
+        with(crRotationShapeSection) {
             addLabel("Координаты точек")
             val xInput = addInput("X", "0.0")
             val yInput = addInput("Y", "0.0")
@@ -247,9 +248,9 @@ class Affine3D : Application() {
             val generatrixPoints = ArrayList<Point3D>()
             addButton("Добавить точку", EventHandler {
                 val point = Point3D(
-                        xInput.text.toDouble(),
-                        yInput.text.toDouble(),
-                        zInput.text.toDouble()
+                    xInput.text.toDouble(),
+                    yInput.text.toDouble(),
+                    zInput.text.toDouble()
                 )
                 generatrixPoints.add(point)
                 currentModel = pointsToPolyhedron(generatrixPoints)
@@ -260,8 +261,10 @@ class Affine3D : Application() {
             val axesList = addComboBox(arrayOf(Axis.X, Axis.Y, Axis.Z), Axis.Y)
 
             addButton("Создать фигуру", EventHandler {
-                currentModel = rotationShape(generatrixPoints,
-                        stepsInput.text.toInt(), axesList.value)
+                currentModel = rotationShape(
+                    generatrixPoints,
+                    stepsInput.text.toInt(), axesList.value
+                )
                 redraw()
                 generatrixPoints.clear()
             })
@@ -276,15 +279,15 @@ class Affine3D : Application() {
         }
 
         transformationPane.children.addAll(
-                saveSection.sectionPane,
-                trMoveSection.sectionPane,
-                zBufferBox,
-                shaderBox,
-                trScaleSection.sectionPane,
-                trReflectSection.sectionPane,
-                trRotateSection.sectionPane,
-                funcPlotSection.sectionPane,
-                crRotationShapeSection.sectionPane
+            saveSection.sectionPane,
+            trMoveSection.sectionPane,
+            zBufferBox,
+            shaderBox,
+            trScaleSection.sectionPane,
+            trReflectSection.sectionPane,
+            trRotateSection.sectionPane,
+            funcPlotSection.sectionPane,
+            crRotationShapeSection.sectionPane
         )
 
         primaryStage.title = "Affine transformations 3D"
@@ -292,7 +295,7 @@ class Affine3D : Application() {
         primaryStage.scene = Scene(mainGroup)
 
         primaryStage.addEventHandler(KeyEvent.KEY_PRESSED) { e ->
-            when(e.text) {
+            when (e.text) {
                 "w" -> camera.changePosition(0.0, 2.0)
                 "a" -> camera.changePosition(-2.0, 0.0)
                 "s" -> camera.changePosition(0.0, -2.0)
@@ -352,7 +355,7 @@ fun saveModel(model: Polyhedron, fileName: String) {
     // добавляем поверхности
     var faceIndex = 1
     for (polygon in model.polygons) {
-        writer.write ("f")
+        writer.write("f")
         for (point in polygon.points) {
             for (i in model.vertices.indices) {
                 if (point == model.vertices[i])
@@ -365,7 +368,7 @@ fun saveModel(model: Polyhedron, fileName: String) {
     writer.close()
 }
 
-fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : DirectionVector {
+fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D): DirectionVector {
     val A = (p1.y - p0.y) * (p2.z - p0.z) - (p1.z - p0.z) * (p2.y - p0.y)
     val B = (p1.z - p0.z) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.z - p0.z)
     val C = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x)
@@ -373,7 +376,7 @@ fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D) : DirectionVector {
 }
 
 
-fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double) : Double {
+fun findDepth(x: Int, y: Int, A: Double, B: Double, C: Double, F: Double): Double {
     return ((A * x) + (B * y) + F) / C
 }
 
@@ -382,7 +385,7 @@ fun classifyPoint(p: Point3D, line: Line): Position {
     val p2 = line.point2
     val a = DoublePoint(p2.x - p1.x, p2.y - p1.y)
     val b = DoublePoint(p.x - p1.x, p.y - p1.y)
-    val sa =  a.x * b.y - b.x * a.y;
+    val sa = a.x * b.y - b.x * a.y;
 
     if (sa > 0.0)
         return Position.Right
@@ -391,7 +394,7 @@ fun classifyPoint(p: Point3D, line: Line): Position {
     return Position.Belongs
 }
 
-fun checkIsInPolygon(point: Point3D, polygon: Polygon) : Boolean {
+fun checkIsInPolygon(point: Point3D, polygon: Polygon): Boolean {
     val result = classifyPoint(point, polygon.edges.first())
     for (i in (1 until polygon.edges.size)) {
         if (result != classifyPoint(point, polygon.edges[i]))
@@ -407,55 +410,56 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
         Array(cHeight) { Double.MAX_VALUE }
     }
 
-    var min_depth = Double.MAX_VALUE
+    var minDepth = Double.MAX_VALUE
     for (polygon in polygons) {
-        var left_bound = cWidth
-        var right_bound = 0
-        var upper_bound = 0
-        var lower_bound = cHeight
+        var leftBound = cWidth
+        var rightBound = 0
+        var upperBound = 0
+        var lowerBound = cHeight
 
         for (point in polygon.points) {
-            if (point.x < left_bound && point.x >= 0)
-                left_bound = Math.ceil(point.x).toInt()
-            if (point.x > right_bound && point.x < cWidth)
-                right_bound = Math.floor(point.x).toInt()
-            if (point.y < lower_bound && point.y >= 0)
-                lower_bound = Math.ceil(point.y).toInt()
-            if (point.y > upper_bound && point.y < cHeight)
-                upper_bound = Math.floor(point.y).toInt()
+            if (point.x < leftBound && point.x >= 0)
+                leftBound = ceil(point.x).toInt()
+            if (point.x > rightBound && point.x < cWidth)
+                rightBound = floor(point.x).toInt()
+            if (point.y < lowerBound && point.y >= 0)
+                lowerBound = ceil(point.y).toInt()
+            if (point.y > upperBound && point.y < cHeight)
+                upperBound = floor(point.y).toInt()
         }
 
         val normal = findNormal(
-                polygon.points[0],
-                polygon.points[1],
-                polygon.points[2])
+            polygon.points[0],
+            polygon.points[1],
+            polygon.points[2]
+        )
         val A = normal.l
         val B = normal.m
         val C = normal.n
         // высчитываем свободный член в уравнении плоскости
-        val F = - (polygon.points[0].x * A) - (polygon.points[0].y * B) - (polygon.points[0].z * C)
+        val F = -(polygon.points[0].x * A) - (polygon.points[0].y * B) - (polygon.points[0].z * C)
 
-        for (x in (left_bound..right_bound)) {
-            for (y in (lower_bound..upper_bound)) {
+        for (x in (leftBound..rightBound)) {
+            for (y in (lowerBound..upperBound)) {
                 val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
 
                 if (checkIsInPolygon(point, polygon)) {
                     val depth = findDepth(x, y, A, B, C, F)
                     if (depth < zBuff[point.x.toInt()][point.y.toInt()]) {
                         zBuff[point.x.toInt()][point.y.toInt()] = depth
-                        if (depth < min_depth)
-                            min_depth = depth
+                        if (depth < minDepth)
+                            minDepth = depth
                     }
                 }
             }
         }
     }
 
-    var max_depth = MIN_VALUE
+    var maxDepth = MIN_VALUE
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
-            if (zBuff[x][y] > max_depth && zBuff[x][y] < MAX_VALUE)
-                max_depth = zBuff[x][y]
+            if (zBuff[x][y] > maxDepth && zBuff[x][y] < MAX_VALUE)
+                maxDepth = zBuff[x][y]
         }
     }
 
@@ -464,7 +468,7 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
     for (x in zBuff.indices) {
         for (y in zBuff[x].indices) {
             if (zBuff[x][y] < Double.MAX_VALUE) {
-                val value = 1 - (zBuff[x][y] - min_depth) / (max_depth - min_depth)
+                val value = 1 - (zBuff[x][y] - minDepth) / (maxDepth - minDepth)
                 writer.setColor(x, y, Color(value, value, value, 1.0))
             } else writer.setColor(x, y, Color(1.0, 1.0, 1.0, 1.0))
         }
@@ -472,7 +476,7 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
     gc.drawImage(image, 0.0, 0.0)
 }
 
-fun zOfPolygon(polygon: Polygon) : Double {
+fun zOfPolygon(polygon: Polygon): Double {
     var zSum = 0.0
     var zCnt = 0.0
     for (point in polygon.points) {
@@ -482,166 +486,73 @@ fun zOfPolygon(polygon: Polygon) : Double {
     return zSum / zCnt
 }
 
-fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, model: Polyhedron,
-           dv: DirectionVector, color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8) {
+fun shader(
+    canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, model: Polyhedron,
+    dv: DirectionVector, color: Color = Color.ORANGE, Li: Double = 1.0, kd: Double = 0.8
+) {
     val cWidth = canvas.width.toInt()
     val cHeight = canvas.height.toInt()
     val zBuff = Array(cWidth) {
         Array(cHeight) { 2.0 }
     }
-    val background_lightning = 0.2
+    val backgroundLightning = 0.2
 
     polygons.sortBy { polygon -> zOfPolygon(polygon) }
 
     for (polygon in polygons) {
-        var left_bound = Point3D(canvas.width, 0.0, 0.0)
-        var right_bound = Point3D(0.0, 0.0, 0.0)
-        var upper_bound = Point3D(0.0, 0.0, 0.0)
-        var lower_bound = Point3D(0.0, canvas.height, 0.0)
+        var leftBound = Point3D(canvas.width, 0.0, 0.0)
+        var rightBound = Point3D(0.0, 0.0, 0.0)
+        var upperBound = Point3D(0.0, 0.0, 0.0)
+        var lowerBound = Point3D(0.0, canvas.height, 0.0)
 
         for (point in polygon.points) {
-            if (point.x < left_bound.x && point.x >= 0)
-                left_bound = point
-            if (point.x > right_bound.x && point.x < cWidth)
-                right_bound = point
-            if (point.y < lower_bound.y && point.y >= 0)
-                lower_bound = point
-            if (point.y > upper_bound.y && point.y < cHeight)
-                upper_bound = point
+            if (point.x < leftBound.x && point.x >= 0)
+                leftBound = point
+            if (point.x > rightBound.x && point.x < cWidth)
+                rightBound = point
+            if (point.y < lowerBound.y && point.y >= 0)
+                lowerBound = point
+            if (point.y > upperBound.y && point.y < cHeight)
+                upperBound = point
         }
 
-        val left_bound_normals = LinkedList<DirectionVector>()
-        val right_bound_normals = LinkedList<DirectionVector>()
-        val upper_bound_normals = LinkedList<DirectionVector>()
-        val lower_bound_normals = LinkedList<DirectionVector>()
+        val leftBoundNormals = ArrayList<DirectionVector>()
+        val rightBoundNormals = ArrayList<DirectionVector>()
+        val upperBoundNormals = ArrayList<DirectionVector>()
+        val lowerBoundNormals = ArrayList<DirectionVector>()
         for (p in model.polygons) {
+            val normal = findNormal(p.points[0], p.points[1], p.points[2])
             for (point in p.points) {
-                if (point.x == left_bound.x && point.y == left_bound.y && point.z == left_bound.z) {
-                    val normal = findNormal(
-                            p.points[0],
-                            p.points[1],
-                            p.points[2])
-                    left_bound_normals.add(normal)
-                }
-                if (point.x == right_bound.x && point.y == right_bound.y && point.z == right_bound.z) {
-                    val normal = findNormal(
-                            p.points[0],
-                            p.points[1],
-                            p.points[2])
-                    right_bound_normals.add(normal)
-                }
-                if (point.x == upper_bound.x && point.y == upper_bound.y && point.z == upper_bound.z) {
-                    val normal = findNormal(
-                            p.points[0],
-                            p.points[1],
-                            p.points[2])
-                    upper_bound_normals.add(normal)
-                }
-                if (point.x == lower_bound.x && point.y == lower_bound.y && point.z == lower_bound.z) {
-                    val normal = findNormal(
-                            p.points[0],
-                            p.points[1],
-                            p.points[2])
-                    lower_bound_normals.add(normal)
-                }
+                if (point == leftBound)
+                    leftBoundNormals.add(normal)
+                if (point == rightBound)
+                    rightBoundNormals.add(normal)
+                if (point == upperBound)
+                    upperBoundNormals.add(normal)
+                if (point == lowerBound)
+                    lowerBoundNormals.add(normal)
             }
         }
 
-        var l = 0.0
-        var m = 0.0
-        var n = 0.0
-        for (dv in left_bound_normals) {
-            l += dv.l
-            m += dv.m
-            n += dv.n
-        }
-        var size = left_bound_normals.size.toDouble()
-        val left_normal = DirectionVector(l / size, m / size, n / size)
-        var left_lightning = 0.0
-        var cos = angleBetweenVectors(left_normal, dv)
-        if (cos > 0) {
-            var L0 = Li * kd * cos + background_lightning
-            if (L0 > 1) L0 = 1.0
-            left_lightning = L0
-        }
-        else
-            left_lightning = background_lightning
+        val leftLightning = getLightning(leftBoundNormals, dv, Li, kd, backgroundLightning)
+        val rightLightning = getLightning(leftBoundNormals, dv, Li, kd, backgroundLightning)
+        val upperLightning = getLightning(leftBoundNormals, dv, Li, kd, backgroundLightning)
+        val lowerLightning = getLightning(leftBoundNormals, dv, Li, kd, backgroundLightning)
 
-
-        l = 0.0
-        m = 0.0
-        n = 0.0
-        for (dv in right_bound_normals) {
-            l += dv.l
-            m += dv.m
-            n += dv.n
-        }
-        size = right_bound_normals.size.toDouble()
-        val right_normal = DirectionVector(l / size, m / size, n / size)
-        var right_lightning = 0.0
-        cos = angleBetweenVectors(right_normal, dv)
-        if (cos > 0) {
-            var L0 = Li * kd * cos + background_lightning
-            if (L0 > 1) L0 = 1.0
-            right_lightning = L0
-        }
-        else
-            right_lightning = background_lightning
-
-        l = 0.0
-        m = 0.0
-        n = 0.0
-        for (dv in upper_bound_normals) {
-            l += dv.l
-            m += dv.m
-            n += dv.n
-        }
-        size = upper_bound_normals.size.toDouble()
-        val upper_normal = DirectionVector(l / size, m / size, n / size)
-        var upper_lightning = 0.0
-        cos = angleBetweenVectors(upper_normal, dv)
-        if (cos > 0) {
-            var L0 = Li * kd * cos + background_lightning
-            if (L0 > 1) L0 = 1.0
-            upper_lightning = L0
-        }
-        else
-            upper_lightning = background_lightning
-
-        l = 0.0
-        m = 0.0
-        n = 0.0
-        for (dv in lower_bound_normals) {
-            l += dv.l
-            m += dv.m
-            n += dv.n
-        }
-        size = lower_bound_normals.size.toDouble()
-        val lower_normal = DirectionVector(l / size, m / size, n / size)
-        var lower_lightning = 0.0
-        cos = angleBetweenVectors(lower_normal, dv)
-        if (cos > 0) {
-            var L0 = Li * kd * cos + background_lightning
-            if (L0 > 1) L0 = 1.0
-            lower_lightning = L0
-        }
-        else
-            lower_lightning = background_lightning
-
-        val delta_horizontal_lightning = right_lightning - left_lightning
-        val delta_width = right_bound.x - left_bound.x
-        val delta_horizontal = delta_horizontal_lightning / delta_width
-        for (x in left_bound.x.toInt()..right_bound.x.toInt()) {
-            val horizontal_lightning = left_lightning +
-                    delta_horizontal * (x - left_bound.x)
-            val delta_vertical_lightning = upper_lightning - lower_lightning
-            val delta_height = upper_bound.y - lower_bound.y
-            val delta_vertical = delta_vertical_lightning / delta_height
-            for (y in (lower_bound.y.toInt()..upper_bound.y.toInt())) {
-                val vertical_lightning = lower_lightning + delta_vertical * (y - lower_bound.y)
+        val deltaHorizontalLightning = rightLightning - leftLightning
+        val deltaWidth = rightBound.x - leftBound.x
+        val deltaHorizontal = deltaHorizontalLightning / deltaWidth
+        for (x in leftBound.x.toInt()..rightBound.x.toInt()) {
+            val horizontalLightning = leftLightning +
+                    deltaHorizontal * (x - leftBound.x)
+            val deltaVerticalLightning = upperLightning - lowerLightning
+            val deltaHeight = upperBound.y - lowerBound.y
+            val deltaVertical = deltaVerticalLightning / deltaHeight
+            for (y in (lowerBound.y.toInt()..upperBound.y.toInt())) {
+                val verticalLightning = lowerLightning + deltaVertical * (y - lowerBound.y)
                 val point = Point3D(x.toDouble(), y.toDouble(), 0.0)
                 if (checkIsInPolygon(point, polygon)) {
-                    var L0 = (horizontal_lightning + vertical_lightning) / 2
+                    var L0 = (horizontalLightning + verticalLightning) / 2
                     if (L0 > 1) L0 = 1.0
                     zBuff[point.x.toInt()][point.y.toInt()] = L0
                 }
@@ -660,4 +571,25 @@ fun shader(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>, mo
         }
     }
     gc.drawImage(image, 0.0, 0.0)
+}
+
+fun getLightning(normals: ArrayList<DirectionVector>, dv: DirectionVector, Li: Double,
+                 kd: Double, backgroundLightning: Double): Double {
+    var l = 0.0
+    var m = 0.0
+    var n = 0.0
+    for (dv in normals) {
+        l += dv.l
+        m += dv.m
+        n += dv.n
+    }
+    val size = normals.size.toDouble()
+    val normal = DirectionVector(l / size, m / size, n / size)
+    val cos = angleBetweenVectors(normal, dv)
+    return if (cos > 0) {
+        var L0 = Li * kd * cos + backgroundLightning
+        if (L0 > 1) L0 = 1.0
+        L0
+    } else
+        backgroundLightning
 }
