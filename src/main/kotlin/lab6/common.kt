@@ -43,36 +43,33 @@ data class DirectionVector(var l: Double, var m: Double, var n: Double) {
     }
 }
 
-class Polygon {
-    var textureVertices: ArrayList<Pair<Vertex, TextureCoordinate?>> = ArrayList()
+class Polygon(var vertices: ArrayList<Vertex>) {
+    var textureCoordinates: ArrayList<TextureCoordinate?>
     var edges = ArrayList<Line>()
-    var normal = findNormal(textureVertices[0].first.point, textureVertices[1].first.point, textureVertices[2].first.point)
-
-    constructor(textureVertices: ArrayList<Pair<Vertex, TextureCoordinate?>>, b: Boolean = false) {
-        this.textureVertices = textureVertices
-    }
-
-    constructor(vertices: ArrayList<Vertex>) {
-        for (vertex in vertices)
-            textureVertices.add(Pair(vertex, null))
-    }
+    var normal = findNormal(vertices[0].point, vertices[1].point, vertices[2].point)
 
     init {
-        var prevPoint = textureVertices.last()
-        for (point in textureVertices) {
-            edges.add(Line(prevPoint.first.point, point.first.point))
-            prevPoint = point
+        textureCoordinates = ArrayList<TextureCoordinate?>()
+        var prevVertex = vertices.last()
+        for (vertex in vertices) {
+            edges.add(Line(prevVertex.point, vertex.point))
+            prevVertex = vertex
         }
     }
 
-    val indices = textureVertices.indices
+    constructor(vertices: ArrayList<Vertex>, textureCoordinates: ArrayList<TextureCoordinate?>): this(vertices) {
+        this.textureCoordinates = textureCoordinates
+    }
 
-    operator fun get(i: Int) = textureVertices[(i % textureVertices.size)]
+    val indices = vertices.indices
+
+    operator fun get(i: Int) = vertices[(i % vertices.size)]
 //    fun add(point: Point3D) = vertices.add(point)
-    fun add(vertex: Vertex, textureCoordinate: TextureCoordinate? = null) = textureVertices.add(Pair(vertex, textureCoordinate))
+//    fun add(vertex: Vertex, textureCoordinate: TextureCoordinate? = null) {
+//    }//textureVertices.add(Pair(vertex, textureCoordinate))
 
     fun updateNormal() {
-        normal = findNormal(textureVertices[0].first.point, textureVertices[1].first.point, textureVertices[2].first.point)
+        normal = findNormal(vertices[0].point, vertices[1].point, vertices[2].point)
     }
 }
 
@@ -95,9 +92,15 @@ class Vertex(val point: Point3D, val index: Int) {
         return Vertex(Point3D(point), index)
     }
 
-    fun x(): Double = point.x
-    fun y(): Double = point.y
-    fun z(): Double = point.z
+    var x: Double
+        get() = this.point.x
+        set(value) { this.point.x = value }
+    var y: Double
+        get() = this.point.y
+        set(value) { this.point.y = value }
+    var z: Double
+        get() = this.point.z
+        set(value) { this.point.z = value }
 }
 
 class Polyhedron {
@@ -152,19 +155,24 @@ class Polyhedron {
 //
 //                        polygons.add(Polygon(points))
 
-                        val points = ArrayList<Pair<Vertex, TextureCoordinate>>()
+                        val newVertices = ArrayList<Vertex>()
+                        val newTextureCoordinates = ArrayList<TextureCoordinate?>()
+
 
                         for (i in 1 until sLine.size) {
                             val split = sLine[i].split('/')
                             val vertexNumber = split[0].toInt() - 1
                             val vertex = vertices[vertexNumber]
+                            newVertices.add(vertex)
                             if (split.size > 1 && split[1] != "")
-                                points.add(Pair(vertex, textureCoordinates[split[1].toInt() - 1]))
-                            if (split.size == 3 && split[2] != "" && normals.size > 0)
-                                vertex.normal = normals[split[2].toInt() - 1]
+                                newTextureCoordinates.add(textureCoordinates[split[1].toInt() - 1])
+//                            if (split.size == 3 && split[2] != "" && normals.size > 0)
+//                                vertex.normal = normals[split[2].toInt() - 1]
                         }
-
-
+                        val newPolygon = Polygon(newVertices, newTextureCoordinates)
+                        for (vertex in newPolygon.vertices)
+                            vertex.addPolygon(newPolygon)
+                        polygons.add(newPolygon)
                     }
                 }
             }
@@ -179,9 +187,9 @@ class Polyhedron {
         this.polygons = polygons
         this.centerPoint = centerPoint
         for (polygon in polygons) {
-            if (polygon.textureVertices.size < 3)
+            if (polygon.vertices.size < 3)
                 continue
-            normals.add(findNormal(polygon[0].first.point, polygon[1].first.point, polygon[2].first.point))
+            normals.add(findNormal(polygon[0].point, polygon[1].point, polygon[2].point))
         }
     }
 
@@ -194,13 +202,13 @@ class Polyhedron {
 
         for (polygon in this.polygons) {
             val tempPoints = ArrayList<Vertex>()
-            for (vertex in polygon.textureVertices) {
-                val newVertex = newVertices[vertex.first.index]
+            for (vertex in polygon.vertices) {
+                val newVertex = newVertices[vertex.index]
                 tempPoints.add(newVertex)
             }
             val newPolygon = Polygon(tempPoints)
-            for (vertex in newPolygon.textureVertices)
-                vertex.first.addPolygon(newPolygon)
+            for (vertex in newPolygon.vertices)
+                vertex.addPolygon(newPolygon)
             newPolygons.add(newPolygon)
         }
 
@@ -211,12 +219,12 @@ class Polyhedron {
         val result = ArrayList<Polygon>()
 
         for (polygon in polygons) {
-            if (polygon.textureVertices.size < 3) {
+            if (polygon.vertices.size < 3) {
                 result.add(polygon)
                 continue
             }
 
-            val normal = findNormal(polygon[0].first.point, polygon[1].first.point, polygon[2].first.point)
+            val normal = findNormal(polygon[0].point, polygon[1].point, polygon[2].point)
             if (angleBetweenVectors(normal, viewVector) >= 0)
                 result.add(polygon)
         }

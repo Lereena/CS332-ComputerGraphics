@@ -339,36 +339,36 @@ class Affine3D : Application() {
 }
 
 fun saveModel(model: Polyhedron, fileName: String) {
-    val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
-
-    // добавляем вершины
-    for (vertice in model.vertices) {
-        writer.write("v ${vertice.point.x} ${vertice.point.y} ${vertice.point.z}\n")
-    }
-
-    // добавляем нормали
-    for (polygon in model.polygons) {
-        val normal = findNormal(
-            polygon.textureVertices[0].first.point, polygon.textureVertices[1].first.point,
-            polygon.textureVertices[2].first.point
-        )
-        writer.write("vn ${normal.l} ${normal.m} ${normal.n}\n")
-    }
-
-    // добавляем поверхности
-    var faceIndex = 1
-    for (polygon in model.polygons) {
-        writer.write("f")
-        for (point in polygon.textureVertices) {
-            for (i in model.vertices.indices) {
-                if (point.first == model.vertices[i])
-                    writer.write(" ${i + 1}//${faceIndex}")
-            }
-        }
-        writer.write("\n")
-        faceIndex++
-    }
-    writer.close()
+//    val writer = File("assets/3dmodels/$fileName.obj").bufferedWriter()
+//
+//    // добавляем вершины
+//    for (vertice in model.vertices) {
+//        writer.write("v ${vertice.point.x} ${vertice.point.y} ${vertice.point.z}\n")
+//    }
+//
+//    // добавляем нормали
+//    for (polygon in model.polygons) {
+//        val normal = findNormal(
+//            polygon.textureVertices[0].first.point, polygon.textureVertices[1].first.point,
+//            polygon.textureVertices[2].first.point
+//        )
+//        writer.write("vn ${normal.l} ${normal.m} ${normal.n}\n")
+//    }
+//
+//    // добавляем поверхности
+//    var faceIndex = 1
+//    for (polygon in model.polygons) {
+//        writer.write("f")
+//        for (point in polygon.textureVertices) {
+//            for (i in model.vertices.indices) {
+//                if (point.first == model.vertices[i])
+//                    writer.write(" ${i + 1}//${faceIndex}")
+//            }
+//        }
+//        writer.write("\n")
+//        faceIndex++
+//    }
+//    writer.close()
 }
 
 fun findNormal(p0: Point3D, p1: Point3D, p2: Point3D): DirectionVector {
@@ -420,27 +420,27 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
         var upperBound = 0
         var lowerBound = cHeight
 
-        for (point in polygon.textureVertices) {
-            if (point.first.x() < leftBound && point.first.x() >= 0)
-                leftBound = ceil(point.first.x()).toInt()
-            if (point.first.x() > rightBound && point.first.x() < cWidth)
-                rightBound = floor(point.first.x()).toInt()
-            if (point.first.y() < lowerBound && point.first.y() >= 0)
-                lowerBound = ceil(point.first.y()).toInt()
-            if (point.first.y() > upperBound && point.first.y() < cHeight)
-                upperBound = floor(point.first.y()).toInt()
+        for (point in polygon.vertices) {
+            if (point.x < leftBound && point.x >= 0)
+                leftBound = ceil(point.x).toInt()
+            if (point.x > rightBound && point.x < cWidth)
+                rightBound = floor(point.x).toInt()
+            if (point.y < lowerBound && point.y >= 0)
+                lowerBound = ceil(point.y).toInt()
+            if (point.y > upperBound && point.y < cHeight)
+                upperBound = floor(point.y).toInt()
         }
 
         val normal = findNormal(
-            polygon.textureVertices[0].first.point,
-            polygon.textureVertices[1].first.point,
-            polygon.textureVertices[2].first.point
+            polygon.vertices[0].point,
+            polygon.vertices[1].point,
+            polygon.vertices[2].point
         )
         val A = normal.l
         val B = normal.m
         val C = normal.n
         // высчитываем свободный член в уравнении плоскости
-        val F = -(polygon.textureVertices[0].first.x() * A) - (polygon.textureVertices[0].first.y() * B) - (polygon.textureVertices[0].first.z() * C)
+        val F = -(polygon.vertices[0].x * A) - (polygon.vertices[0].y * B) - (polygon.vertices[0].z * C)
 
         for (x in (leftBound..rightBound)) {
             for (y in (lowerBound..upperBound)) {
@@ -482,8 +482,8 @@ fun zBuffer(canvas: Canvas, gc: GraphicsContext, polygons: ArrayList<Polygon>) {
 fun zOfPolygon(polygon: Polygon): Double {
     var zSum = 0.0
     var zCnt = 0.0
-    for (point in polygon.textureVertices) {
-        zSum += point.first.z()
+    for (point in polygon.vertices) {
+        zSum += point.z
         zCnt += 1.0
     }
     return zSum / zCnt
@@ -508,15 +508,15 @@ fun shader(
         var upperBound = Point3D(0.0, 0.0, 0.0)
         var lowerBound = Point3D(0.0, canvas.height, 0.0)
 
-        for (point in polygon.textureVertices) {
-            if (point.first.x() < leftBound.x && point.first.x() >= 0)
-                leftBound = point.first.point
-            if (point.first.x() > rightBound.x && point.first.x() < cWidth)
-                rightBound = point.first.point
-            if (point.first.y() < lowerBound.y && point.first.y() >= 0)
-                lowerBound = point.first.point
-            if (point.first.y() > upperBound.y && point.first.y() < cHeight)
-                upperBound = point.first.point
+        for (point in polygon.vertices) {
+            if (point.x < leftBound.x && point.x >= 0)
+                leftBound = point.point
+            if (point.x > rightBound.x && point.x < cWidth)
+                rightBound = point.point
+            if (point.y < lowerBound.y && point.y >= 0)
+                lowerBound = point.point
+            if (point.y > upperBound.y && point.y < cHeight)
+                upperBound = point.point
         }
 
         val leftBoundNormals = ArrayList<DirectionVector>()
@@ -524,15 +524,15 @@ fun shader(
         val upperBoundNormals = ArrayList<DirectionVector>()
         val lowerBoundNormals = ArrayList<DirectionVector>()
         for (p in model.polygons) {
-            val normal = findNormal(p.textureVertices[0].first.point, p.textureVertices[1].first.point, p.textureVertices[2].first.point)
-            for (point in p.textureVertices) {
-                if (point.first.point == leftBound)
+            val normal = findNormal(p.vertices[0].point, p.vertices[1].point, p.vertices[2].point)
+            for (point in p.vertices) {
+                if (point.point == leftBound)
                     leftBoundNormals.add(normal)
-                if (point.first.point == rightBound)
+                if (point.point == rightBound)
                     rightBoundNormals.add(normal)
-                if (point.first.point == upperBound)
+                if (point.point == upperBound)
                     upperBoundNormals.add(normal)
-                if (point.first.point == lowerBound)
+                if (point.point == lowerBound)
                     lowerBoundNormals.add(normal)
             }
         }
