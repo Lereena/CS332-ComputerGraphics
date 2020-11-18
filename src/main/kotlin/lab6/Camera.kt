@@ -2,26 +2,26 @@ package lab6
 
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
+import javafx.scene.image.WritableImage
+import javafx.scene.paint.Color
+import lab3.getLine
 import lab5.Point
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.tan
+
+enum class RasterModes { BY_EDGES, Z_BUFFER, SHADER, FLOAT_HOR }
 
 class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val canvas: Canvas) {
     val mainGc = canvas.graphicsContext2D
     val height = canvas.height
     val width = canvas.width
     var projectionMode = Projection.PERSPECTIVE
-    var zBufferMode = false
-    var shaderMode = false
+    var removeFaces = false
+    var rasterMode = RasterModes.BY_EDGES
     var viewVector = DirectionVector(0.0, 0.0, 1.0)
-    var cosX = Math.cos(angleX)
-    var cosY = Math.cos(angleY)
-    var sinX = Math.sin(angleX)
-    var sinY = Math.sin(angleY)
-
-    init {
-        updateViewVector()
-    }
 
     fun draw(model: Polyhedron) {
         val projectionMatrix = multiplyMatrices(
@@ -36,61 +36,72 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         )
         val clone = model.clone()
         transform(clone, projectionMatrix)
-        var polygons = clone.faces(viewVector)
+        var polygons = if (removeFaces) clone.faces(viewVector) else clone.polygons
 
-        if (zBufferMode) {
-            zBuffer(canvas, mainGc, polygons)
+        when (rasterMode) {
+            RasterModes.BY_EDGES -> drawByEdges(polygons)
+            RasterModes.Z_BUFFER -> zBuffer(canvas, mainGc, polygons)
+            RasterModes.SHADER -> shader(canvas, mainGc, polygons, clone, DirectionVector(0.0, -1.0, 0.0))
+            RasterModes.FLOAT_HOR -> drawFloatingHorizon(clone)
         }
-        else {
-            for (polygon in polygons)
-                for (edge in polygon.edges) {
-                    val a = edge.point1
-                    val b = edge.point2
-                    mainGc.strokeLine(
-                            a.x, a.y,
-                            b.x, b.y
-                    )
-                }
-        }
+    }
 
-        polygons = clone.faces(DirectionVector(0.0, 0.0, -1.0))
-        if (shaderMode) {
-            shader(canvas, mainGc, polygons, clone, DirectionVector(0.0, 0.0, -1.0))
-        }
-        else {
-            for (polygon in polygons)
-                for (edge in polygon.edges) {
-                    val a = edge.point1
-                    val b = edge.point2
-                    mainGc.strokeLine(
-                            a.x, a.y,
-                            b.x, b.y
-                    )
+    private fun drawFloatingHorizon(plot: Polyhedron) {
+        val minHorizon = Array<Int>(canvas.width.toInt()) { Int.MAX_VALUE }
+        val maxHorizon = Array<Int>(canvas.width.toInt()) { Int.MIN_VALUE }
+
+        val image = WritableImage(canvas.width.toInt(), canvas.height.toInt())
+        val writer = image.pixelWriter
+
+        val flag = plot.polygons.first().vertices.first().z >
+                plot.polygons.last().vertices.first().z
+        val planes = if (flag) plot.polygons else plot.polygons.reversed()
+        for (plane in planes) {
+            var prevVertex = plane.vertices.first()
+            for (vertex in plane.vertices.drop(1)) {
+                val rasterPoints = getLine(prevVertex.point, prevVertex.point)
+                for (pixel in rasterPoints) {
+                    if (pixel.x >= canvas.width || pixel.x < 0 ||
+                            pixel.y >= canvas.height || pixel.y < 0)
+                        continue
+                    if (pixel.y >= maxHorizon[pixel.x]) {
+                        maxHorizon[pixel.x] = pixel.y
+                        writer.setColor(pixel.x, pixel.y, Color.BLACK)
+                    }
+                    if (pixel.y <= minHorizon[pixel.x]) {
+                        minHorizon[pixel.x] = pixel.y
+                        writer.setColor(pixel.x, pixel.y, Color.BLACK)
+                    }
                 }
+                prevVertex = vertex
+            }
         }
+        mainGc.drawImage(image, 0.0, 0.0)
+    }
+
+    private fun drawByEdges(polygons: ArrayList<Polygon>) {
+        for (polygon in polygons)
+            for (edge in polygon.edges) {
+                val a = edge.point1
+                val b = edge.point2
+                mainGc.strokeLine(
+                        a.x, a.y,
+                        b.x, b.y
+                )
+            }
     }
 
     fun changeAngleX(difAngleX: Double) {
         angleX += difAngleX
-        cosX = Math.cos(angleX)
-        sinX = Math.sin(angleX)
     }
 
     fun changeAngleY(difAngleY: Double) {
         angleY += difAngleY
-        cosY = Math.cos(angleY)
-        sinY = Math.sin(angleY)
     }
 
     fun changePosition(difX: Double, difY: Double) {
         position.x += difX
         position.y += difY
-    }
-
-    private fun updateViewVector() {
-        val v1 = DirectionVector(cosX, 0.0, sinX)
-        val v2 = DirectionVector(0.0, cosY, sinY)
-        viewVector = v1 + v2
     }
 
     private fun perspectiveProjectionMatrix(): Matrix {
@@ -124,11 +135,51 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
         val rotateY = rotationYMatrix(angleY - Math.PI / 2)
         val rotateX = rotationXMatrix(angleX - Math.PI / 2)
         val temp = multiplyMatrices(rotateY, rotateX)
-        val temp2 = multiplyMatrices(
+        return multiplyMatrices(
                 translationMatrix(-position.x, -position.y, -position.z),
                 temp
         )
-        return temp2
-//        return translationMatrix(-position.x, -position.y, -position.z)
     }
+}
+
+fun getLine(start: Point3D, end: Point3D): LinkedList<Pixel> {
+    val result = LinkedList<Pixel>()
+    val pStart = Pixel(start)
+    val pEnd = Pixel(end)
+    result.add(pStart)
+
+    val a = pEnd.y - pStart.y
+    val b = pStart.x - pEnd.x
+    if (a == 0 && b == 0)
+        return result
+    val sign = if (abs(a) > abs(b)) 1 else -1
+    val signA = if (a > 0) 1 else -1
+    val signB = if (b > 0) 1 else -1
+
+    var f = 0
+    var x = pStart.x
+    var y = pStart.y
+
+    if (sign == -1)
+        do {
+            f += a * signA
+            if (f > 0) {
+                f -= b * signB
+                y += signA
+            }
+            x -= signB
+            result.add(Pixel(x, y))
+        } while (x != pEnd.x || y != pEnd.y)
+    else
+        do {
+            f += b * signB
+            if (f > 0) {
+                f -= a * signA
+                x -= signB
+            }
+            y += signA
+            result.add(Pixel(x, y))
+        } while (x != pEnd.x || y != pEnd.y)
+
+    return result
 }

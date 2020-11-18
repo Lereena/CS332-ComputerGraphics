@@ -23,10 +23,7 @@ import java.lang.Double.MIN_VALUE
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.collections.ArrayList
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.pow
-import kotlin.math.sin
+import kotlin.math.*
 import java.io.File as File
 
 enum class Projection { PERSPECTIVE, ORTHOGRAPHIC }
@@ -114,19 +111,44 @@ class Affine3D : Application() {
             })
         }
 
-        // z-buffer pane
-        val zBufferBox = CheckBox("Z-буффер")
-        zBufferBox.setOnAction() {
-            camera.zBufferMode = !camera.zBufferMode
+        // Camera pane
+        val cameraModeSection = FlowPane(Orientation.VERTICAL, 0.0, 5.0)
+        val removeFacesBox = CheckBox("Удалить грани")
+        removeFacesBox.setOnAction {
+            camera.removeFaces = !camera.removeFaces
             redraw()
         }
-
-        // shader pane
-        val shaderBox = CheckBox("Осветить")
-        shaderBox.setOnAction() {
-            camera.shaderMode = !camera.shaderMode
+        val cameraModeGroup = ToggleGroup()
+        val byEdgesButton = RadioButton("По ребрам")
+        byEdgesButton.toggleGroup = cameraModeGroup;
+        byEdgesButton.isSelected = true
+        byEdgesButton.setOnAction {
+            camera.rasterMode = RasterModes.BY_EDGES
             redraw()
         }
+        val zBufferButton = RadioButton("Z-буффер")
+        zBufferButton.toggleGroup = cameraModeGroup;
+        zBufferButton.setOnAction {
+            camera.rasterMode = RasterModes.Z_BUFFER
+            redraw()
+        }
+        val shaderButton = RadioButton("Тени")
+        shaderButton.toggleGroup = cameraModeGroup;
+        shaderButton.setOnAction {
+            camera.rasterMode = RasterModes.SHADER
+            redraw()
+        }
+        val floatHorButton = RadioButton("Плав. гор-т")
+        floatHorButton.toggleGroup = cameraModeGroup;
+        floatHorButton.setOnAction {
+            camera.rasterMode = RasterModes.FLOAT_HOR
+            redraw()
+        }
+        cameraModeSection.children.addAll(
+                removeFacesBox,
+                byEdgesButton, zBufferButton,
+                shaderButton, floatHorButton
+        )
 
         // scale pane
         val trScaleSection = InterfaceSection("Масштабирование")
@@ -207,23 +229,27 @@ class Affine3D : Application() {
 
         // plot pane
         val funcPlotSection = InterfaceSection("Построение графика")
-        with(funcPlotSection) {
-            val x0Field = addInput("X0", "-10.0")
-            val y0Field = addInput("Y0", "-10.0")
-            val x1Field = addInput("X1", "10.0")
-            val y1Field = addInput("Y1", "10.0")
-            val stepField = addInput("Шаг", "0.1")
+        with (funcPlotSection) {
+            val x0Field = addInput("X0", "-1.0")
+            val y0Field = addInput("Y0", "-1.0")
+            val x1Field = addInput("X1", "1.0")
+            val y1Field = addInput("Y1", "1.0")
+            val stepField = addInput("Шаг", "0.01")
             val funcItems = FXCollections.observableArrayList(
-                "sin(x + y)",
-                "sin(x + y) / (x + y)",
-                "x + y^2",
+                    "sin(x + y)",
+                    "sin(x + y) / (x + y)",
+                    "x + y^2",
+                    "sin(5x) * cos(5y) / 5",
+                    "sin(10(x^2 + y^2)) / 10"
             )
             val funcList = ComboBox(funcItems)
             addComboBox(funcList)
             val functions = arrayListOf<(Double, Double) -> Double>(
-                { x, y -> sin(x + y) },
-                { x, y -> sin(x + y) / (x + y) },
-                { x, y -> x + y.pow(2) },
+                    { x, y -> sin(x + y) },
+                    { x, y -> sin(x + y) / (x + y) },
+                    { x, y -> x + y.pow(2) },
+                    { x, y -> sin(5 * x) * cos(5 * y) / 5.0 },
+                    { x, y -> sin(10 * (x.pow(2) + y.pow(2))) / 10 }
             )
             addButton("Построить график", EventHandler {
                 val x0 = x0Field.text.toDouble()
@@ -232,7 +258,7 @@ class Affine3D : Application() {
                 val y1 = y1Field.text.toDouble()
                 val step = stepField.text.toDouble()
                 val func = funcItems.indexOf(funcList.value)
-//                currentModel = plot3D(x0, y0, x1, y1, step, functions[func])
+                currentModel = floatingPlot(x0, y0, x1, y1, step, functions[func])
                 redraw()
             })
         }
@@ -279,15 +305,14 @@ class Affine3D : Application() {
         }
 
         transformationPane.children.addAll(
-            saveSection.sectionPane,
-            trMoveSection.sectionPane,
-            zBufferBox,
-            shaderBox,
-            trScaleSection.sectionPane,
-            trReflectSection.sectionPane,
-            trRotateSection.sectionPane,
-            funcPlotSection.sectionPane,
-            crRotationShapeSection.sectionPane
+                saveSection.sectionPane,
+                trMoveSection.sectionPane,
+                cameraModeSection,
+                trScaleSection.sectionPane,
+                trReflectSection.sectionPane,
+                trRotateSection.sectionPane,
+                funcPlotSection.sectionPane,
+                crRotationShapeSection.sectionPane
         )
 
         primaryStage.title = "Affine transformations 3D"
@@ -320,7 +345,7 @@ class Affine3D : Application() {
     fun redraw() {
         mainGc.clearRect(0.0, 0.0, 1000.0, 1000.0)
         mainGc.beginPath()
-        //camera.draw(axesModel)
+//        camera.draw(axesModel)
         camera.draw(currentModel)
     }
 
