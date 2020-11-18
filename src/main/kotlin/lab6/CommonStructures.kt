@@ -28,7 +28,7 @@ data class Pixel(var x: Int, val y: Int) {
     constructor(point: Point3D): this(point.x.toInt(), point.y.toInt())
 }
 
-data class TextureCoordinate(var u: Double, var v: Double, var w: Double?)
+data class TextureCoordinate(var u: Double, var v: Double, var w: Double? = null)
 
 enum class Axis { X, Y, Z }
 
@@ -53,7 +53,14 @@ class Polygon(var vertices: ArrayList<Vertex>) {
     var normal = findNormal(vertices[0].point, vertices[1].point, vertices[2].point)
 
     init {
-        textureCoordinates = ArrayList<TextureCoordinate?>()
+        textureCoordinates = ArrayList()
+        textureCoordinates.add(TextureCoordinate(0.0, 0.0))
+        textureCoordinates.add(TextureCoordinate(1.0, 0.0))
+        for (i in 2..vertices.size - 2) {
+            textureCoordinates.add(TextureCoordinate(0.0, 0.0))
+        }
+        textureCoordinates.add(TextureCoordinate(0.0, 1.0))
+
         var prevVertex = vertices.last()
         for (vertex in vertices) {
             edges.add(Line(prevVertex.point, vertex.point))
@@ -237,19 +244,6 @@ class Polyhedron {
     }
 }
 
-fun angleBetweenVectors(v1: DirectionVector, v2: DirectionVector): Double {
-    return ((v1.l * v2.l + v1.m * v2.m + v1.n * v2.n)
-            / (sqrt(v1.l * v1.l + v1.m * v1.m + v1.n * v1.n)
-            * sqrt(v2.l * v2.l + v2.m * v2.m + v2.n * v2.n)))
-}
-
-//fun getLinePolyhedron(line: Line): Polyhedron {
-//    val vertices = arrayListOf(line.point1, line.point2)
-//    val polygon = Polygon(vertices)
-//    val polygons = arrayListOf(polygon)
-//    return Polyhedron(vertices, polygons)
-//}
-
 typealias Matrix = Array<DoubleArray>
 
 data class Line(val point1: Point3D, val point2: Point3D) {
@@ -268,14 +262,4 @@ data class Line(val point1: Point3D, val point2: Point3D) {
             return false
         return point1.x == other.point1.x && point1.y == other.point1.y && point1.z == other.point1.z
     }
-}
-
-fun multiplyMatrices(left: Matrix, right: Matrix): Matrix {
-    val result = Array(left.size) { DoubleArray(right[0].size) { 0.0 } }
-    for (i in left.indices) // Rows
-        for (j in right[0].indices) // Columns
-            for (k in right.indices)
-                result[i][j] += left[i][k] * right[k][j]
-
-    return result
 }
