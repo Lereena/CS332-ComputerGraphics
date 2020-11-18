@@ -35,9 +35,9 @@ class Affine3D : Application() {
     private val mainGc = mainCanvas.graphicsContext2D
 
     private val camera = Camera(
-        Point3D(0.0, 0.0, 300.0),
-        -Math.PI / 2, -Math.PI / 2,
-        mainCanvas
+            Point3D(0.0, 0.0,300.0),
+            0.0, 0.0,
+            mainCanvas
     )
 
     override fun start(primaryStage: Stage) {

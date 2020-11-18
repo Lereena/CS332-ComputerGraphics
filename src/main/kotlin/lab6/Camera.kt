@@ -21,7 +21,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     var projectionMode = Projection.PERSPECTIVE
     var removeFaces = false
     var rasterMode = RasterModes.BY_EDGES
-    var viewVector = DirectionVector(0.0, 0.0, 1.0)
+    var viewVector = DirectionVector(0.0, 0.0, -1.0)
 
     fun draw(model: Polyhedron) {
         val projectionMatrix = multiplyMatrices(
@@ -132,8 +132,8 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
     }
 
     private fun viewMatrix(): Matrix {
-        val rotateY = rotationYMatrix(angleY - Math.PI / 2)
-        val rotateX = rotationXMatrix(angleX - Math.PI / 2)
+        val rotateY = rotationYMatrix(angleY)
+        val rotateX = rotationXMatrix(angleX)
         val temp = multiplyMatrices(rotateY, rotateX)
         return multiplyMatrices(
                 translationMatrix(-position.x, -position.y, -position.z),
