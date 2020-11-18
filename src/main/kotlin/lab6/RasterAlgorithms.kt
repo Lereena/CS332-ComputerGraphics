@@ -260,12 +260,12 @@ fun interpolateTextureCoordinate(point: Point3D, polygon: Polygon): TextureCoord
     val p2 = polygon.vertices[1].point
     val p3 = polygon.vertices.last().point
 
-    val e1 = p2 - p1
-    val e2 = p3 - p1
+    val e1 = DirectionVector(p2 - p1)
+    val e2 = DirectionVector(p3 - p1)
 
     val n = polygon.normal
-    val m = DirectionVector(e2.x * p1.x, e2.y * p1.y, e2.z * p1.z)
-    val l = DirectionVector(p1.x * e1.x, p1.y * e1.y, p1.z * e1.z)
+    val m = DirectionVector(e2.l * p1.x, e2.m * p1.y, e2.n * p1.z)
+    val l = DirectionVector(p1.x * e1.l, p1.y * e1.m, p1.z * e1.n)
 
     val matrix = arrayOf(
         doubleArrayOf(m.l, m.m, m.n),
@@ -273,12 +273,18 @@ fun interpolateTextureCoordinate(point: Point3D, polygon: Polygon): TextureCoord
         doubleArrayOf(n.l, n.m, n.n)
     )
 
-    val deltas = multiplePointAndMatrix(point, matrix)
-    val u = deltas.x
-    val v = deltas.y
+    val pointMatrix = arrayOf(
+            doubleArrayOf(point.x),
+            doubleArrayOf(point.y),
+            doubleArrayOf(1.0)
+    )
 
-    val pX = p1.x + e1.x * u + e2.x * v
-    val pY = p1.y + e1.y * u + e2.y * v
+    val deltas = multiplyMatrices(matrix, pointMatrix)
+    val u = deltas[0][0] / deltas[2][0]
+    val v =  deltas[1][0] / deltas[2][0]
+
+    val pX = p1.x + e1.m * u + e2.m * v
+    val pY = p1.y + e1.n * u + e2.n * v
 
     return TextureCoordinate(pX, pY)
 }

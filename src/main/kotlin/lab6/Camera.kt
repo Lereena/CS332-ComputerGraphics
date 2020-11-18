@@ -1,12 +1,10 @@
 package lab6
 
 import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
-import lab3.getLine
-import lab5.Point
+import java.io.FileInputStream
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.PI
@@ -43,7 +41,7 @@ class Camera(var position: Point3D, var angleX: Double, var angleY: Double, val 
             RasterModes.BY_EDGES -> drawByEdges(polygons)
             RasterModes.Z_BUFFER -> zBuffer(canvas, mainGc, polygons)
             RasterModes.SHADER -> shader(canvas, mainGc, polygons, clone, DirectionVector(0.0, -1.0, 0.0))
-            RasterModes.TEXTURE -> textureOverlay(canvas, mainGc, polygons, Image("/assets/test-texture.jpg"))
+            RasterModes.TEXTURE -> textureOverlay(canvas, mainGc, polygons, Image(FileInputStream("assets/test-texture.jpg")))
             RasterModes.FLOAT_HOR -> drawFloatingHorizon(clone)
         }
     }
