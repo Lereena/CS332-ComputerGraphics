@@ -22,13 +22,10 @@ class CornishRoom : Application() {
         root.children.add(canvas)
         primaryStage.scene = Scene(root)
 
-//        buildRoom()
         primaryStage.show()
     }
 
-//    private fun buildRoom() {
-//        val room = Figure()
-//    }
+    val rayTracer = RayTracer(480, 480)
 
     companion object {
         @JvmStatic
