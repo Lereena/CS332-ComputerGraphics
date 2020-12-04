@@ -5,8 +5,9 @@ import lab6.Point3D
 
 enum class LightType { Ambient, Point }
 
-class Light(type: LightType, intensity: Double, position: Point3D) {
+class Light(val type: LightType, val intensity: Double, val position: Point3D) {
     var rIntensity = intensity
     var gIntensity = intensity
-    var color = Color.color(255 * intensity, 255 * intensity, 255 * intensity,)
+    var bIntensity = intensity
+    var color = Color.color(255 * intensity / 255.0, 255 * intensity / 255.0, 255 * intensity / 255.0,)
 }

@@ -15,7 +15,7 @@ class Face(var points: List<Point3D>) {
     var yconst = points.all { point -> point.y == points[0].y }
     var zconst = points.all { point -> point.z == points[0].z }
 
-    constructor(face: Face) {
+    constructor(face: Face): this(face.points) {
         points = face.points.asSequence().map { pt -> Point3D(pt.x, pt.y, pt.z) }.toList()
         center = Point3D(face.center)
         if (face.normal.size > 0)

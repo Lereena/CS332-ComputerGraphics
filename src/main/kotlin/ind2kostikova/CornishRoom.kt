@@ -13,19 +13,20 @@ class CornishRoom : Application() {
     override fun start(primaryStage: Stage) {
         primaryStage.title = "Cornish room"
         val root = FlowPane(Orientation.VERTICAL, 0.0, 30.0)
-        val width = 800.0
-        val height = 600.0
+        val width = 480.0
+        val height = 480.0
         val canvas = Canvas(width, height)
-        val dotsGC = canvas.graphicsContext2D
-        dotsGC.stroke = Color.BLACK
+        val gc = canvas.graphicsContext2D
+        gc.stroke = Color.BLACK
 
         root.children.add(canvas)
         primaryStage.scene = Scene(root)
 
+        val rayTracer = RayTracer(480, 480)
+        rayTracer.ShowScene(gc)
+
         primaryStage.show()
     }
-
-    val rayTracer = RayTracer(480, 480)
 
     companion object {
         @JvmStatic
