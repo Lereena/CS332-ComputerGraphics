@@ -15,6 +15,16 @@ class Polyhedron(var faces: ArrayList<Face>) {
     var reflective = 0.0
     var transparent = 0.0
 
+    init {
+        if (faces.size != 0) {
+            val newFaces = ArrayList<Face>()
+            for (face in faces)
+                newFaces.add(Face(face))
+            faces = newFaces
+        }
+        center = findCenter()
+    }
+
     fun hexahedron(cubeHalfSize: Double = 50.0) {
         val front = makeFace(
             Point3D(-cubeHalfSize, cubeHalfSize, cubeHalfSize),
