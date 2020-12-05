@@ -16,7 +16,6 @@ class CornishRoom : Application() {
         val height = 480.0
         val canvas = Canvas(width, height)
         val gc = canvas.graphicsContext2D
-//        gc.stroke = Color.BLACK
 
         root.children.add(canvas)
         primaryStage.scene = Scene(root)

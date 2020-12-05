@@ -24,8 +24,8 @@ class Polyhedron(var faces: ArrayList<Face>) {
         )
 
         val back = makeFace(
-            Point3D(-cubeHalfSize, -cubeHalfSize, -cubeHalfSize),
             Point3D(-cubeHalfSize, cubeHalfSize, -cubeHalfSize),
+            Point3D(-cubeHalfSize, -cubeHalfSize, -cubeHalfSize),
             Point3D(cubeHalfSize, -cubeHalfSize, -cubeHalfSize),
             Point3D(cubeHalfSize, cubeHalfSize, -cubeHalfSize)
         )
@@ -43,7 +43,7 @@ class Polyhedron(var faces: ArrayList<Face>) {
     fun sphere(center: Point3D, radius: Double) {
         isSphere = true
         sphereRadius = radius
-        faces = arrayListOf(Face(listOf(center)))
+        faces = arrayListOf(Face(listOf(Point3D(center))))
         this.center = center
     }
 
