@@ -11,7 +11,7 @@ import kotlin.math.sqrt
 
 class RayTracer(val width: Int, val height: Int) {
     val polyhedrons = ArrayList<Polyhedron>()
-    val camera = Camera(Point3D(0.0, 3.0, -15.0))
+    val camera = Camera(Point3D(0.0, 4.0, -20.0))
 
     private val lights = listOf(
         Light(LightType.Ambient, 0.2, Point3D(0.0, 0.0, 0.0)),
@@ -24,7 +24,7 @@ class RayTracer(val width: Int, val height: Int) {
     private val projectionPlaneD = 1.0
     private val eps = 1E-3
     private val recurseDepth = 5
-    private val backgroundColor = Color.BLACK
+    private val backgroundColor = Color.LIGHTSLATEGREY
 
     fun showScene(gc: GraphicsContext) {
         genScene()
@@ -145,14 +145,14 @@ class RayTracer(val width: Int, val height: Int) {
     }
 
     private fun genScene() {
-        addSphere(Point3D(-3.0, 2.0, 1.0), 1.0, Color.RED, 500.0)
-        addSphere(Point3D(0.0, 3.0, -3.0), 1.0, Color.WHITE, 500.0, 1.0)
-        addSphere(Point3D(3.0, 0.0, -4.0), 0.5, Color.WHITE, 500.0, 0.0, 1.0)
+        addSphere(Point3D(-5.0, 5.0, 1.0), 2.0, Color.DARKCYAN, 500.0)
+        addSphere(Point3D(0.0, 6.0, -3.0), 2.0, Color.WHITE, 500.0, 1.0)
+        addSphere(Point3D(4.5, 1.0, -5.0), 1.5, Color.WHITE, 500.0, 0.0, 1.0)
 
-        addCube(0.75, Point3D(3.0, 1.0, 1.0), Color.BLUE, 500.0)
-        addCube(0.75, Point3D(-1.0, 0.0, -3.0), Color.WHITE, 500.0, 1.0)
-        addCube(0.5, Point3D(-3.0, 0.0, -5.0), Color.WHITE, 500.0, 0.0, 1.0)
-        addCube(0.5, Point3D(-1.0, 0.0, -7.0), Color.GREEN, 500.0)
+        addCube(1.5, Point3D(3.0, 1.0, 1.0), Color.CRIMSON, 500.0)
+        addCube(1.5, Point3D(-1.0, 1.0, -3.0), Color.WHITE, 500.0, 1.0)
+        addCube(1.0, Point3D(-6.0, 1.0, -2.0), Color.WHITE, 500.0, 0.0, 1.0)
+        addCube(1.0, Point3D(-2.0, 0.0, -8.0), Color.CORAL, 500.0)
 
         var points = listOf(
             Point3D(-10.0, -1.0, -10.0),
@@ -160,42 +160,42 @@ class RayTracer(val width: Int, val height: Int) {
             Point3D(10.0, 10.0, -10.0),
             Point3D(10.0, -1.0, -10.0)
         )
-        addWall(points, arrayListOf(0.0, 0.0, -1.0), Color.DEEPPINK)
+        addWall(points, arrayListOf(0.0, 0.0, -1.0), Color.AQUAMARINE) // back
         points = listOf(
             Point3D(-10.0, -1.0, 10.0),
             Point3D(-10.0, 10.0, 10.0),
             Point3D(10.0, 10.0, 10.0),
             Point3D(10.0, -1.0, 10.0)
         )
-        addWall(points, arrayListOf(0.0, 0.0, 1.0), Color.CHOCOLATE)
+        addWall(points, arrayListOf(0.0, 0.0, 1.0), Color.AZURE, reflective = 1.0) // front
         points = listOf(
             Point3D(-10.0, -1.0, -10.0),
             Point3D(-10.0, -1.0, 10.0),
             Point3D(10.0, -1.0, 10.0),
             Point3D(10.0, -1.0, -10.0)
         )
-        addWall(points, arrayListOf(0.0, -1.0, 0.0), Color.YELLOW)
+        addWall(points, arrayListOf(0.0, -1.0, 0.0), Color.PINK) // floor
         points = listOf(
             Point3D(-10.0, 10.0, -10.0),
             Point3D(-10.0, 10.0, 10.0),
             Point3D(10.0, 10.0, 10.0),
             Point3D(10.0, 10.0, -10.0)
         )
-        addWall(points, arrayListOf(0.0, 1.0, 0.0), Color.GREEN)
+        addWall(points, arrayListOf(0.0, 1.0, 0.0), Color.ALICEBLUE) // ceil
         points = listOf(
             Point3D(-10.0, -1.0, -10.0),
             Point3D(-10.0, 10.0, -10.0),
             Point3D(-10.0, 10.0, 10.0),
             Point3D(-10.0, -1.0, 10.0)
         )
-        addWall(points, arrayListOf(-1.0, 0.0, 0.0), Color.RED)
+        addWall(points, arrayListOf(-1.0, 0.0, 0.0), Color.BLUEVIOLET) // left
         points = listOf(
             Point3D(10.0, -1.0, -10.0),
             Point3D(10.0, 10.0, -10.0),
             Point3D(10.0, 10.0, 10.0),
             Point3D(10.0, -1.0, 10.0)
         )
-        addWall(points, arrayListOf(1.0, 0.0, 0.0), Color.BLUE)
+        addWall(points, arrayListOf(1.0, 0.0, 0.0), Color.BURLYWOOD) // right
     }
 
     private fun сanvasToViewport(x: Int, y: Int, width: Double, height: Double): Point3D {

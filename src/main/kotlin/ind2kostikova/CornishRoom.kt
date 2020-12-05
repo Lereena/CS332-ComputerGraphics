@@ -5,6 +5,7 @@ import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.layout.FlowPane
+import javafx.scene.layout.GridPane
 import javafx.stage.Stage
 
 class CornishRoom : Application() {
@@ -16,6 +17,8 @@ class CornishRoom : Application() {
         val height = 480.0
         val canvas = Canvas(width, height)
         val gc = canvas.graphicsContext2D
+
+//        val reflectionSection = GridPane()
 
         root.children.add(canvas)
         primaryStage.scene = Scene(root)

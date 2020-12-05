@@ -5,6 +5,27 @@ import lab6.Point3D
 
 enum class PolyhedronType { Hexahedron, Sphere }
 
+//class Figure(val type: PolyhedronType, var size: Double, var specular: Double, var reflective: Double, var transparent: Double) {
+//    var center = findCenter()
+//
+//    private fun findCenter(): Point3D {
+//        var x = 0.0
+//        var y = 0.0
+//        var z = 0.0
+//        for (face in faces) {
+//            x += face.center.x
+//            y += face.center.y
+//            z += face.center.z
+//        }
+//        x /= faces.size
+//        y /= faces.size
+//        z /= faces.size
+//
+//        return Point3D(x, y, z)
+//    }
+//
+//}
+
 class Polyhedron(var faces: ArrayList<Face>) {
     var center = findCenter()
     var cubeSize = 0.0
