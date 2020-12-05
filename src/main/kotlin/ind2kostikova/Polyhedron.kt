@@ -3,6 +3,8 @@ package ind2kostikova
 import javafx.scene.paint.Color
 import lab6.Point3D
 
+enum class PolyhedronType { Hexahedron, Sphere }
+
 class Polyhedron(var faces: ArrayList<Face>) {
     var center = findCenter()
     var cubeSize = 0.0

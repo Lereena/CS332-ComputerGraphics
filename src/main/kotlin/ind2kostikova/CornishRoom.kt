@@ -5,7 +5,6 @@ import javafx.geometry.Orientation
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.layout.FlowPane
-import javafx.scene.paint.Color
 import javafx.stage.Stage
 
 class CornishRoom : Application() {
@@ -17,13 +16,13 @@ class CornishRoom : Application() {
         val height = 480.0
         val canvas = Canvas(width, height)
         val gc = canvas.graphicsContext2D
-        gc.stroke = Color.BLACK
+//        gc.stroke = Color.BLACK
 
         root.children.add(canvas)
         primaryStage.scene = Scene(root)
 
         val rayTracer = RayTracer(480, 480)
-        rayTracer.ShowScene(gc)
+        rayTracer.showScene(gc)
 
         primaryStage.show()
     }
