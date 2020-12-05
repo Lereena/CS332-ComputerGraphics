@@ -11,7 +11,7 @@ import kotlin.math.sqrt
 
 class RayTracer(val width: Int, val height: Int) {
     val polyhedrons = ArrayList<Polyhedron>()
-    val camera = Camera(Point3D(0.0, 3.0, -15.0), width, height)
+    val camera = Camera(Point3D(0.0, 3.0, -15.0))
 
     private val lights = listOf(
         Light(LightType.Ambient, 0.2, Point3D(0.0, 0.0, 0.0)),
@@ -33,7 +33,7 @@ class RayTracer(val width: Int, val height: Int) {
         for (y in (-height / 2)..(height / 2))
             for (x in (-width / 2)..(width / 2)) {
                 val D = сanvasToViewport(x, y, width.toDouble(), height.toDouble())
-                val color = traceRay(camera.view.point1, D, 1.0, Double.MAX_VALUE, 1.0)
+                val color = traceRay(camera.point, D, 1.0, Double.MAX_VALUE, 1.0)
                 val imgX = x + width / 2
                 val imgY = height / 2 - y - 1
                 if (imgX < 0 || imgX >= width || imgY < 0 || imgY >= height)

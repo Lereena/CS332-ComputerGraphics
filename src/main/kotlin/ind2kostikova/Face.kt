@@ -31,10 +31,10 @@ class Face(var points: List<Point3D>) {
         if (abs(a * pt.x + b * pt.y + c) > eps)
             return false
 
-        return LEq(min(e1.x, e2.x), pt.x)
-                && LEq(pt.x, max(e1.x, e2.x))
-                && LEq(min(e1.y, e2.y), pt.y)
-                && LEq(pt.y, max(e1.y, e2.y))
+        return lEq(min(e1.x, e2.x), pt.x)
+                && lEq(pt.x, max(e1.x, e2.x))
+                && lEq(min(e1.y, e2.y), pt.y)
+                && lEq(pt.y, max(e1.y, e2.y))
     }
 
     private fun isCrossed(first1: Point2D, first2: Point2D, second1: Point2D, second2: Point2D): Boolean {
@@ -50,18 +50,18 @@ class Face(var points: List<Point3D>) {
 
         var x = -1.0 * (c1 * b2 - c2 * b1) / zn
         var y = -1.0 * (a1 * c2 - a2 * c1) / zn
-        if (Eq(x, 0.0))
+        if (eq(x, 0.0))
             x = 0.0
-        if (Eq(y, 0.0))
+        if (eq(y, 0.0))
             y = 0.0
-        val toFirst = LEq(min(first1.x, first2.x), x)
-                && LEq(x, max(first1.x, first2.x))
-                && LEq(min(first1.y, first2.y), y)
-                && LEq(y, max(first1.y, first2.y))
-        val toSecond = LEq(min(second1.x, second2.x), x)
-                && LEq(x, max(second1.x, second2.x))
-                && LEq(min(second1.y, second2.y), y)
-                && LEq(y, max(second1.y, second2.y))
+        val toFirst = lEq(min(first1.x, first2.x), x)
+                && lEq(x, max(first1.x, first2.x))
+                && lEq(min(first1.y, first2.y), y)
+                && lEq(y, max(first1.y, first2.y))
+        val toSecond = lEq(min(second1.x, second2.x), x)
+                && lEq(x, max(second1.x, second2.x))
+                && lEq(min(second1.y, second2.y), y)
+                && lEq(y, max(second1.y, second2.y))
         return toFirst && toSecond
     }
 
@@ -75,11 +75,11 @@ class Face(var points: List<Point3D>) {
                 val tmp2 = Point2D(points[i % points.size].x, points[i % points.size].y)
                 if (pointBelongs(tmp1, tmp2, pt))
                     return true
-                if (Eq(tmp1.y, tmp2.y))
+                if (eq(tmp1.y, tmp2.y))
                     continue
-                if (Eq(pt.y, min(tmp1.y, tmp2.y)))
+                if (eq(pt.y, min(tmp1.y, tmp2.y)))
                     continue
-                if (Eq(pt.y, max(tmp1.y, tmp2.y)) && Less(pt.x, min(tmp1.x, tmp2.x)))
+                if (eq(pt.y, max(tmp1.y, tmp2.y)) && less(pt.x, min(tmp1.x, tmp2.x)))
                     count++
                 else if (isCrossed(tmp1, tmp2, pt, ray))
                     count++
@@ -93,11 +93,11 @@ class Face(var points: List<Point3D>) {
                 val tmp2 = Point2D(points[i % points.size].x, points[i % points.size].z)
                 if (pointBelongs(tmp1, tmp2, pt))
                     return true
-                if (Eq(tmp1.y, tmp2.y))
+                if (eq(tmp1.y, tmp2.y))
                     continue
-                if (Eq(pt.y, min(tmp1.y, tmp2.y)))
+                if (eq(pt.y, min(tmp1.y, tmp2.y)))
                     continue
-                if (Eq(pt.y, max(tmp1.y, tmp2.y)) && Less(pt.x, min(tmp1.x, tmp2.x)))
+                if (eq(pt.y, max(tmp1.y, tmp2.y)) && less(pt.x, min(tmp1.x, tmp2.x)))
                     count++
                 else if (isCrossed(tmp1, tmp2, pt, ray))
                     count++
@@ -111,11 +111,11 @@ class Face(var points: List<Point3D>) {
                 val tmp2 = Point2D(points[i % points.size].y, points[i % points.size].z)
                 if (pointBelongs(tmp1, tmp2, pt))
                     return true
-                if (Eq(tmp1.y, tmp2.y))
+                if (eq(tmp1.y, tmp2.y))
                     continue
-                if (Eq(pt.y, min(tmp1.y, tmp2.y)))
+                if (eq(pt.y, min(tmp1.y, tmp2.y)))
                     continue
-                if (Eq(pt.y, max(tmp1.y, tmp2.y)) && Less(pt.x, min(tmp1.x, tmp2.x)))
+                if (eq(pt.y, max(tmp1.y, tmp2.y)) && less(pt.x, min(tmp1.x, tmp2.x)))
                     count++
                 else if (isCrossed(tmp1, tmp2, pt, ray))
                     count++
@@ -200,14 +200,14 @@ class Face(var points: List<Point3D>) {
 
 val eps = 1e-6f
 
-fun Eq(d1: Double, d2: Double): Boolean {
+fun eq(d1: Double, d2: Double): Boolean {
     return abs(d1 - d2) < eps
 }
 
-fun Less(d1: Double, d2: Double): Boolean {
+fun less(d1: Double, d2: Double): Boolean {
     return d1 < d2 && abs(d1 - d2) >= eps
 }
 
-fun LEq(b1: Double, b2: Double): Boolean {
-    return Less(b1, b2) || Eq(b1, b2)
+fun lEq(b1: Double, b2: Double): Boolean {
+    return less(b1, b2) || eq(b1, b2)
 }
