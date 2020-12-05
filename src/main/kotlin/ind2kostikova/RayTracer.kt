@@ -311,7 +311,7 @@ class RayTracer(val width: Int, val height: Int) {
                 }
                 val (blocker, _, _) = сlosestIntersection(point, vectorLight, eps, tMax)
                 val tr = 1.0
-                if (blocker.faces.size == 0)
+                if (blocker.faces.size != 0)
                     continue
                 val nDotL = dot(normal, vectorLight)
                 if (nDotL > 0) {
